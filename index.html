@@ -1317,8 +1317,12 @@ function loadDraft() {
 
 function applyDraft(draft) {
   if (!draft) return;
-  if (draft.naam) document.getElementById("naam").value = draft.naam;
-  if (draft.contact) document.getElementById("contact").value = draft.contact;
+  try {
+    const _n = document.getElementById("naam");
+    const _c = document.getElementById("contact");
+    if (draft.naam && _n) _n.value = draft.naam;
+    if (draft.contact && _c) _c.value = draft.contact;
+  } catch(e) { console.warn("Draft apply fout (naam/contact):", e); }
   // Wedstrijden
   for (const [idx, v] of Object.entries(draft.wedstrijden || {})) {
     const t = document.querySelector(`#tab-wedstrijden input[data-wedstrijd="${idx}"][data-pos="thuis"]`);
@@ -2287,8 +2291,11 @@ function normaliseer(s) {
 // === v10: AUTO-LOAD bij naam+contact match ===
 let _autoLoadGedaan = false;
 async function checkBestaandeEnLaadIn() {
-  const naam = document.getElementById("naam").value.trim();
-  const contact = document.getElementById("contact").value.trim();
+  const _naamEl = document.getElementById("naam");
+  const _contactEl = document.getElementById("contact");
+  if (!_naamEl || !_contactEl) return; // v12: defensief
+  const naam = _naamEl.value.trim();
+  const contact = _contactEl.value.trim();
   const banner = document.getElementById("herkenning-banner");
   if (!naam || !contact) {
     if (banner) banner.style.display = "none";
@@ -2340,23 +2347,29 @@ async function checkBestaandeEnLaadIn() {
   } catch(e) { console.warn("Auto-load fout:", e); }
 }
 
-// Bind aan beide velden
-document.getElementById("naam").addEventListener("blur", checkBestaandeEnLaadIn);
-document.getElementById("contact").addEventListener("blur", checkBestaandeEnLaadIn);
+// v12: Bind aan beide velden — defensief (voorkomt iOS Safari crash bij null)
+try {
+  const _naamEl = document.getElementById("naam");
+  const _contactEl = document.getElementById("contact");
+  if (_naamEl) _naamEl.addEventListener("blur", checkBestaandeEnLaadIn);
+  if (_contactEl) _contactEl.addEventListener("blur", checkBestaandeEnLaadIn);
+} catch(e) { console.warn("Event-binding fout:", e); }
 
-// === Init ===
-renderWedstrijden();
-renderSpecials();
+// === Init === (v12: defensief — voorkomt herhaalde Safari-crashes)
+try { renderWedstrijden(); } catch(e) { console.error("renderWedstrijden fout:", e); }
+try { renderSpecials(); } catch(e) { console.error("renderSpecials fout:", e); }
 
-// v8: reclameblok starten
-initReclame();
+// v8: reclameblok starten (v12: defensief)
+try { initReclame(); } catch(e) { console.warn("Reclame init fout:", e); }
 // Voorkom dat klikken op reclame zonder link naar boven scrollt
-const _reclameBanner = document.getElementById("reclame-banner");
-if (_reclameBanner) {
-  _reclameBanner.addEventListener("click", (e) => {
-    if (_reclameBanner.getAttribute("href") === "#") e.preventDefault();
-  });
-}
+try {
+  const _reclameBanner = document.getElementById("reclame-banner");
+  if (_reclameBanner) {
+    _reclameBanner.addEventListener("click", (e) => {
+      if (_reclameBanner.getAttribute("href") === "#") e.preventDefault();
+    });
+  }
+} catch(e) { console.warn("Reclame banner-binding fout:", e); }
 
 // v4: footer logo src kopiëren uit header logo
 const _headerLogo = document.querySelector('.header-logo');
@@ -2374,17 +2387,30 @@ if (draft) {
   showResumeBanner(draft);
 }
 
-// v4: bind autosave op alle voorspellings-inputs
-bindAutoSave();
+// v4: bind autosave op alle voorspellings-inputs (v12: defensief)
+try { bindAutoSave(); } catch(e) { console.warn("bindAutoSave fout:", e); }
 
-// Voortgang updaten op tab-change
-document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", updateVoortgang));
-updateVoortgang();
+// Voortgang updaten op tab-change (v12: defensief)
+try {
+  document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", updateVoortgang));
+  updateVoortgang();
+} catch(e) { console.warn("Tab/voortgang init fout:", e); }
 
 // Bij refresh: blijf ingelogd
-if (sessionStorage.getItem(ADMIN_LOGIN_KEY) === "1") {
-  // Wacht tot tab geopend wordt
-}
+try {
+  if (sessionStorage.getItem(ADMIN_LOGIN_KEY) === "1") {
+    // Wacht tot tab geopend wordt
+  }
+} catch(e) { /* sessionStorage kan in privémodus falen */ }
+
+// v12: globale safety net — vangt elke onverwachte fout zodat Safari ons niet blokkeert
+window.addEventListener("error", function(e) {
+  console.error("Globale fout opgevangen:", e.message);
+  return true; // voorkomt dat Safari de pagina markeert als crashend
+});
+window.addEventListener("unhandledrejection", function(e) {
+  console.error("Niet-afgehandelde promise:", e.reason);
+});
 </script>
 </body>
 </html>
