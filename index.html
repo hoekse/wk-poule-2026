@@ -658,6 +658,12 @@
       <input type="text" id="contact" placeholder="zodat we je kunnen bereiken">
     </div>
 
+    <!-- v10: bestaande-deelnemer detectie -->
+    <div id="herkenning-banner" style="display:none;background:linear-gradient(135deg,var(--groen) 0%,#6ea400 100%);color:white;padding:14px;border-radius:10px;margin-bottom:14px;font-size:0.9rem;">
+      <strong>👋 Welkom terug, <span id="herkenning-naam"></span>!</strong>
+      <div style="margin-top:4px;opacity:0.95;font-size:0.82rem;">Je eerdere voorspellingen zijn ingeladen. Vul de nieuwe wedstrijden aan en druk op verzenden om alles bij te werken.</div>
+    </div>
+
     <div class="voortgang-grid">
       <div class="voortgang-cell"><span class="num" id="vc-wedstr">0</span><span class="lbl">Wedstr.</span></div>
       <div class="voortgang-cell"><span class="num" id="vc-specials">0</span><span class="lbl">Specials</span></div>
@@ -778,8 +784,8 @@
 // SUPABASE OPSLAG-LAAG
 // ============================================================
 // VUL HIER JE EIGEN SUPABASE-GEGEVENS IN (zie instructies):
-const SUPABASE_URL = "https://gkxcnbyialssruvhuiyn.supabase.co";        // bv. https://abcdxyz.supabase.co
-const SUPABASE_ANON_KEY = "sb_publishable_8PQM6fi3o1GHQtEpm2abgg_UnPIt1rT"; // de "anon public" key
+const SUPABASE_URL = "https://gkxcnbyialssruvhuiyn.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_8PQM6fi3o1GHQtEpm2abgg_UnPIt1rT";
 
 // Naam van de tabel in Supabase
 const STORAGE_TABEL = "poule_data";
@@ -1088,22 +1094,22 @@ const GROEPSFASE = [
 ];
 
 const KNOCKOUTS = [
-  ["28 jun","21:00","1/16","K73","2A vs 2B"],
-  ["29 jun","22:30","1/16","K74","1E vs 3ABCDF"],
-  ["30 jun","03:00","1/16","K75","1F vs 2C"],
-  ["29 jun","19:00","1/16","K76","1C vs 2F"],
-  ["30 jun","23:00","1/16","K77","1I vs 3CDFGH"],
-  ["30 jun","19:00","1/16","K78","2E vs 2I"],
-  ["01 jul","03:00","1/16","K79","1A vs 3CEFHI"],
-  ["01 jul","18:00","1/16","K80","1L vs 3EHIJK"],
-  ["02 jul","02:00","1/16","K81","1D vs 3BEFIJ"],
-  ["01 jul","22:00","1/16","K82","1G vs 3AEHIJ"],
-  ["03 jul","01:00","1/16","K83","2K vs 2L"],
-  ["02 jul","21:00","1/16","K84","1H vs 2J"],
-  ["03 jul","05:00","1/16","K85","1B vs 3EFGIJ"],
-  ["04 jul","00:00","1/16","K86","1J vs 2H"],
-  ["04 jul","03:30","1/16","K87","1K vs 3DEIJL"],
-  ["03 jul","20:00","1/16","K88","2D vs 2G"],
+  ["28 jun","21:00","1/16","K73","Zuid-Afrika - Canada"],
+  ["29 jun","22:30","1/16","K74","Duitsland - Paraguay"],
+  ["30 jun","03:00","1/16","K75","Nederland - Marokko"],
+  ["29 jun","19:00","1/16","K76","Brazilië - Japan"],
+  ["30 jun","23:00","1/16","K77","Frankrijk - Zweden"],
+  ["30 jun","19:00","1/16","K78","Ivoorkust - Noorwegen"],
+  ["01 jul","03:00","1/16","K79","Mexico - Ecuador"],
+  ["01 jul","18:00","1/16","K80","Engeland - Congo DR"],
+  ["02 jul","02:00","1/16","K81","Verenigde Staten - Bosnië-Herzegovina"],
+  ["01 jul","22:00","1/16","K82","België - Senegal"],
+  ["03 jul","01:00","1/16","K83","Portugal - Kroatië"],
+  ["02 jul","21:00","1/16","K84","Spanje - Oostenrijk"],
+  ["03 jul","05:00","1/16","K85","Zwitserland - Algerije"],
+  ["04 jul","00:00","1/16","K86","Argentinië - Kaapverdië"],
+  ["04 jul","03:30","1/16","K87","Colombia - Ghana"],
+  ["03 jul","20:00","1/16","K88","Australië - Egypte"],
   ["04 jul","23:00","1/8","A89","W74 vs W77"],
   ["04 jul","19:00","1/8","A90","W73 vs W75"],
   ["05 jul","22:00","1/8","A91","W76 vs W78"],
@@ -1121,6 +1127,29 @@ const KNOCKOUTS = [
   ["18 jul","23:00","3e/4e","T103","V101 vs V102"],
   ["19 jul","21:00","FINALE","F104","W101 vs W102"],
 ];
+
+// v11: Bekende teams voor de zestiende finales (na groepsfase 27 juni 2026)
+// Index = positie in TOTAAL-wedstrijden array (#73 = idx 72, etc.)
+// Bron: vi.nl / intikkertje.nl / FIFA, 28 juni 2026
+// Waarde: {thuis, uit} OF {thuis} OF {uit} als maar één team bekend is
+const KO_BEKEND_TEAMS = {
+  72: {thuis:"Zuid-Afrika",     uit:"Canada"},                    // #73
+  73: {thuis:"Duitsland",       uit:"Paraguay"},                   // #74
+  74: {thuis:"Nederland",       uit:"Marokko"},                    // #75
+  75: {thuis:"Brazilië",        uit:"Japan"},                      // #76
+  76: {thuis:"Frankrijk",       uit:"Zweden"},                     // #77
+  77: {thuis:"Ivoorkust",       uit:"Noorwegen"},                  // #78
+  78: {thuis:"Mexico",          uit:"Ecuador"},                    // #79
+  79: {thuis:"Engeland",        uit:"Congo DR"},                   // #80
+  80: {thuis:"Verenigde Staten",uit:"Bosnië-Herzegovina"},         // #81
+  81: {thuis:"België",          uit:"Senegal"},                    // #82
+  82: {thuis:"Portugal",        uit:"Kroatië"},                    // #83
+  83: {thuis:"Spanje",          uit:"Oostenrijk"},                 // #84
+  84: {thuis:"Zwitserland",     uit:"Algerije"},                   // #85
+  85: {thuis:"Argentinië",      uit:"Kaapverdië"},                 // #86
+  86: {thuis:"Colombia",        uit:"Ghana"},                      // #87
+  87: {thuis:"Australië",       uit:"Egypte"},                     // #88
+};
 
 const ALLE_TEAMS = Object.values(GROEPEN).flatMap(g => g.teams);
 // SPECIALS_TEAMS = alleen echt gekwalificeerde landen (zonder Play-off placeholders),
@@ -1176,6 +1205,12 @@ function renderWedstrijden() {
     html += `<div class="ronde-titel">${faseLabels[fase]} <span class="badge">${wedstr.length} wedstr.</span></div>`;
     wedstr.forEach(w => {
       const cls = fase === "FINALE" ? "finale" : "knockout";
+      // v11: bekende teams (alleen voor 1/16 finales waar paring vaststaat)
+      const bekend = KO_BEKEND_TEAMS[w.idx] || {};
+      const thuisBekend = bekend.thuis || "";
+      const uitBekend = bekend.uit || "";
+      const thuisAttr = thuisBekend ? `value="${escapeHtml(thuisBekend)}" readonly style="text-align:right;background:#f0f4f8;font-weight:700;color:#2d3748;"` : `placeholder="Team 1..." style="text-align:right;"`;
+      const uitAttr = uitBekend ? `value="${escapeHtml(uitBekend)}" readonly style="background:#f0f4f8;font-weight:700;color:#2d3748;"` : `placeholder="Team 2..."`;
       html += `
         <div class="wedstrijd ${cls}">
           <div class="wedstrijd-meta">
@@ -1184,11 +1219,11 @@ function renderWedstrijden() {
           </div>
           <div style="font-size:0.7rem;color:var(--grijs);margin:4px 0;font-style:italic;">${escapeHtml(w.omschr)}</div>
           <div class="wedstrijd-row">
-            <input type="text" class="ko-team-input" placeholder="Team 1..." data-wedstrijd="${w.idx}" data-pos="team-thuis" style="text-align:right;">
+            <input type="text" class="ko-team-input" ${thuisAttr} data-wedstrijd="${w.idx}" data-pos="team-thuis">
             <input type="number" min="0" max="20" class="score-input" data-wedstrijd="${w.idx}" data-pos="thuis">
             <div class="vs">–</div>
             <input type="number" min="0" max="20" class="score-input" data-wedstrijd="${w.idx}" data-pos="uit">
-            <input type="text" class="ko-team-input" placeholder="Team 2..." data-wedstrijd="${w.idx}" data-pos="team-uit">
+            <input type="text" class="ko-team-input" ${uitAttr} data-wedstrijd="${w.idx}" data-pos="team-uit">
           </div>
         </div>`;
     });
@@ -1246,7 +1281,7 @@ function saveDraft() {
         const u = document.querySelector(`#tab-wedstrijden input[data-wedstrijd="${i}"][data-pos="uit"]`);
         const tt = document.querySelector(`#tab-wedstrijden input[data-wedstrijd="${i}"][data-pos="team-thuis"]`);
         const tu = document.querySelector(`#tab-wedstrijden input[data-wedstrijd="${i}"][data-pos="team-uit"]`);
-        if ((t && t.value !== "") || (u && u.value !== "") || (tt && tt.value) || (tu && tu.value)) {
+        if ((t && t.value !== "") || (u && u.value !== "")) {  // v11: alleen opslaan als er een score is
           wedstrijden[i] = {
             thuis: t ? t.value : "", uit: u ? u.value : "",
             team_thuis: tt ? tt.value : "", team_uit: tu ? tu.value : ""
@@ -1406,7 +1441,7 @@ document.getElementById("btn-submit").addEventListener("click", async () => {
     const u = document.querySelector(`#tab-wedstrijden input[data-wedstrijd="${i}"][data-pos="uit"]`);
     const tt = document.querySelector(`#tab-wedstrijden input[data-wedstrijd="${i}"][data-pos="team-thuis"]`);
     const tu = document.querySelector(`#tab-wedstrijden input[data-wedstrijd="${i}"][data-pos="team-uit"]`);
-    if ((t && t.value !== "") || (u && u.value !== "") || (tt && tt.value) || (tu && tu.value)) {
+    if ((t && t.value !== "") || (u && u.value !== "")) {  // v11: alleen opslaan als er een score is
       wedstrijden[i] = {
         thuis: t ? t.value : "", uit: u ? u.value : "",
         team_thuis: tt ? tt.value : "", team_uit: tu ? tu.value : ""
@@ -1424,20 +1459,48 @@ document.getElementById("btn-submit").addEventListener("click", async () => {
   };
 
   // v4: zoek bestaande deelnemer op naam+contact, anders nieuw ID
+  // v10: tolerantere match (negeer alle whitespace-verschillen) + MERGE i.p.v. overschrijven
   let bestaande = null;
   try {
     const alle = await getAlleVoorspellingen();
-    bestaande = alle.find(d => d.naam.trim().toLowerCase() === naam.toLowerCase() && d.contact.trim().toLowerCase() === contact.toLowerCase());
+    bestaande = alle.find(d => normaliseer(d.naam) === normaliseer(naam) && normaliseer(d.contact) === normaliseer(contact));
   } catch(e) {}
 
   let isUpdate = !!bestaande;
-  if (isUpdate && !confirm(`Je hebt al een voorspelling ingediend op ${bestaande.datum}.\n\nWil je deze bijwerken?`)) {
+  if (isUpdate && !confirm(`Je hebt al een voorspelling ingediend op ${bestaande.datum}.\n\nNieuwe of gewijzigde voorspellingen worden toegevoegd aan je bestaande. Doorgaan?`)) {
     return;
+  }
+
+  // v10: MERGE — start met de oude voorspellingen, overschrijf alleen wat NU is ingevuld
+  let merged_wedstrijden = bestaande ? Object.assign({}, bestaande.wedstrijden || {}) : {};
+  for (const [idx, w] of Object.entries(wedstrijden)) {
+    // Bestaande gegevens behouden voor velden die nu leeg zijn
+    const oud = merged_wedstrijden[idx] || {};
+    merged_wedstrijden[idx] = {
+      thuis: (w.thuis !== "" ? w.thuis : (oud.thuis || "")),
+      uit: (w.uit !== "" ? w.uit : (oud.uit || "")),
+      team_thuis: (w.team_thuis ? w.team_thuis : (oud.team_thuis || "")),
+      team_uit: (w.team_uit ? w.team_uit : (oud.team_uit || ""))
+    };
+  }
+
+  // v10: specials ook mergen (alleen ingevulde waarden overschrijven oude)
+  let merged_specials = Object.assign({}, bestaande ? (bestaande.specials || {}) : {});
+  if (specials.kampioen) merged_specials.kampioen = specials.kampioen;
+  if (specials.finalist) merged_specials.finalist = specials.finalist;
+  if (specials.topscoorder) merged_specials.topscoorder = specials.topscoorder;
+  if (specials.gele) merged_specials.gele = specials.gele;
+  if (specials.rode) merged_specials.rode = specials.rode;
+  // Halve finalisten: vervang alleen als er minstens 1 is ingevuld
+  if (specials.halve && specials.halve.filter(Boolean).length > 0) {
+    merged_specials.halve = specials.halve;
   }
 
   const id = bestaande ? bestaande.id : (Date.now().toString(36) + Math.random().toString(36).substr(2, 5));
   const voorspelling = {
-    id, naam, contact, wedstrijden, specials,
+    id, naam, contact,
+    wedstrijden: merged_wedstrijden,
+    specials: merged_specials,
     datum: new Date().toLocaleString("nl-NL"),
     datum_eerste_inzending: bestaande ? (bestaande.datum_eerste_inzending || bestaande.datum) : new Date().toLocaleString("nl-NL"),
     punten: bestaande ? bestaande.punten : 0,
@@ -1825,6 +1888,10 @@ async function showUitslagenInvoer() {
     html += `<div class="ronde-titel">${faseLabels[fase]}</div>`;
     wedstr.forEach(w => {
       const u = data.wedstrijden[w.idx] || {};
+      // v11: bekende teams voorvullen
+      const bekend = KO_BEKEND_TEAMS[w.idx] || {};
+      const tThuis = u.team_thuis || bekend.thuis || "";
+      const tUit = u.team_uit || bekend.uit || "";
       html += `
         <div class="wedstrijd ${fase==='FINALE'?'finale':'knockout'}">
           <div class="wedstrijd-meta">
@@ -1833,11 +1900,11 @@ async function showUitslagenInvoer() {
           </div>
           <div style="font-size:0.7rem;color:var(--grijs);margin:4px 0;font-style:italic;">${escapeHtml(w.omschr)}</div>
           <div class="wedstrijd-row">
-            <input type="text" class="ko-team-input" placeholder="Team 1..." data-real="${w.idx}" data-pos="team-thuis" value="${escapeHtml(u.team_thuis||'')}" style="text-align:right;">
+            <input type="text" class="ko-team-input" placeholder="Team 1..." data-real="${w.idx}" data-pos="team-thuis" value="${escapeHtml(tThuis)}" style="text-align:right;">
             <input type="number" min="0" max="20" class="score-input admin-real" data-real="${w.idx}" data-pos="thuis" value="${u.thuis||''}">
             <div class="vs">–</div>
             <input type="number" min="0" max="20" class="score-input admin-real" data-real="${w.idx}" data-pos="uit" value="${u.uit||''}">
-            <input type="text" class="ko-team-input" placeholder="Team 2..." data-real="${w.idx}" data-pos="team-uit" value="${escapeHtml(u.team_uit||'')}">
+            <input type="text" class="ko-team-input" placeholder="Team 2..." data-real="${w.idx}" data-pos="team-uit" value="${escapeHtml(tUit)}">
           </div>
         </div>`;
     });
@@ -2209,6 +2276,73 @@ function escapeHtml(s) {
   if (s === undefined || s === null) return "";
   return String(s).replace(/[&<>"']/g, m => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[m]));
 }
+
+// v10: tolerante normalisatie voor naam/contact matching
+// Maakt alle hoofdletters klein, vervangt alle whitespace-blokken door één spatie, trimt
+function normaliseer(s) {
+  if (!s) return "";
+  return String(s).trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+// === v10: AUTO-LOAD bij naam+contact match ===
+let _autoLoadGedaan = false;
+async function checkBestaandeEnLaadIn() {
+  const naam = document.getElementById("naam").value.trim();
+  const contact = document.getElementById("contact").value.trim();
+  const banner = document.getElementById("herkenning-banner");
+  if (!naam || !contact) {
+    if (banner) banner.style.display = "none";
+    return;
+  }
+  try {
+    const alle = await getAlleVoorspellingen();
+    const bestaande = alle.find(d =>
+      normaliseer(d.naam) === normaliseer(naam) &&
+      normaliseer(d.contact) === normaliseer(contact)
+    );
+    if (bestaande && !_autoLoadGedaan) {
+      _autoLoadGedaan = true;
+      // Laad in formulier
+      if (bestaande.wedstrijden) {
+        for (const [idx, w] of Object.entries(bestaande.wedstrijden)) {
+          const t = document.querySelector(`#tab-wedstrijden input[data-wedstrijd="${idx}"][data-pos="thuis"]`);
+          const u = document.querySelector(`#tab-wedstrijden input[data-wedstrijd="${idx}"][data-pos="uit"]`);
+          const tt = document.querySelector(`#tab-wedstrijden input[data-wedstrijd="${idx}"][data-pos="team-thuis"]`);
+          const tu = document.querySelector(`#tab-wedstrijden input[data-wedstrijd="${idx}"][data-pos="team-uit"]`);
+          if (t && (w.thuis !== "" && w.thuis !== undefined)) t.value = w.thuis;
+          if (u && (w.uit !== "" && w.uit !== undefined)) u.value = w.uit;
+          if (tt && w.team_thuis) tt.value = w.team_thuis;
+          if (tu && w.team_uit) tu.value = w.team_uit;
+        }
+      }
+      if (bestaande.specials) {
+        const s = bestaande.specials;
+        const setSel = (sel, val) => { const el = document.querySelector(sel); if (el && val) el.value = val; };
+        setSel('#tab-specials select[data-spec="kampioen"]', s.kampioen);
+        setSel('#tab-specials select[data-spec="finalist"]', s.finalist);
+        setSel('#tab-specials select[data-spec="gele"]', s.gele);
+        setSel('#tab-specials select[data-spec="rode"]', s.rode);
+        const ts = document.querySelector('#tab-specials input[data-spec="topscoorder"]');
+        if (ts && s.topscoorder) ts.value = s.topscoorder;
+        if (s.halve && s.halve.length) {
+          const halveSelects = document.querySelectorAll('#tab-specials select[data-spec="halve"]');
+          s.halve.forEach((team, i) => { if (halveSelects[i] && team) halveSelects[i].value = team; });
+        }
+      }
+      // Voortgang updaten
+      if (typeof updateVoortgang === "function") updateVoortgang();
+      // Banner tonen
+      if (banner) {
+        document.getElementById("herkenning-naam").textContent = bestaande.naam;
+        banner.style.display = "block";
+      }
+    }
+  } catch(e) { console.warn("Auto-load fout:", e); }
+}
+
+// Bind aan beide velden
+document.getElementById("naam").addEventListener("blur", checkBestaandeEnLaadIn);
+document.getElementById("contact").addEventListener("blur", checkBestaandeEnLaadIn);
 
 // === Init ===
 renderWedstrijden();
