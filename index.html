@@ -1149,6 +1149,15 @@ const KO_BEKEND_TEAMS = {
   85: {thuis:"Argentinië",      uit:"Kaapverdië"},                 // #86
   86: {thuis:"Colombia",        uit:"Ghana"},                      // #87
   87: {thuis:"Australië",       uit:"Egypte"},                     // #88
+  // === Achtste finales (v13 — teams ingevuld op basis van zestiende-finale uitslagen) ===
+  88: {thuis:"Paraguay",        uit:"Frankrijk"},                  // A89 = W74 vs W77
+  89: {thuis:"Canada",          uit:"Marokko"},                    // A90 = W73 vs W75
+  90: {thuis:"Brazilië",        uit:"Noorwegen"},                  // A91 = W76 vs W78
+  91: {thuis:"Mexico",          uit:"Engeland"},                   // A92 = W79 vs W80
+  92: {thuis:"Portugal",        uit:"Spanje"},                     // A93 = W83 vs W84
+  93: {thuis:"Verenigde Staten",uit:"België"},                     // A94 = W81 vs W82
+  94: {thuis:"Argentinië",      uit:"Egypte"},                     // A95 = W86 vs W88
+  95: {thuis:"Zwitserland",     uit:"Colombia"},                   // A96 = W85 vs W87
 };
 
 const ALLE_TEAMS = Object.values(GROEPEN).flatMap(g => g.teams);
@@ -1464,10 +1473,15 @@ document.getElementById("btn-submit").addEventListener("click", async () => {
 
   // v4: zoek bestaande deelnemer op naam+contact, anders nieuw ID
   // v10: tolerantere match (negeer alle whitespace-verschillen) + MERGE i.p.v. overschrijven
+  // v13: extra fallback op alleen contact (voor spelvariaties in naam)
   let bestaande = null;
   try {
     const alle = await getAlleVoorspellingen();
-    bestaande = alle.find(d => normaliseer(d.naam) === normaliseer(naam) && normaliseer(d.contact) === normaliseer(contact));
+    bestaande = alle.find(d => normaliseer(d.naam) === normaliseer(naam) && normaliseerContact(d.contact) === normaliseerContact(contact));
+    if (!bestaande) {
+      const cN = normaliseerContact(contact);
+      if (cN) bestaande = alle.find(d => normaliseerContact(d.contact) === cN);
+    }
   } catch(e) {}
 
   let isUpdate = !!bestaande;
@@ -2285,7 +2299,22 @@ function escapeHtml(s) {
 // Maakt alle hoofdletters klein, vervangt alle whitespace-blokken door één spatie, trimt
 function normaliseer(s) {
   if (!s) return "";
-  return String(s).trim().toLowerCase().replace(/\s+/g, " ");
+  // v13 fix: alle whitespace weg (was spaties bewaren, wat matching brak)
+  return String(s).trim().toLowerCase().replace(/\s+/g, "");
+}
+
+// v13: extra strikte contact-normalisatie (voor e-mail: puntjes en +tags negeren; voor tel: alleen cijfers)
+function normaliseerContact(s) {
+  if (!s) return "";
+  const raw = String(s).trim().toLowerCase();
+  if (raw.includes("@")) {
+    // e-mail: haal @-domain er los af, negeer + en punt in het lokale deel
+    const [local, domain] = raw.split("@");
+    const cleanLocal = local.split("+")[0].replace(/\./g, "");
+    return cleanLocal + "@" + domain;
+  }
+  // telefoonnummer: alleen cijfers
+  return raw.replace(/\D/g, "");
 }
 
 // === v10: AUTO-LOAD bij naam+contact match ===
@@ -2303,10 +2332,16 @@ async function checkBestaandeEnLaadIn() {
   }
   try {
     const alle = await getAlleVoorspellingen();
-    const bestaande = alle.find(d =>
+    // v13: eerst strikte match (naam + contact), dan fallback op alleen contact
+    let bestaande = alle.find(d =>
       normaliseer(d.naam) === normaliseer(naam) &&
-      normaliseer(d.contact) === normaliseer(contact)
+      normaliseerContact(d.contact) === normaliseerContact(contact)
     );
+    if (!bestaande) {
+      // Fallback: match alleen op contact (e-mail of telefoon exact hetzelfde)
+      const cN = normaliseerContact(contact);
+      if (cN) bestaande = alle.find(d => normaliseerContact(d.contact) === cN);
+    }
     if (bestaande && !_autoLoadGedaan) {
       _autoLoadGedaan = true;
       // Laad in formulier
