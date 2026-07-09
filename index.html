@@ -1244,6 +1244,16 @@ function renderWedstrijden() {
   });
 
   c.innerHTML = html;
+  // v15: Cache alle wedstrijd-inputs voor snelle toegang (voorkomt iPhone crash door 400+ querySelectors)
+  window._wedstrijdCache = [];
+  for (let i = 0; i < TOTAAL_WEDSTRIJDEN; i++) {
+    window._wedstrijdCache.push({
+      thuis: c.querySelector(`input[data-wedstrijd="${i}"][data-pos="thuis"]`),
+      uit: c.querySelector(`input[data-wedstrijd="${i}"][data-pos="uit"]`),
+      team_thuis: c.querySelector(`input[data-wedstrijd="${i}"][data-pos="team-thuis"]`),
+      team_uit: c.querySelector(`input[data-wedstrijd="${i}"][data-pos="team-uit"]`),
+    });
+  }
   c.querySelectorAll('input[data-pos="thuis"], input[data-pos="uit"]').forEach(inp => {
     inp.addEventListener('input', updateVoortgang);
   });
@@ -1251,10 +1261,20 @@ function renderWedstrijden() {
 
 function updateVoortgang() {
   let ingevuld = 0;
-  for (let i = 0; i < TOTAAL_WEDSTRIJDEN; i++) {
-    const t = document.querySelector(`#tab-wedstrijden input[data-wedstrijd="${i}"][data-pos="thuis"]`);
-    const u = document.querySelector(`#tab-wedstrijden input[data-wedstrijd="${i}"][data-pos="uit"]`);
-    if (t && u && t.value !== "" && u.value !== "") ingevuld++;
+  const cache = window._wedstrijdCache;
+  if (cache && cache.length) {
+    // v15: gebruik cache (10x sneller dan querySelector loop)
+    for (let i = 0; i < cache.length; i++) {
+      const e = cache[i];
+      if (e.thuis && e.uit && e.thuis.value !== "" && e.uit.value !== "") ingevuld++;
+    }
+  } else {
+    // Fallback
+    for (let i = 0; i < TOTAAL_WEDSTRIJDEN; i++) {
+      const t = document.querySelector(`#tab-wedstrijden input[data-wedstrijd="${i}"][data-pos="thuis"]`);
+      const u = document.querySelector(`#tab-wedstrijden input[data-wedstrijd="${i}"][data-pos="uit"]`);
+      if (t && u && t.value !== "" && u.value !== "") ingevuld++;
+    }
   }
   const el = document.getElementById("voortgang-count");
   if (el) el.textContent = ingevuld;
@@ -1290,16 +1310,30 @@ function saveDraft() {
       const contact = document.getElementById("contact").value.trim();
 
       const wedstrijden = {};
-      for (let i = 0; i < TOTAAL_WEDSTRIJDEN; i++) {
-        const t = document.querySelector(`#tab-wedstrijden input[data-wedstrijd="${i}"][data-pos="thuis"]`);
-        const u = document.querySelector(`#tab-wedstrijden input[data-wedstrijd="${i}"][data-pos="uit"]`);
-        const tt = document.querySelector(`#tab-wedstrijden input[data-wedstrijd="${i}"][data-pos="team-thuis"]`);
-        const tu = document.querySelector(`#tab-wedstrijden input[data-wedstrijd="${i}"][data-pos="team-uit"]`);
-        if ((t && t.value !== "") || (u && u.value !== "")) {  // v11: alleen opslaan als er een score is
-          wedstrijden[i] = {
-            thuis: t ? t.value : "", uit: u ? u.value : "",
-            team_thuis: tt ? tt.value : "", team_uit: tu ? tu.value : ""
-          };
+      const cache = window._wedstrijdCache;
+      if (cache && cache.length) {
+        // v15: gebruik cache (voorkomt iPhone crash door 400+ querySelectors)
+        for (let i = 0; i < cache.length; i++) {
+          const e = cache[i];
+          if ((e.thuis && e.thuis.value !== "") || (e.uit && e.uit.value !== "")) {
+            wedstrijden[i] = {
+              thuis: e.thuis ? e.thuis.value : "", uit: e.uit ? e.uit.value : "",
+              team_thuis: e.team_thuis ? e.team_thuis.value : "", team_uit: e.team_uit ? e.team_uit.value : ""
+            };
+          }
+        }
+      } else {
+        for (let i = 0; i < TOTAAL_WEDSTRIJDEN; i++) {
+          const t = document.querySelector(`#tab-wedstrijden input[data-wedstrijd="${i}"][data-pos="thuis"]`);
+          const u = document.querySelector(`#tab-wedstrijden input[data-wedstrijd="${i}"][data-pos="uit"]`);
+          const tt = document.querySelector(`#tab-wedstrijden input[data-wedstrijd="${i}"][data-pos="team-thuis"]`);
+          const tu = document.querySelector(`#tab-wedstrijden input[data-wedstrijd="${i}"][data-pos="team-uit"]`);
+          if ((t && t.value !== "") || (u && u.value !== "")) {
+            wedstrijden[i] = {
+              thuis: t ? t.value : "", uit: u ? u.value : "",
+              team_thuis: tt ? tt.value : "", team_uit: tu ? tu.value : ""
+            };
+          }
         }
       }
       const specials = {
