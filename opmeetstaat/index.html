@@ -1,0 +1,2441 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Opmeetstaat Schilderwerk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Layout: werkbalk + tabbladen bovenaan; per tab een werkvlak. Tekeningen: lijst links, viewer rechts. Inkt-blauw met meetlint-geel als accent. */
+  --paper:#f2f4f7;
+  --surface:#ffffff;
+  --ink:#15233b;
+  --muted:#5b687d;
+  --line:#d7dde7;
+  --accent:#f2b21b;
+  --accent-ink:#1d1500;
+  --brand:#1d3a66;
+  --brand-ink:#ffffff;
+  --viewer:#dfe4ec;
+  --ok:#1d7a4c; --ok-bg:#e3f3ea;
+  --warn:#9a6200; --warn-bg:#fcefd6;
+  --bad:#b3332a; --bad-bg:#fae5e3;
+  --info:#285f9f; --info-bg:#e5edf8;
+  --display:'Barlow Condensed','Arial Narrow',system-ui,sans-serif;
+  --body:'Barlow',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --r:8px;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0e1420; --surface:#162034; --ink:#e5eaf2; --muted:#9ba8bd; --line:#2a3855;
+    --accent:#f2b21b; --accent-ink:#1d1500; --brand:#86aee8; --brand-ink:#0e1420; --viewer:#0a0f18;
+    --ok:#53c48e; --ok-bg:#15352a; --warn:#f0b552; --warn-bg:#3a2b10; --bad:#f2837a; --bad-bg:#3e1c1a; --info:#86b4f0; --info-bg:#172b47;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0e1420; --surface:#162034; --ink:#e5eaf2; --muted:#9ba8bd; --line:#2a3855;
+  --accent:#f2b21b; --accent-ink:#1d1500; --brand:#86aee8; --brand-ink:#0e1420; --viewer:#0a0f18;
+  --ok:#53c48e; --ok-bg:#15352a; --warn:#f0b552; --warn-bg:#3a2b10; --bad:#f2837a; --bad-bg:#3e1c1a; --info:#86b4f0; --info-bg:#172b47;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45;-webkit-text-size-adjust:100%}
+h1,h2,h3,h4{font-family:var(--display);font-weight:600;letter-spacing:.01em;margin:0;text-wrap:balance}
+h2{font-size:1.45rem}
+h3{font-size:1.15rem}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.num,.tnum,td.q{font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+.small{font-size:.86rem}
+.hidden{display:none!important}
+
+/* Topbar */
+.topbar{position:sticky;top:0;z-index:30;background:var(--surface);border-bottom:1px solid var(--line)}
+.topbar-in{display:flex;align-items:center;gap:12px;padding:10px 16px;flex-wrap:wrap}
+.logo{display:flex;align-items:center;gap:10px;min-width:0}
+.logo-mark{width:34px;height:34px;border-radius:7px;background:var(--brand);display:grid;place-items:center;flex:none}
+.logo-mark svg{width:22px;height:22px}
+.logo h1{font-size:1.25rem;line-height:1.1}
+.logo .proj{font-size:.85rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:42vw}
+.top-actions{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.savestate{font-size:.82rem;color:var(--muted);white-space:nowrap}
+.tabs{display:flex;gap:2px;padding:0 12px;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{appearance:none;border:0;background:none;padding:10px 14px 9px;border-bottom:3px solid transparent;cursor:pointer;font-family:var(--display);font-size:1.05rem;font-weight:600;color:var(--muted);white-space:nowrap;display:flex;gap:7px;align-items:center}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.tab .cnt{font-family:var(--body);font-size:.75rem;font-weight:600;border-radius:99px;padding:1px 7px;background:var(--paper);color:var(--muted)}
+.tab .cnt.bad{background:var(--bad-bg);color:var(--bad)}
+.tab .cnt.warn{background:var(--warn-bg);color:var(--warn)}
+
+/* Buttons */
+.btn{appearance:none;border:1px solid var(--line);background:var(--surface);border-radius:7px;padding:7px 12px;cursor:pointer;font-weight:600;font-size:.92rem;display:inline-flex;gap:6px;align-items:center;white-space:nowrap;line-height:1.2}
+.btn:hover{border-color:var(--muted)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:var(--brand-ink)}
+.btn.accent{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.ghost{border-color:transparent;background:transparent}
+.btn.danger{color:var(--bad)}
+.btn.sm{padding:4px 8px;font-size:.84rem}
+.btn.icon{padding:5px 8px}
+.btn[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+/* Layout */
+main{padding:16px;display:block}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px}
+.panel-h{display:flex;align-items:center;gap:10px;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap}
+.stack{display:flex;flex-direction:column;gap:12px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px}
+.banner{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:var(--info-bg);color:var(--ink);border:1px solid var(--line);border-left:4px solid var(--info);border-radius:var(--r);padding:10px 14px;margin-bottom:12px}
+.banner.warn{background:var(--warn-bg);border-left-color:var(--warn)}
+
+/* Tekeningen */
+.draw-layout{display:grid;grid-template-columns:minmax(280px,350px) 1fr;gap:12px;align-items:start}
+@media (max-width:900px){.draw-layout{grid-template-columns:1fr}}
+.drop{border:2px dashed var(--line);border-radius:var(--r);padding:16px;text-align:center;cursor:pointer;background:var(--paper)}
+.drop.over{border-color:var(--accent);background:var(--warn-bg)}
+.drop strong{display:block;font-family:var(--display);font-size:1.1rem}
+.sheets{display:flex;flex-direction:column;gap:6px;max-height:280px;overflow:auto}
+.sheet{display:flex;gap:8px;align-items:center;padding:6px;border:1px solid var(--line);border-radius:7px;cursor:pointer;background:var(--surface)}
+.sheet[aria-current="true"]{border-color:var(--brand);box-shadow:inset 3px 0 0 var(--accent)}
+.sheet img,.sheet .ph{width:54px;height:40px;object-fit:contain;background:#fff;border:1px solid var(--line);border-radius:4px;flex:none}
+.sheet .meta{min-width:0;flex:1}
+.sheet .meta b{display:block;font-size:.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.views{display:flex;flex-direction:column;gap:6px}
+.view{border:1px solid var(--line);border-radius:7px;padding:8px 10px;display:flex;flex-direction:column;gap:4px}
+.view .vt{display:flex;gap:8px;align-items:flex-start;justify-content:space-between}
+.view.sel{border-color:var(--accent)}
+.view .t{font-weight:600;font-size:.9rem;cursor:pointer}
+.chip{display:inline-flex;align-items:center;gap:4px;font-size:.74rem;font-weight:600;padding:1px 7px;border-radius:99px;background:var(--paper);color:var(--muted);border:1px solid var(--line);white-space:nowrap}
+.chip.ok{background:var(--ok-bg);color:var(--ok);border-color:transparent}
+.chip.warn{background:var(--warn-bg);color:var(--warn);border-color:transparent}
+.chip.bad{background:var(--bad-bg);color:var(--bad);border-color:transparent}
+.chip.info{background:var(--info-bg);color:var(--info);border-color:transparent}
+.chip.ai{background:var(--brand);color:var(--brand-ink);border-color:transparent}
+.viewer-wrap{display:flex;flex-direction:column;gap:8px;min-width:0}
+.toolbar{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.toolbar .sep{width:1px;height:24px;background:var(--line);margin:0 4px}
+.viewer{position:relative;height:clamp(420px,70vh,1100px);background:var(--viewer);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;touch-action:none;user-select:none}
+.viewer canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.viewer .empty{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:24px;color:var(--muted)}
+.viewer .hint{position:absolute;left:10px;bottom:10px;background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:6px 10px;font-size:.85rem;max-width:calc(100% - 20px);box-shadow:0 2px 8px rgba(0,0,0,.12)}
+.viewer .scaleinfo{position:absolute;right:10px;top:10px;background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:4px 8px;font-size:.8rem}
+.ailog{max-height:220px;overflow:auto;font-size:.86rem;display:flex;flex-direction:column;gap:3px}
+.ailog .l{display:flex;gap:8px}
+.ailog .l time{color:var(--muted);flex:none;font-variant-numeric:tabular-nums}
+.ailog .l.err{color:var(--bad)}
+.ailog .l.ok{color:var(--ok)}
+.busy{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:7px;background:var(--warn-bg);border:1px solid var(--line)}
+.spin{width:16px;height:16px;border-radius:50%;border:2px solid var(--line);border-top-color:var(--accent);animation:spin 1s linear infinite;flex:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion: reduce){.spin{animation:none}}
+.measures{display:flex;flex-direction:column;gap:4px;font-size:.88rem}
+.measures .m{display:flex;gap:6px;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);padding:4px 0}
+
+/* Tabellen */
+.subtabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.filters{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+table.tbl{border-collapse:collapse;width:100%;font-size:.88rem}
+.tbl th{position:sticky;top:0;background:var(--paper);text-align:left;font-weight:600;font-size:.78rem;color:var(--muted);padding:7px 6px;border-bottom:1px solid var(--line);white-space:nowrap}
+.tbl td{padding:4px 6px;border-bottom:1px solid var(--line);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:0}
+.tbl tr.flash td{background:var(--warn-bg)}
+.tbl tr.checked td:first-child{box-shadow:inset 3px 0 0 var(--ok)}
+.tbl td.q,.tbl th.q{text-align:right;white-space:nowrap}
+.tbl .grp td{background:var(--paper);font-family:var(--display);font-weight:600;font-size:1rem;color:var(--ink);padding-top:9px}
+.tbl .grp2 td{font-weight:600;background:transparent;border-bottom:1px solid var(--line)}
+.tbl .formula{color:var(--muted);font-size:.82rem;white-space:nowrap}
+.in{border:1px solid var(--line);background:var(--surface);border-radius:5px;padding:4px 6px;min-width:0;width:100%}
+.in.num{width:76px;text-align:right;font-variant-numeric:tabular-nums}
+.in.int{width:54px;text-align:right}
+.in::placeholder{color:var(--muted);opacity:.75}
+select.in{width:auto;max-width:170px;padding:4px}
+td .in.txt{min-width:120px}
+.empty-row td{padding:18px;text-align:center;color:var(--muted)}
+
+/* Opmeetstaat */
+.sum-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px;margin-bottom:12px}
+.sum-card h3{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.sum-row{display:grid;grid-template-columns:1fr auto auto;gap:8px;padding:5px 0;border-bottom:1px solid var(--line);align-items:baseline}
+.sum-row:last-child{border-bottom:0}
+.sum-row .v{font-weight:700;text-align:right;font-variant-numeric:tabular-nums}
+.sum-row .u{color:var(--muted);width:2.4em;font-size:.85rem}
+.sum-row .st{display:block;color:var(--muted);font-size:.78rem}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:12px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px 12px;border-top:4px solid var(--line)}
+.tile b{display:block;font-family:var(--display);font-size:1.9rem;line-height:1.1;font-variant-numeric:tabular-nums}
+.tile.bad{border-top-color:var(--bad)} .tile.warn{border-top-color:var(--warn)} .tile.info{border-top-color:var(--info)} .tile.ok{border-top-color:var(--ok)}
+.meter{height:6px;border-radius:99px;background:var(--paper);overflow:hidden;margin-top:6px}
+.meter i{display:block;height:100%;background:var(--ok)}
+
+/* Controle */
+.issues{display:flex;flex-direction:column;gap:6px}
+.issue{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--line);border-radius:7px;padding:8px 10px}
+.issue.fout{border-left-color:var(--bad)} .issue.waarschuwing{border-left-color:var(--warn)} .issue.info{border-left-color:var(--info)}
+.issue .acts{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+@media (max-width:600px){.issue{grid-template-columns:1fr}.issue .acts{justify-content:flex-start}}
+
+/* Formulieren */
+.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px 14px}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:.82rem;font-weight:600;color:var(--muted)}
+.field .in{width:100%}
+.field.chk{flex-direction:row;align-items:center;gap:8px}
+.field.chk label{color:var(--ink);font-weight:500;font-size:.92rem}
+.rules{font-size:.9rem;max-width:72ch}
+.rules li{margin:3px 0}
+
+/* Modal + toast */
+.modal-bg{position:fixed;inset:0;background:rgba(10,15,25,.55);display:grid;place-items:center;z-index:100;padding:16px}
+.modal{background:var(--surface);color:var(--ink);border-radius:10px;max-width:640px;width:100%;max-height:calc(100% - 32px);overflow:auto;padding:18px;box-shadow:0 10px 40px rgba(0,0,0,.3)}
+.modal h3{font-size:1.35rem;margin-bottom:10px}
+.modal .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap}
+.plist{display:flex;flex-direction:column;gap:6px;max-height:50vh;overflow:auto}
+.pitem{display:flex;gap:10px;align-items:center;justify-content:space-between;border:1px solid var(--line);border-radius:7px;padding:8px 10px}
+.pitem[aria-current="true"]{border-color:var(--accent)}
+.toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:9px 14px;border-radius:8px;font-size:.9rem;z-index:120;max-width:calc(100% - 32px);box-shadow:0 4px 16px rgba(0,0,0,.25)}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-in">
+    <div class="logo">
+      <div class="logo-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="14" width="18" height="6" rx="1.2" fill="#f2b21b"/><path d="M6 14v3M9 14v2M12 14v3M15 14v2M18 14v3" stroke="#1d1500" stroke-width="1.2"/><path d="M7 11V5.5A1.5 1.5 0 0 1 8.5 4h7A1.5 1.5 0 0 1 17 5.5V11" stroke="#fff" stroke-width="1.6"/><path d="M10 8h4" stroke="#fff" stroke-width="1.6"/></svg>
+      </div>
+      <div>
+        <h1>Opmeetstaat Schilderwerk</h1>
+        <div class="proj" id="projName">Voorbeeldproject</div>
+      </div>
+    </div>
+    <div class="top-actions">
+      <span class="savestate" id="saveState" aria-live="polite"></span>
+      <button class="btn" id="btnProjects" type="button">Projecten</button>
+      <button class="btn primary" id="btnNew" type="button">Nieuw project</button>
+    </div>
+  </div>
+  <nav class="tabs" role="tablist" aria-label="Onderdelen">
+    <button class="tab" role="tab" data-tab="tekeningen" aria-selected="true" type="button">1 · Tekeningen</button>
+    <button class="tab" role="tab" data-tab="opname" aria-selected="false" type="button">2 · Opname <span class="cnt" id="cntOpname">0</span></button>
+    <button class="tab" role="tab" data-tab="staat" aria-selected="false" type="button">3 · Opmeetstaat</button>
+    <button class="tab" role="tab" data-tab="controle" aria-selected="false" type="button">4 · Controle <span class="cnt" id="cntControle">0</span></button>
+    <button class="tab" role="tab" data-tab="instellingen" aria-selected="false" type="button">Instellingen</button>
+  </nav>
+</header>
+
+<main>
+  <div id="demoBanner" class="banner hidden">
+    <span><b>Voorbeeldproject.</b> Dit is een rijtjeswoning als voorbeeld, zodat je ziet hoe de opmeetstaat eruitziet. Wijzigingen worden niet bewaard.</span>
+    <span class="btn-row"><button class="btn sm" id="btnDemoKeep" type="button">Bewaar als eigen project</button><button class="btn sm primary" id="btnDemoNew" type="button">Start leeg project</button></span>
+  </div>
+
+  <!-- TAB: TEKENINGEN -->
+  <section id="tab-tekeningen" role="tabpanel">
+    <div class="draw-layout">
+      <div class="stack">
+        <div class="panel stack">
+          <label class="drop" id="drop" for="fileIn">
+            <strong>Bouwtekening toevoegen</strong>
+            <span class="small muted">Sleep een PDF, JPG of PNG hierheen of tik om te kiezen. Meerdere bladen tegelijk mag.</span>
+          </label>
+          <input type="file" id="fileIn" accept="application/pdf,image/png,image/jpeg,image/webp" multiple class="hidden">
+          <div id="aiStatus" class="small"></div>
+          <div class="btn-row">
+            <button class="btn accent" id="btnAnalyzeAll" type="button">Alle bladen uitlezen met Claude</button>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-h"><h3>Bladen</h3><span class="small muted" id="sheetCount"></span></div>
+          <div class="sheets" id="sheetList"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-h"><h3>Aanzichten op dit blad</h3>
+            <button class="btn sm" id="btnDetect" type="button">Herken aanzichten</button></div>
+          <div class="views" id="viewList"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-h"><h3>Metingen</h3></div>
+          <div class="measures" id="measureList"></div>
+        </div>
+      </div>
+      <div class="viewer-wrap">
+        <div class="toolbar" role="toolbar" aria-label="Gereedschap">
+          <button class="btn sm" data-tool="pan" aria-pressed="true" type="button">Verschuiven</button>
+          <button class="btn sm" data-tool="select" aria-pressed="false" type="button">Gebied uitlezen</button>
+          <span class="sep"></span>
+          <button class="btn sm" data-tool="calib" aria-pressed="false" type="button">Schaal kalibreren</button>
+          <button class="btn sm" data-tool="len" aria-pressed="false" type="button">Lengte meten</button>
+          <button class="btn sm" data-tool="area" aria-pressed="false" type="button">Oppervlak meten</button>
+          <span class="sep"></span>
+          <button class="btn sm icon" id="zoomIn" type="button" aria-label="Inzoomen">+</button>
+          <button class="btn sm icon" id="zoomOut" type="button" aria-label="Uitzoomen">−</button>
+          <button class="btn sm" id="zoomFit" type="button">Passend</button>
+          <label class="small" style="display:flex;gap:5px;align-items:center;margin-left:6px"><input type="checkbox" id="showRooms" checked> Toon herkende ruimtes</label>
+        </div>
+        <div class="viewer" id="viewer">
+          <canvas id="cv"></canvas>
+          <div class="empty" id="viewerEmpty"><div><h3>Nog geen tekening geopend</h3><p class="small">Voeg links een bouwtekening toe. Claude leest daarna per verdieping alle ruimtes, deuren, kozijnen en gevelonderdelen uit.</p></div></div>
+          <div class="scaleinfo hidden" id="scaleInfo"></div>
+          <div class="hint hidden" id="toolHint"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-h"><h3>Voortgang uitlezen</h3><button class="btn sm ghost" id="btnClearLog" type="button">Wissen</button></div>
+          <div id="busyBox" class="busy hidden"><span class="spin"></span><span id="busyText" style="flex:1">Bezig…</span><button class="btn sm" id="btnStop" type="button">Stop</button></div>
+          <div class="ailog" id="aiLog"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TAB: OPNAME -->
+  <section id="tab-opname" role="tabpanel" class="hidden">
+    <div class="panel">
+      <div class="panel-h">
+        <div class="subtabs" id="subtabs">
+          <button class="btn sm" data-sub="rooms" type="button">Ruimtes</button>
+          <button class="btn sm" data-sub="doors" type="button">Deuren</button>
+          <button class="btn sm" data-sub="frames" type="button">Kozijnen &amp; ramen</button>
+          <button class="btn sm" data-sub="items" type="button">Overige onderdelen</button>
+          <button class="btn sm" data-sub="floors" type="button">Verdiepingen</button>
+        </div>
+        <button class="btn primary sm" id="btnAddRow" type="button">+ Regel toevoegen</button>
+      </div>
+      <div class="filters" id="floorFilter"></div>
+      <div id="opnameBody"></div>
+      <p class="small muted" id="opnameHint"></p>
+    </div>
+  </section>
+
+  <!-- TAB: OPMEETSTAAT -->
+  <section id="tab-staat" role="tabpanel" class="hidden">
+    <div class="panel" style="margin-bottom:12px">
+      <div class="panel-h">
+        <div>
+          <h2 id="staatTitle">Opmeetstaat</h2>
+          <div class="small muted" id="staatMeta"></div>
+        </div>
+        <div class="btn-row">
+          <button class="btn" id="expXlsx" type="button">Excel</button>
+          <button class="btn" id="expPdf" type="button">PDF</button>
+          <button class="btn" id="expCsv" type="button">CSV</button>
+          <button class="btn" id="expCopy" type="button">Kopieer tabel</button>
+        </div>
+      </div>
+      <div class="filters" id="staatFilters"></div>
+    </div>
+    <div class="sum-grid" id="sumGrid"></div>
+    <div class="tbl-wrap"><table class="tbl" id="staatTbl"></table></div>
+  </section>
+
+  <!-- TAB: CONTROLE -->
+  <section id="tab-controle" role="tabpanel" class="hidden">
+    <div class="tiles" id="ctrlTiles"></div>
+    <div class="panel" style="margin-bottom:12px">
+      <div class="panel-h">
+        <div><h3>Tweede controle door Claude</h3>
+        <p class="small muted" style="margin:4px 0 0">Claude leest elk uitgelezen aanzicht opnieuw en vergelijkt alle maten met de opname. Afwijkingen en vergeten onderdelen verschijnen hieronder als voorstel.</p></div>
+        <button class="btn accent" id="btnDoubleCheck" type="button">Dubbelcheck uitvoeren</button>
+      </div>
+      <div class="issues" id="aiSuggest"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-h"><h3>Rekenkundige controles</h3>
+        <div class="filters" id="ctrlFilter" style="margin:0"></div></div>
+      <div class="issues" id="issueList"></div>
+    </div>
+  </section>
+
+  <!-- TAB: INSTELLINGEN -->
+  <section id="tab-instellingen" role="tabpanel" class="hidden">
+    <div class="grid2">
+      <div class="panel">
+        <h3 style="margin-bottom:10px">Projectgegevens</h3>
+        <div class="form" id="projForm"></div>
+      </div>
+      <div class="panel">
+        <h3 style="margin-bottom:10px">Rekenregels</h3>
+        <div class="form" id="setForm"></div>
+      </div>
+      <div class="panel">
+        <h3 style="margin-bottom:10px">Zo rekent de app</h3>
+        <ul class="rules">
+          <li><b>Wanden m²</b> = omtrek × (hoogte − tegelhoogte) − openingen. Openingen kleiner dan de drempel worden niet afgetrokken.</li>
+          <li><b>Plafond m²</b> = opgegeven vloeroppervlak, anders lengte × breedte.</li>
+          <li><b>Vloerplint m1</b> = omtrek − deurbreedtes.</li>
+          <li><b>Deurblad m²</b> = breedte × hoogte × aantal zijden. <b>Deurkozijn m1</b> = 2 × hoogte + breedte.</li>
+          <li><b>Kozijnhout m1</b> = 2 × (breedte + hoogte). <b>Staanders m1</b> = aantal × hoogte. <b>Liggers m1</b> = aantal × breedte (of de opgegeven lengte).</li>
+          <li><b>Glaslatten m1</b> ≈ kozijnomtrek + 2 × staanders + 2 × liggers (benadering).</li>
+          <li><b>Dagkanten m1</b> = 2 × hoogte + breedte. <b>Vensterbank / waterslag m1</b> = kozijnbreedte.</li>
+          <li>Plattegronden leveren de <b>binnenzijde</b> van kozijnen, gevelaanzichten de <b>buitenzijde</b>. Ontbreekt een hoogte op de plattegrond, dan neemt de app die over van een even breed kozijn in de gevel.</li>
+        </ul>
+      </div>
+      <div class="panel">
+        <h3 style="margin-bottom:10px">Gegevens</h3>
+        <p class="small muted" id="storeInfo"></p>
+        <div class="btn-row">
+          <button class="btn" id="btnExportJson" type="button">Project exporteren (.json)</button>
+          <label class="btn" for="jsonIn">Project importeren</label>
+          <input type="file" id="jsonIn" accept="application/json,.json" class="hidden">
+          <button class="btn danger" id="btnDeleteProject" type="button">Project verwijderen</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div id="modalRoot"></div>
+<div id="toast" class="toast hidden" role="status"></div>
+
+<script>
+'use strict';
+/* =====================================================================
+   Opmeetstaat Schilderwerk
+   Bouwtekening -> Claude leest maten uit -> opname per verdieping/ruimte
+   -> rekenregels -> opmeetstaat (m², m1, st) -> controles -> export.
+   ===================================================================== */
+
+const LIB = {
+  pdf: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',
+  pdfWorker: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js',
+  xlsx: 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',
+  jspdf: 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
+  autotable: 'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js',
+};
+
+/* ---------- Hulpfuncties ---------- */
+const $ = (s, el = document) => el.querySelector(s);
+const $$ = (s, el = document) => Array.from(el.querySelectorAll(s));
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const uid = (p = 'x') => p + Math.random().toString(36).slice(2, 8) + Date.now().toString(36).slice(-4);
+const arr = v => Array.isArray(v) ? v : [];
+const str = v => (v == null ? '' : String(v)).trim();
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const sum = (a, f = x => x) => a.reduce((s, x) => s + (Number(f(x)) || 0), 0);
+const r2 = n => Math.round((Number(n) || 0) * 100) / 100;
+function num(v) {
+  if (v == null || v === '') return null;
+  if (typeof v === 'number') return isFinite(v) ? v : null;
+  let s = String(v).trim().replace(/\s/g, '').replace(/(m²|m2|m1|mm|m)$/i, '');
+  if (/^-?\d{1,3}(\.\d{3})+(,\d+)?$/.test(s)) s = s.replace(/\./g, '').replace(',', '.');
+  else s = s.replace(',', '.');
+  const n = parseFloat(s);
+  return isFinite(n) ? n : null;
+}
+/* Lengte in meters. Getallen boven de 60 zijn vrijwel zeker millimeters. */
+function len(v) { const n = num(v); if (n == null) return null; if (Math.abs(n) > 60) return n / 1000; return n; }
+function int(v, d = 1) { const n = num(v); return n == null ? d : Math.max(0, Math.round(n)); }
+function conf(v) { const n = num(v); if (n == null) return null; return clamp(n > 1 ? n / 100 : n, 0, 1); }
+const fmt = (n, d = 2) => (n == null || !isFinite(n)) ? '–' : Number(n).toLocaleString('nl-NL', { minimumFractionDigits: d, maximumFractionDigits: d });
+const fmt0 = n => fmt(n, 0);
+const fmtIn = v => (v == null || v === '') ? '' : String(Math.round(Number(v) * 1000) / 1000).replace('.', ',');
+const pct = n => Math.round(n * 100) + '%';
+function today() { return new Date().toISOString().slice(0, 10); }
+function lsGet(k) { try { return localStorage.getItem(k); } catch { return null; } }
+function lsSet(k, v) { try { localStorage.setItem(k, v); return true; } catch { return false; } }
+function lsDel(k) { try { localStorage.removeItem(k); } catch {} }
+function lsJSON(k) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : null; } catch { return null; } }
+const loadedScripts = {};
+function loadScript(src) {
+  if (!loadedScripts[src]) loadedScripts[src] = new Promise((res, rej) => {
+    const s = document.createElement('script'); s.src = src; s.async = false;
+    s.onload = () => res(); s.onerror = () => { delete loadedScripts[src]; rej(new Error('Bibliotheek kon niet laden: ' + src)); };
+    document.head.appendChild(s);
+  });
+  return loadedScripts[src];
+}
+
+/* ---------- Catalogus van onderdelen ---------- */
+const CATS = [
+  ['wanden', 'Wanden', 'm²', 'binnen'],
+  ['plafonds', 'Plafonds', 'm²', 'binnen'],
+  ['deurbladen', 'Deuren (deurbladen)', 'm²', 'binnen'],
+  ['deurkozijnen', 'Deurkozijnen', 'm1', 'binnen'],
+  ['kozijn_binnen', 'Raam-/gevelkozijnen binnenzijde', 'm1', 'binnen'],
+  ['staanders_binnen', 'Staanders binnenzijde', 'm1', 'binnen'],
+  ['liggers_binnen', 'Liggers binnenzijde', 'm1', 'binnen'],
+  ['draaiend_binnen', 'Draaiende delen binnenzijde', 'st', 'binnen'],
+  ['glaslat_binnen', 'Glaslatten binnenzijde', 'm1', 'binnen'],
+  ['vensterbanken', 'Vensterbanken', 'm1', 'binnen'],
+  ['dagkanten', 'Dagkanten', 'm1', 'binnen'],
+  ['plinten', 'Vloerplinten', 'm1', 'binnen'],
+  ['aftimmerlatten', 'Aftimmerlatten', 'm1', 'binnen'],
+  ['plafondlijsten', 'Plafondlijsten / koven', 'm1', 'binnen'],
+  ['betimmering', 'Betimmeringen / kokers / schotten', 'm²', 'binnen'],
+  ['trappen', 'Trappen', 'st', 'binnen'],
+  ['trapleuning', 'Trapleuningen / hekwerk binnen', 'm1', 'binnen'],
+  ['radiatoren', 'Radiatoren / leidingwerk', 'st', 'binnen'],
+  ['overig_binnen', 'Overig binnen', '', 'binnen'],
+  ['wanden_buiten', 'Gevelvlakken / wanden buiten', 'm²', 'buiten'],
+  ['plafond_buiten', 'Plafonds buiten / overstekken', 'm²', 'buiten'],
+  ['kozijn_buiten', 'Gevelkozijnen buitenzijde', 'm1', 'buiten'],
+  ['staanders_buiten', 'Staanders (tussenstijlen)', 'm1', 'buiten'],
+  ['liggers_buiten', 'Liggers (tussendorpels)', 'm1', 'buiten'],
+  ['draaiend_buiten', 'Draaiende delen (ramen/deuren)', 'st', 'buiten'],
+  ['glaslat_buiten', 'Glaslatten buitenzijde', 'm1', 'buiten'],
+  ['buitendeuren', 'Buitendeuren (deurbladen)', 'm²', 'buiten'],
+  ['garagedeuren', 'Garagedeuren', 'm²', 'buiten'],
+  ['waterslagen', 'Waterslagen / onderdorpels', 'm1', 'buiten'],
+  ['dakgoten', 'Dakgoten', 'm1', 'buiten'],
+  ['boeiboorden', 'Boeiboorden', 'm1', 'buiten'],
+  ['windveren', 'Windveren', 'm1', 'buiten'],
+  ['daktrim', 'Daklijsten / daktrim', 'm1', 'buiten'],
+  ['rabat', 'Rabat / gevelbekleding', 'm²', 'buiten'],
+  ['regenpijpen', 'Regenpijpen (hemelwaterafvoer)', 'm1', 'buiten'],
+  ['dakkapellen', 'Dakkapellen', 'st', 'buiten'],
+  ['hekwerk_buiten', 'Hekwerken / balustrades', 'm1', 'buiten'],
+  ['gevel_overig', 'Gevel stuc-/metselwerk', 'm²', 'buiten'],
+  ['overig_buiten', 'Overig buiten', '', 'buiten'],
+];
+const CAT = Object.fromEntries(CATS.map(([k, label, unit, group], i) => [k, { k, label, unit, group, i }]));
+/* Onderdelen die de app zelf berekent; Claude geeft deze niet los op. */
+const AUTO_CATS = new Set(['wanden', 'plafonds', 'deurbladen', 'deurkozijnen', 'kozijn_binnen', 'staanders_binnen', 'liggers_binnen', 'draaiend_binnen', 'glaslat_binnen', 'dagkanten', 'plinten', 'kozijn_buiten', 'staanders_buiten', 'liggers_buiten', 'draaiend_buiten', 'glaslat_buiten', 'buitendeuren']);
+const ITEM_CATS = CATS.filter(c => !AUTO_CATS.has(c[0]));
+const DOOR_KINDS = [['binnendeur', 'Binnendeur'], ['buitendeur', 'Buitendeur'], ['schuifdeur', 'Schuifdeur'], ['dubbele deur', 'Dubbele deur'], ['doorgang', 'Doorgang (geen deur)']];
+const FRAME_KINDS = [['raamkozijn', 'Raamkozijn'], ['deurkozijn', 'Deurkozijn (buitendeur)'], ['schuifpui', 'Schuifpui'], ['vast glas', 'Vast glas'], ['garagedeur', 'Garagedeur'], ['dakraam', 'Dakraam / dakkapel']];
+const SIDES = [['binnen', 'Binnenzijde'], ['buiten', 'Buitenzijde'], ['beide', 'Binnen + buiten']];
+const UNITS = [['m1', 'm1'], ['m²', 'm²'], ['st', 'st']];
+const VIEW_KINDS = [['plattegrond', 'Plattegrond'], ['gevel', 'Gevelaanzicht'], ['doorsnede', 'Doorsnede'], ['detail', 'Detail'], ['situatie', 'Situatie'], ['overig', 'Overig']];
+const label = (list, k) => (list.find(x => x[0] === k) || [k, k])[1];
+
+function mapCategory(raw, loc) {
+  const s = str(raw).toLowerCase();
+  if (CAT[s] && !AUTO_CATS.has(s)) return s;
+  const rules = [
+    [/goot/, 'dakgoten'], [/boei/, 'boeiboorden'], [/windve/, 'windveren'], [/rabat|potdeksel|bekleding|beplating|gevelbetimmering|channelsiding|delen/, 'rabat'],
+    [/regenpijp|hwa|hemelwater|afvoerpijp/, 'regenpijpen'], [/waterslag|onderdorpel|waterbord/, 'waterslagen'], [/trim|daklijst|dakrand|daktrim/, 'daktrim'],
+    [/dakkapel/, 'dakkapellen'], [/overstek|onderzijde|luifel|plafond buiten|onderbetimmering/, 'plafond_buiten'], [/garage/, 'garagedeuren'],
+    [/stuc|metsel|gevelvlak|pleister/, 'gevel_overig'], [/vensterbank/, 'vensterbanken'], [/plint/, 'aftimmerlatten'], [/aftimmer|afdeklat/, 'aftimmerlatten'],
+    [/plafondlijst|koof|sierlijst|lijst/, 'plafondlijsten'], [/trapleuning|leuning|traphek/, 'trapleuning'], [/trap/, 'trappen'],
+    [/radiator|leiding|buis/, 'radiatoren'], [/betimmering|koker|schot|kast|omkasting/, 'betimmering'], [/hek|balustrade|reling/, loc === 'binnen' ? 'trapleuning' : 'hekwerk_buiten'],
+  ];
+  for (const [re, k] of rules) if (re.test(s)) return k;
+  return loc === 'binnen' ? 'overig_binnen' : 'overig_buiten';
+}
+
+/* ---------- Project ---------- */
+function defaultSettings() {
+  return {
+    defaultH: 2.6, deduct: true, deductMin: 0.5, plinthMinusDoors: true, doorSides: 2,
+    dagkanten: true, glaslatten: 'buiten', minConf: 0.7, aiTier: 'complex', maxTiles: 9, autoViews: true,
+  };
+}
+function emptyProject(name) {
+  return {
+    v: 1, id: uid('p'), name: name || 'Nieuw project', client: '', address: '', date: today(), by: '', company: '', notes: '',
+    settings: defaultSettings(), floors: [], rooms: [], doors: [], frames: [], items: [], sheets: [], suggestions: [],
+    created: new Date().toISOString(),
+  };
+}
+function migrate(p) {
+  if (!p || typeof p !== 'object') return null;
+  const d = emptyProject(p.name);
+  const out = Object.assign(d, p);
+  out.settings = Object.assign(defaultSettings(), p.settings || {});
+  for (const k of ['floors', 'rooms', 'doors', 'frames', 'items', 'sheets', 'suggestions']) out[k] = arr(p[k]);
+  return out;
+}
+function floorOrder(name) {
+  const t = str(name).toLowerCase();
+  if (/kelder|souterrain/.test(t)) return -1;
+  if (/begane/.test(t)) return 0;
+  const m = t.match(/(\d+)\s*e/); if (m) return Number(m[1]);
+  if (/zolder|vliering/.test(t)) return 8;
+  if (/dak/.test(t)) return 9;
+  return 5;
+}
+function normFloorName(s) {
+  const raw = str(s); const t = raw.toLowerCase().replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
+  if (!t) return '';
+  if (/begane|^bg$|parterre|gelijkvloers|^0e?( verdieping)?$/.test(t)) return 'Begane grond';
+  let m = t.match(/(\d+)\s*(e|ste|de)?\s*(verdieping|verd|etage)/) || t.match(/(verdieping|etage)\s*(\d+)/);
+  if (m) return (m[1].match(/\d/) ? m[1] : m[2]) + 'e verdieping';
+  if (/eerste/.test(t)) return '1e verdieping';
+  if (/tweede/.test(t)) return '2e verdieping';
+  if (/derde/.test(t)) return '3e verdieping';
+  if (/zolder|vliering/.test(t)) return 'Zolder';
+  if (/kelder|souterrain/.test(t)) return 'Kelder';
+  return raw.charAt(0).toUpperCase() + raw.slice(1);
+}
+function floorFor(name) {
+  const n = normFloorName(name) || 'Onbekende verdieping';
+  let f = P.floors.find(x => x.name.toLowerCase() === n.toLowerCase());
+  if (!f) { f = { id: uid('f'), name: n, order: floorOrder(n), H: null }; P.floors.push(f); sortFloors(); }
+  return f;
+}
+function sortFloors() { P.floors.sort((a, b) => (a.order - b.order) || a.name.localeCompare(b.name)); }
+const floorById = id => P.floors.find(f => f.id === id);
+const roomById = id => P.rooms.find(r => r.id === id);
+const floorName = id => floorById(id)?.name || 'Zonder verdieping';
+
+/* Effectieve waarden (met afgeleide standaardwaarden) */
+function roomH(r) { return r.H || floorById(r.floorId)?.H || P.settings.defaultH; }
+function roomHSrc(r) { return r.H ? 'tekening' : floorById(r.floorId)?.H ? 'verdieping' : 'standaard'; }
+function roomArea(r) { return r.area || ((r.L && r.B) ? r.L * r.B : null); }
+function roomPerim(r) { return r.perim || ((r.L && r.B) ? 2 * (r.L + r.B) : null); }
+function isFrameDoor(k) { return !!k.door || ['deurkozijn', 'schuifpui', 'garagedeur'].includes(k.kind); }
+
+/* Hoogte van een kozijn: eigen hoogte, anders overgenomen van een even breed gevelkozijn op dezelfde verdieping. */
+function frameLinks() {
+  const out = new Map();
+  const outer = P.frames.filter(k => k.side !== 'binnen' && k.h && k.w);
+  for (const k of P.frames) {
+    if (k.h || !k.w || k.side === 'buiten') continue;
+    let best = null, bd = 1e9;
+    for (const o of outer) {
+      if (o === k) continue;
+      if (k.floorId && o.floorId && o.floorId !== k.floorId) continue;
+      const d = Math.abs(o.w - k.w);
+      if (d < bd) { bd = d; best = o; }
+    }
+    if (best && bd <= 0.06) out.set(k.id, best);
+  }
+  return out;
+}
+
+/* ---------- Rekenen: opmeetstaat-regels ---------- */
+function computeLines() {
+  const S = P.settings, lines = [];
+  RT.roomCalc = {};
+  RT.links = frameLinks();
+  const add = o => { if (!(o.qty > 0) && !o.zero) return; o.qty = r2(o.qty); o.group = CAT[o.cat]?.group || o.group; lines.push(o); };
+  const fm = n => fmt(n, 2);
+
+  for (const r of P.rooms) {
+    const H = roomH(r), A = roomArea(r), Pm = roomPerim(r), tile = Math.min(r.tileH || 0, H);
+    const buiten = r.loc === 'buiten';
+    const doorsIn = P.doors.filter(d => d.roomId === r.id || d.toRoomId === r.id);
+    const framesIn = P.frames.filter(k => k.roomId === r.id && k.side !== 'buiten');
+    let ded = 0, nDed = 0;
+    if (S.deduct) {
+      for (const d of doorsIn) { if (!d.w || !d.h) continue; if (d.w * d.h < S.deductMin) continue; ded += d.w * Math.max(0, d.h - tile) * (d.n || 1); nDed += d.n || 1; }
+      for (const k of framesIn) {
+        const h = k.h || RT.links.get(k.id)?.h; if (!k.w || !h) continue; if (k.w * h < S.deductMin) continue;
+        const band = Math.max(0, H - tile); ded += k.w * Math.min(h, band) * (k.n || 1); nDed += k.n || 1;
+      }
+    }
+    const gross = Pm ? Pm * Math.max(0, H - tile) : 0;
+    RT.roomCalc[r.id] = { gross, ded, H, A, Pm };
+    const base = { floorId: r.floorId, space: r.name, ref: { t: 'rooms', id: r.id } };
+    if (r.walls !== false && Pm) {
+      add({ ...base, cat: buiten ? 'wanden_buiten' : 'wanden', desc: tile ? `Wanden boven tegelwerk (${fm(tile)} m)` : 'Wanden',
+        qty: Math.max(0, gross - ded), unit: 'm²',
+        formula: `${fm(Pm)} × ${fm(H - tile)}` + (ded ? ` − ${fm(ded)} (${nDed} opening${nDed === 1 ? '' : 'en'})` : '') });
+    }
+    if (r.ceiling !== false && A) {
+      add({ ...base, cat: buiten ? 'plafond_buiten' : 'plafonds', desc: 'Plafond', qty: A, unit: 'm²',
+        formula: r.area ? `vloeroppervlak ${fm(r.area)}` : `${fm(r.L)} × ${fm(r.B)}` });
+    }
+    if (!buiten && r.plinth !== false && Pm) {
+      const dw = S.plinthMinusDoors ? sum(doorsIn, d => (d.w || 0) * (d.n || 1)) + sum(framesIn.filter(isFrameDoor), k => (k.w || 0) * (k.n || 1)) : 0;
+      add({ ...base, cat: 'plinten', desc: 'Vloerplint', qty: Math.max(0, Pm - dw), unit: 'm1', formula: `${fm(Pm)}` + (dw ? ` − ${fm(dw)} deuropeningen` : '') });
+    }
+  }
+
+  for (const d of P.doors) {
+    const ra = roomById(d.roomId), rb = roomById(d.toRoomId);
+    const space = ra ? (rb ? `${ra.name} / ${rb.name}` : d.toOutside ? `${ra.name} / buiten` : ra.name) : (rb ? rb.name : 'Deur zonder ruimte');
+    const n = d.n || 1, outside = !!d.toOutside || d.kind === 'buitendeur';
+    const base = { floorId: d.floorId || ra?.floorId || rb?.floorId, space, ref: { t: 'doors', id: d.id }, st: n };
+    const sides = outside ? 1 : (d.sides || S.doorSides);
+    const nm = `${label(DOOR_KINDS, d.kind)} ${fmtmm(d.w)} × ${fmtmm(d.h)}`;
+    if (d.kind !== 'doorgang' && d.w && d.h) {
+      add({ ...base, cat: 'deurbladen', desc: nm + (outside ? ' (binnenzijde)' : ''), qty: d.w * d.h * sides * n, unit: 'm²',
+        formula: `${fm(d.w)} × ${fm(d.h)} × ${sides} zijde${sides === 1 ? '' : 'n'}` + (n > 1 ? ` × ${n}` : '') });
+    }
+    if (d.frame !== false && d.w && d.h) {
+      add({ ...base, cat: 'deurkozijnen', desc: (d.kind === 'doorgang' ? 'Kozijn/aftimmering doorgang' : 'Deurkozijn') + (outside ? ' binnenzijde' : ''),
+        qty: (2 * d.h + d.w) * n, unit: 'm1', formula: `2 × ${fm(d.h)} + ${fm(d.w)}` + (n > 1 ? ` × ${n}` : '') });
+    }
+  }
+
+  for (const k of P.frames) {
+    const n = k.n || 1;
+    const link = RT.links.get(k.id);
+    const h = k.h || link?.h || null;
+    const mull = k.mullions ?? link?.mullions ?? 0, trans = k.transoms ?? link?.transoms ?? 0;
+    const stM1 = k.mullionsM1 || (h ? mull * h : 0), ligM1 = k.transomsM1 || (k.w ? trans * k.w : 0);
+    const room = roomById(k.roomId);
+    const sides = k.side === 'beide' ? ['binnen', 'buiten'] : [k.side === 'binnen' ? 'binnen' : 'buiten'];
+    const nm = `${label(FRAME_KINDS, k.kind)} ${fmtmm(k.w)} × ${h ? fmtmm(h) : '?'}` + (link && !k.h ? ' (hoogte uit gevel)' : '');
+    for (const s of sides) {
+      const space = s === 'binnen' ? (room?.name || k.facade || 'Kozijn') : (k.facade || 'Gevel onbekend');
+      const base = { floorId: k.floorId || room?.floorId, space, ref: { t: 'frames', id: k.id }, st: n, side: s };
+      const sfx = n > 1 ? ` × ${n}` : '';
+      if (k.w) add({ ...base, cat: s === 'binnen' ? 'kozijn_binnen' : 'kozijn_buiten', desc: nm, qty: 2 * (k.w + (h || 0)) * n, unit: 'm1',
+        formula: h ? `2 × (${fm(k.w)} + ${fm(h)})${sfx}` : `hoogte ontbreekt: alleen 2 × ${fm(k.w)}${sfx}` });
+      if (stM1 > 0) add({ ...base, cat: s === 'binnen' ? 'staanders_binnen' : 'staanders_buiten', desc: `Staanders ${nm}`, qty: stM1 * n, unit: 'm1',
+        formula: k.mullionsM1 ? `opgegeven ${fm(k.mullionsM1)}${sfx}` : `${mull} × ${fm(h)}${sfx}` });
+      if (ligM1 > 0) add({ ...base, cat: s === 'binnen' ? 'liggers_binnen' : 'liggers_buiten', desc: `Liggers ${nm}`, qty: ligM1 * n, unit: 'm1',
+        formula: k.transomsM1 ? `opgegeven ${fm(k.transomsM1)}${sfx}` : `${trans} × ${fm(k.w)}${sfx}` });
+      if (k.sashes > 0) add({ ...base, cat: s === 'binnen' ? 'draaiend_binnen' : 'draaiend_buiten', desc: `Draaiende delen ${nm}`, qty: k.sashes * n, unit: 'st', formula: `${k.sashes}${sfx}` });
+      if (S.glaslatten === s && k.w && h && !['garagedeur', 'deurkozijn'].includes(k.kind)) {
+        add({ ...base, cat: s === 'binnen' ? 'glaslat_binnen' : 'glaslat_buiten', desc: `Glaslatten ${nm}`, qty: (2 * (k.w + h) + 2 * stM1 + 2 * ligM1) * n, unit: 'm1',
+          formula: `≈ 2 × (${fm(k.w)} + ${fm(h)}) + 2 × ${fm(stM1)} + 2 × ${fm(ligM1)}${sfx}` });
+      }
+      if (isFrameDoor(k) && k.w && h) {
+        const lw = k.leafW || Math.max(0.6, k.w - 0.12), lh = k.leafH || Math.max(1.8, h - 0.1);
+        const cat = k.kind === 'garagedeur' ? 'garagedeuren' : (s === 'binnen' ? 'deurbladen' : 'buitendeuren');
+        add({ ...base, cat, desc: `Deurblad ${nm} (${s}zijde)`, qty: lw * lh * n, unit: 'm²',
+          formula: `${fm(lw)} × ${fm(lh)}` + (k.leafW ? '' : ' (geschat)') + sfx });
+      }
+    }
+    if (sides.includes('binnen')) {
+      const space = room?.name || k.facade || 'Kozijn';
+      const base = { floorId: k.floorId || room?.floorId, space, ref: { t: 'frames', id: k.id } };
+      if (k.sill && k.w && !isFrameDoor(k)) add({ ...base, cat: 'vensterbanken', desc: `Vensterbank bij ${nm}`, qty: k.w * n, unit: 'm1', formula: `${fm(k.w)}` + (n > 1 ? ` × ${n}` : '') });
+      if (S.dagkanten && k.w && h && k.reveal !== false) add({ ...base, cat: 'dagkanten', desc: `Dagkanten ${nm}`, qty: (2 * h + k.w) * n, unit: 'm1', formula: `2 × ${fm(h)} + ${fm(k.w)}` + (n > 1 ? ` × ${n}` : '') });
+    }
+    if (sides.includes('buiten') && k.drip && k.w) {
+      add({ floorId: k.floorId, space: k.facade || 'Gevel onbekend', ref: { t: 'frames', id: k.id }, cat: 'waterslagen', desc: `Waterslag ${nm}`, qty: k.w * n, unit: 'm1', formula: `${fm(k.w)}` + (n > 1 ? ` × ${n}` : '') });
+    }
+  }
+
+  for (const it of P.items) {
+    const c = CAT[it.cat] || CAT[it.loc === 'binnen' ? 'overig_binnen' : 'overig_buiten'];
+    const unit = c.unit || it.unit || 'st';
+    const n = it.n || 1, room = roomById(it.roomId);
+    let qty = 0, formula = '';
+    if (unit === 'm1') { qty = (it.len || 0) * n; formula = `${fm(it.len)}` + (n > 1 ? ` × ${n}` : ''); }
+    else if (unit === 'm²') {
+      const a = it.area || ((it.w && it.h) ? it.w * it.h : (it.len && it.h ? it.len * it.h : 0));
+      qty = a * n; formula = it.area ? `${fm(it.area)}` : (it.w && it.h ? `${fm(it.w)} × ${fm(it.h)}` : `${fm(it.len)} × ${fm(it.h)}`); if (n > 1) formula += ` × ${n}`;
+    } else { qty = n; formula = `${n} st`; }
+    const space = c.group === 'binnen' ? (room?.name || 'Algemeen') : (it.facade || room?.name || 'Algemeen');
+    add({ floorId: it.floorId || room?.floorId, space, cat: c.k, desc: it.desc || c.label, qty, unit, formula, ref: { t: 'items', id: it.id }, zero: true });
+  }
+
+  const order = { binnen: 0, buiten: 1 };
+  lines.sort((a, b) => (order[a.group] - order[b.group]) ||
+    (a.group === 'binnen' ? ((floorById(a.floorId)?.order ?? 99) - (floorById(b.floorId)?.order ?? 99)) : 0) ||
+    a.space.localeCompare(b.space, 'nl') || (CAT[a.cat].i - CAT[b.cat].i));
+  return lines;
+}
+function fmtmm(m) { return m ? String(Math.round(m * 1000)) : '?'; }
+
+function totals(lines) {
+  const t = {};
+  for (const l of lines) {
+    const k = l.cat + '|' + l.unit;
+    t[k] = t[k] || { cat: l.cat, unit: l.unit, qty: 0, st: 0, n: 0, group: l.group };
+    t[k].qty += l.qty; t[k].st += l.st || 0; t[k].n++;
+  }
+  return Object.values(t).sort((a, b) => CAT[a.cat].i - CAT[b.cat].i);
+}
+
+/* ---------- Controles ---------- */
+function runChecks() {
+  const I = [], S = P.settings;
+  const push = (lvl, msg, ref, fix) => I.push({ lvl, msg, ref, fix });
+  const nmR = r => `${r.name} (${floorName(r.floorId)})`;
+  const lowConf = (e, nm) => { if (e.conf != null && e.conf < S.minConf) push('waarschuwing', `${nm}: Claude was niet zeker van deze maten (${pct(e.conf)}). Controleer op de tekening.`, e._ref); };
+
+  if (!P.rooms.length && !P.items.length && !P.frames.length) push('info', 'Er is nog niets opgenomen. Voeg een bouwtekening toe en laat Claude die uitlezen, of voer regels handmatig in.', null);
+
+  const byFloorName = {};
+  for (const r of P.rooms) {
+    const ref = { t: 'rooms', id: r.id }; r._ref = ref;
+    const c = RT.roomCalc[r.id] || {};
+    const A = roomArea(r), Pm = roomPerim(r), H = roomH(r);
+    if (!A) push('fout', `${nmR(r)}: lengte en breedte of oppervlakte ontbreken.`, ref);
+    else if (!Pm) push('fout', `${nmR(r)}: omtrek is onbekend, wanden en plint kunnen niet berekend worden.`, ref);
+    if (!r.H && !floorById(r.floorId)?.H && r.walls !== false) push('waarschuwing', `${nmR(r)}: geen hoogte gevonden, standaardhoogte ${fmt(S.defaultH)} m gebruikt.`, ref);
+    if (H && (H < 2.1 || H > 4.5)) push('waarschuwing', `${nmR(r)}: hoogte ${fmt(H)} m is ongebruikelijk.`, ref);
+    for (const [v, w] of [[r.L, 'lengte'], [r.B, 'breedte']]) if (v && (v < 0.5 || v > 30)) push('waarschuwing', `${nmR(r)}: ${w} ${fmt(v)} m lijkt niet te kloppen.`, ref);
+    if (r.area && r.L && r.B) {
+      const calc = r.L * r.B, d = Math.abs(calc - r.area) / r.area;
+      if (d > 0.07) push('waarschuwing', `${nmR(r)}: opgegeven vloeroppervlak ${fmt(r.area)} m² wijkt ${pct(d)} af van lengte × breedte (${fmt(calc)} m²). Is de ruimte niet rechthoekig? Controleer dan de omtrek.`, ref);
+    }
+    if (A && Pm && Pm < 3.54 * Math.sqrt(A)) push('fout', `${nmR(r)}: omtrek ${fmt(Pm)} m is te klein voor ${fmt(A)} m² en kan niet kloppen.`, ref);
+    else if (A && Pm && Pm > 7 * Math.sqrt(A)) push('waarschuwing', `${nmR(r)}: omtrek ${fmt(Pm)} m is erg groot voor ${fmt(A)} m².`, ref);
+    if (c.gross && c.ded >= c.gross) push('fout', `${nmR(r)}: openingen (${fmt(c.ded)} m²) zijn groter dan het wandoppervlak (${fmt(c.gross)} m²).`, ref);
+    else if (c.gross && c.ded > 0.6 * c.gross) push('waarschuwing', `${nmR(r)}: openingen beslaan ${pct(c.ded / c.gross)} van de wanden. Controleer de kozijnmaten.`, ref);
+    lowConf(r, nmR(r));
+    if (r.loc !== 'buiten' && !/vide|kruip|trapgat|schacht|kast|meterkast|berging|zolder|overloop/i.test(r.name)) {
+      if (!P.doors.some(d => d.roomId === r.id || d.toRoomId === r.id) && !P.frames.some(k => k.roomId === r.id && isFrameDoor(k)))
+        push('info', `${nmR(r)}: geen deur gekoppeld. Controleer of er een deur ontbreekt.`, ref);
+    }
+    const key = r.floorId + '|' + r.name.toLowerCase();
+    (byFloorName[key] = byFloorName[key] || []).push(r);
+  }
+  for (const list of Object.values(byFloorName)) if (list.length > 1) push('info', `${nmR(list[0])} komt ${list.length}× voor. Dubbel uitgelezen of bewust twee ruimtes met dezelfde naam?`, { t: 'rooms', id: list[1].id });
+
+  const doorKeys = {};
+  for (const d of P.doors) {
+    const ref = { t: 'doors', id: d.id }; d._ref = ref;
+    const nm = `Deur ${roomById(d.roomId)?.name || '?'} → ${d.toOutside ? 'buiten' : roomById(d.toRoomId)?.name || '?'}`;
+    if (!d.w || !d.h) push('fout', `${nm}: breedte of hoogte ontbreekt.`, ref);
+    if (d.w && (d.w < 0.5 || d.w > 2.2)) push('waarschuwing', `${nm}: breedte ${fmt(d.w)} m is ongebruikelijk.`, ref);
+    if (d.h && (d.h < 1.8 || d.h > 3.0)) push('waarschuwing', `${nm}: hoogte ${fmt(d.h)} m is ongebruikelijk.`, ref);
+    if (!d.roomId && !d.toRoomId) push('waarschuwing', `${nm}: niet gekoppeld aan een ruimte, wordt niet afgetrokken van wanden en plint.`, ref);
+    lowConf(d, nm);
+    const k = [d.roomId, d.toOutside ? 'buiten' : d.toRoomId].sort().join('|') + '|' + Math.round((d.w || 0) * 100);
+    (doorKeys[k] = doorKeys[k] || []).push(d);
+  }
+  for (const list of Object.values(doorKeys)) if (list.length > 1) push('waarschuwing', `Deur tussen ${roomById(list[0].roomId)?.name || '?'} en ${list[0].toOutside ? 'buiten' : roomById(list[0].toRoomId)?.name || '?'} staat ${list.length}× in de opname. Mogelijk dubbel geteld.`, { t: 'doors', id: list[1].id });
+
+  for (const k of P.frames) {
+    const ref = { t: 'frames', id: k.id }; k._ref = ref;
+    const where = k.side === 'buiten' ? (k.facade || 'gevel') : (roomById(k.roomId)?.name || k.facade || 'onbekend');
+    const nm = `Kozijn ${fmtmm(k.w)} breed (${where}, ${label(SIDES, k.side).toLowerCase()})`;
+    const link = RT.links.get(k.id);
+    if (!k.w) push('fout', `${nm}: breedte ontbreekt.`, ref);
+    if (!k.h && !link) push('fout', `${nm}: hoogte ontbreekt. Kozijnhout, staanders en dagkanten zijn daardoor te laag. Vul de hoogte in of lees het gevelaanzicht uit.`, ref);
+    else if (!k.h && link) push('info', `${nm}: hoogte ${fmt(link.h)} m overgenomen van een gevelkozijn (${link.facade || 'gevel'}). Klopt dit?`, ref);
+    if (k.w && (k.w < 0.25 || k.w > 8)) push('waarschuwing', `${nm}: breedte ${fmt(k.w)} m is ongebruikelijk.`, ref);
+    if (k.h && (k.h < 0.25 || k.h > 4)) push('waarschuwing', `${nm}: hoogte ${fmt(k.h)} m is ongebruikelijk.`, ref);
+    if (k.mullions > 0 && k.w && k.w < 0.6) push('waarschuwing', `${nm}: staanders in een kozijn van ${fmt(k.w)} m breed? Controleer.`, ref);
+    if (/kunststof|alu/i.test(k.material || '')) push('info', `${nm}: materiaal is ${k.material}. Dat wordt meestal niet geschilderd; zet zo nodig op 0 of verwijder.`, ref);
+    lowConf(k, nm);
+  }
+
+  for (const it of P.items) {
+    const ref = { t: 'items', id: it.id }; it._ref = ref;
+    const c = CAT[it.cat]; const nm = `${c?.label || 'Onderdeel'}: ${it.desc || ''}`;
+    const unit = c?.unit || it.unit;
+    if (unit === 'm1' && !it.len) push('fout', `${nm}: lengte ontbreekt.`, ref);
+    if (unit === 'm²' && !it.area && !(it.w && it.h) && !(it.len && it.h)) push('fout', `${nm}: maten voor m² ontbreken.`, ref);
+    if (unit === 'm1' && it.len > 40) push('waarschuwing', `${nm}: lengte ${fmt(it.len)} m is erg lang. Controleer.`, ref);
+    lowConf(it, nm);
+  }
+
+  // Per verdieping: ruimtes tegen totaal of buitenmaten
+  for (const f of P.floors) {
+    const rooms = P.rooms.filter(r => r.floorId === f.id && r.loc !== 'buiten');
+    const tot = sum(rooms, r => roomArea(r));
+    const views = P.sheets.flatMap(s => arr(s.views)).filter(v => v.check && v.floorId === f.id);
+    for (const v of views) {
+      if (v.check.total && tot) {
+        const d = Math.abs(tot - v.check.total) / v.check.total;
+        if (d > 0.05) push('waarschuwing', `${f.name}: ruimtes samen ${fmt(tot)} m², volgens de tekening ${fmt(v.check.total)} m² (${pct(d)} verschil). Ontbreekt er een ruimte?`, { t: 'floors', id: f.id });
+        else push('info', `${f.name}: ruimtes samen ${fmt(tot)} m² komt overeen met het totaal op de tekening (${fmt(v.check.total)} m²).`, { t: 'floors', id: f.id });
+      }
+      if (v.check.L && v.check.B && tot) {
+        const bruto = v.check.L * v.check.B, ratio = tot / bruto;
+        if (ratio < 0.65 || ratio > 0.95) push('waarschuwing', `${f.name}: netto ${fmt(tot)} m² is ${pct(ratio)} van de buitenmaten (${fmt(v.check.L)} × ${fmt(v.check.B)} m). Normaal is 70 tot 90%. Controleer of ruimtes ontbreken of dubbel staan.`, { t: 'floors', id: f.id });
+        else push('info', `${f.name}: netto ${fmt(tot)} m² is ${pct(ratio)} van de buitenmaten. Dat is aannemelijk.`, { t: 'floors', id: f.id });
+      }
+    }
+    // Kozijnen binnenzijde tegen buitenzijde
+    const inn = P.frames.filter(k => k.floorId === f.id && k.side !== 'buiten');
+    const outDoors = P.doors.filter(d => (d.toOutside || d.kind === 'buitendeur') && (d.floorId || roomById(d.roomId)?.floorId) === f.id);
+    const out = P.frames.filter(k => k.floorId === f.id && k.side !== 'binnen');
+    const ci = sum(inn, k => k.n || 1) + sum(outDoors, d => d.n || 1), co = sum(out, k => k.n || 1);
+    if (inn.length && co) {
+      const wi = sum(inn, k => (k.w || 0) * (k.n || 1)) + sum(outDoors, d => ((d.w || 0) + 0.12) * (d.n || 1)), wo = sum(out, k => (k.w || 0) * (k.n || 1));
+      if (ci !== co || Math.abs(wi - wo) > 0.08 * Math.max(wi, wo)) push('waarschuwing', `${f.name}: plattegrond toont ${ci} kozijnen en buitendeuren (samen ca. ${fmt(wi)} m breed), de gevels ${co} kozijnen (samen ${fmt(wo)} m breed). Controleer of er een kozijn ontbreekt of dubbel staat.`, { t: 'frames', id: (inn[0] || out[0]).id });
+      else push('info', `${f.name}: aantal en breedte van de kozijnen op plattegrond en gevels komen overeen (${ci} st).`, null);
+    }
+  }
+  const anyIn = P.frames.some(k => k.side === 'binnen'), anyOut = P.frames.some(k => k.side !== 'binnen');
+  if (anyIn && !anyOut) push('waarschuwing', 'Er zijn alleen kozijnen van de plattegronden opgenomen (binnenzijde). De buitenzijde ontbreekt. Lees de gevelaanzichten uit, of reken de plattegrondkozijnen ook voor buiten.', null, { label: 'Reken ook buitenzijde', fn: 'framesBoth' });
+  const has = c => sum(P.items.filter(i => i.cat === c), i => i.len || i.n || 1) > 0;
+  if (has('dakgoten') && !has('regenpijpen')) push('info', 'Er zijn dakgoten maar geen regenpijpen opgenomen. Controleer de gevels.', null);
+  if (has('dakgoten') && !has('boeiboorden')) push('info', 'Er zijn dakgoten maar geen boeiboorden opgenomen. Controleer de gevels en doorsnede.', null);
+  for (const s of P.sheets) if (s.kind === 'img' && !s.calibrated && arr(s.measures).length) push('info', `Blad "${s.fileName}": metingen zonder kalibratie. Kalibreer de schaal voor betrouwbare handmetingen.`, null);
+  for (const s of P.sheets) for (const v of arr(s.views)) for (const o of arr(v.check?.notes)) push('info', `Opmerking van Claude bij ${v.title}: ${o}`, null);
+  const open = arr(P.suggestions).filter(s => s.status === 'open').length;
+  if (open) push('waarschuwing', `Er staan ${open} voorstellen van de dubbelcheck open. Bekijk ze bovenaan deze pagina.`, null);
+
+  const rank = { fout: 0, waarschuwing: 1, info: 2 };
+  I.sort((a, b) => rank[a.lvl] - rank[b.lvl]);
+  return I;
+}
+const FIXES = {
+  framesBoth() { for (const k of P.frames) if (k.side === 'binnen') k.side = 'beide'; changed(); toast('Kozijnen tellen nu voor binnen én buiten.'); },
+};
+
+/* ---------- Opslag ---------- */
+const Store = {
+  mode: 'mem',
+  col() { return RT.db.collection('data/users/' + RT.uid); },
+  async list() {
+    if (this.mode === 'db') {
+      const snap = await this.col().get();
+      return snap.docs.filter(d => d.exists && d.data()?.kind === 'opmeetproject').map(d => { const x = d.data(); return { id: d.id, name: x.name, client: x.client, updated: x.updated }; })
+        .sort((a, b) => str(b.updated).localeCompare(str(a.updated)));
+    }
+    if (this.mode === 'local') return arr(lsJSON('opmeet.index')).sort((a, b) => str(b.updated).localeCompare(str(a.updated)));
+    return [];
+  },
+  async load(id) {
+    if (this.mode === 'db') { const s = await this.col().doc(id).get(); return s.exists ? migrate(s.data().data) : null; }
+    if (this.mode === 'local') return migrate(lsJSON('opmeet.p.' + id));
+    return null;
+  },
+  async save(p) {
+    const clean = JSON.parse(JSON.stringify(p, (k, v) => k.startsWith('_') ? undefined : v));
+    const updated = new Date().toISOString();
+    if (this.mode === 'db') {
+      await this.col().doc(p.id).set({ kind: 'opmeetproject', name: p.name, client: p.client || '', updated, data: clean });
+    } else if (this.mode === 'local') {
+      if (!lsSet('opmeet.p.' + p.id, JSON.stringify(clean))) throw new Error('local');
+      const idx = arr(lsJSON('opmeet.index')).filter(x => x.id !== p.id); idx.push({ id: p.id, name: p.name, client: p.client || '', updated });
+      lsSet('opmeet.index', JSON.stringify(idx));
+    } else throw new Error('mem');
+  },
+  async remove(id) {
+    if (this.mode === 'db') await this.col().doc(id).delete();
+    else if (this.mode === 'local') { lsDel('opmeet.p.' + id); lsSet('opmeet.index', JSON.stringify(arr(lsJSON('opmeet.index')).filter(x => x.id !== id))); }
+  },
+};
+let saveTimer = null, saving = false, saveAgain = false;
+function setSaveState(t) { $('#saveState').textContent = t; }
+function scheduleSave() {
+  if (RT.isDemo) { setSaveState('Voorbeeld, niet opgeslagen'); return; }
+  setSaveState('Wijzigingen opslaan…');
+  clearTimeout(saveTimer); saveTimer = setTimeout(doSave, 1200);
+}
+async function doSave() {
+  if (RT.isDemo) return;
+  if (saving) { saveAgain = true; return; }
+  saving = true;
+  try {
+    const size = JSON.stringify(P).length;
+    if (Store.mode === 'db' && size > 240000) toast('Let op: dit project is erg groot en past mogelijk niet meer in de opslag.');
+    await Store.save(P);
+    lsSet('opmeet.last', P.id);
+    setSaveState(Store.mode === 'db' ? 'Opgeslagen' : 'Opgeslagen in deze browser');
+  } catch (e) {
+    console.warn(e);
+    setSaveState(Store.mode === 'mem' ? 'Niet opgeslagen (geen opslag beschikbaar)' : 'Opslaan mislukt');
+    if (e?.code === 'quota_exceeded') toast('De opslag is vol. Verwijder oude projecten.');
+  }
+  saving = false;
+  if (saveAgain) { saveAgain = false; doSave(); }
+}
+
+/* ---------- Runtime-staat ---------- */
+const RT = {
+  sample: null, limits: null, db: null, uid: null, downloads: null, capsDone: false,
+  sheetData: {}, curSheet: null, curView: null,
+  tab: 'tekeningen', sub: 'rooms', floorFilter: 'all', staatGroup: 'all', staatFloor: 'all', ctrlFilter: 'all',
+  lines: [], issues: [], roomCalc: {}, links: new Map(), busy: false, abort: null, log: [], isDemo: true,
+};
+let P = null;
+
+function changed(opts = {}) {
+  recompute();
+  if (!opts.noRender) renderActive();
+  renderBadges();
+  scheduleSave();
+}
+function recompute() { RT.lines = computeLines(); RT.issues = runChecks(); }
+function setProject(p, isDemo) {
+  P = p; RT.isDemo = !!isDemo; RT.curSheet = P.sheets[0]?.id || null; RT.curView = null; RT.floorFilter = 'all';
+  $('#demoBanner').classList.toggle('hidden', !RT.isDemo);
+  if (!isDemo) lsSet('opmeet.last', P.id);
+  recompute(); renderAll();
+  setSaveState(isDemo ? 'Voorbeeld, niet opgeslagen' : (Store.mode === 'db' ? 'Opgeslagen' : Store.mode === 'local' ? 'Opgeslagen in deze browser' : 'Niet opgeslagen'));
+  V.fitPending = true; viewerLoadSheet();
+}
+async function startNewProject(name) {
+  const p = emptyProject(name || 'Project ' + new Date().toLocaleDateString('nl-NL'));
+  setProject(p, false);
+  await doSave();
+  return p;
+}
+async function ensureRealProject() {
+  if (RT.isDemo) { await startNewProject(); toast('Nieuw project aangemaakt.'); }
+}
+
+/* ---------- Voorbeeldproject ---------- */
+function demoProject() {
+  const p = emptyProject('Voorbeeld: rijtjeswoning Lindelaan 12');
+  p.client = 'Fam. de Vries'; p.address = 'Lindelaan 12'; p.by = 'Voorbeeld';
+  const save = P; P = p;
+  const bg = floorFor('Begane grond'), e1 = floorFor('1e verdieping');
+  bg.H = 2.6; e1.H = 2.6;
+  const R = (f, name, L, B, extra = {}) => { const r = { id: uid('r'), floorId: f.id, name, loc: 'binnen', L, B, H: null, area: null, perim: null, tileH: 0, walls: true, ceiling: true, plinth: true, conf: 0.9, note: '', src: { kind: 'demo' }, checked: false, ...extra }; p.rooms.push(r); return r; };
+  const hal = R(bg, 'Hal', 3.6, 1.85), toilet = R(bg, 'Toilet', 1.2, 0.9, { tileH: 1.2, plinth: false });
+  const woon = R(bg, 'Woonkamer', null, null, { area: 31.5, perim: 25.2, note: 'L-vormig' });
+  const keuken = R(bg, 'Keuken', 3.1, 2.7, { conf: 0.62, note: 'Maatlijn deels onleesbaar' });
+  const trapkast = R(bg, 'Trapkast', 1.0, 0.9, { walls: false, plinth: false });
+  const overloop = R(e1, 'Overloop', 2.8, 1.0), s1 = R(e1, 'Slaapkamer 1', 4.2, 3.4), s2 = R(e1, 'Slaapkamer 2', 3.0, 2.9), s3 = R(e1, 'Slaapkamer 3', 2.3, 2.9);
+  const bad = R(e1, 'Badkamer', 2.3, 2.1, { walls: false, plinth: false, note: 'Tegelwerk tot plafond' });
+  const D = (a, b, w, h, kind = 'binnendeur', extra = {}) => p.doors.push({ id: uid('d'), floorId: a.floorId, roomId: a.id, toRoomId: b?.id || null, toOutside: !b, kind, w, h, n: 1, sides: null, frame: true, conf: 0.9, note: '', src: { kind: 'demo' }, checked: false, ...extra });
+  D(hal, toilet, 0.73, 2.015); D(hal, woon, 0.93, 2.315); D(hal, trapkast, 0.73, 2.015); D(woon, keuken, 0.93, 2.315, 'doorgang'); D(hal, null, 0.98, 2.18, 'buitendeur');
+  D(overloop, s1, 0.83, 2.315); D(overloop, s2, 0.83, 2.315); D(overloop, s3, 0.83, 2.315); D(overloop, bad, 0.83, 2.315);
+  const K = (f, room, side, facade, w, h, extra = {}) => p.frames.push({ id: uid('k'), floorId: f.id, roomId: room?.id || null, facade, side, kind: 'raamkozijn', w, h, n: 1, mullions: null, mullionsM1: null, transoms: null, transomsM1: null, sashes: 0, door: false, leafW: null, leafH: null, sill: side !== 'buiten', drip: side !== 'binnen', material: 'hout', conf: 0.85, note: '', src: { kind: 'demo' }, checked: false, ...extra });
+  K(bg, woon, 'binnen', 'Voorgevel', 2.7, null); K(bg, woon, 'binnen', 'Achtergevel', 2.4, null, { kind: 'schuifpui', sill: false }); K(bg, keuken, 'binnen', 'Achtergevel', 1.2, null);
+  K(e1, s1, 'binnen', 'Voorgevel', 2.4, null); K(e1, s2, 'binnen', 'Achtergevel', 1.8, null); K(e1, s3, 'binnen', 'Achtergevel', 1.2, null); K(e1, bad, 'binnen', 'Achtergevel', 0.6, 0.6, { sill: false });
+  K(bg, null, 'buiten', 'Voorgevel', 2.7, 1.6, { mullions: 2, transoms: 1, sashes: 1 });
+  K(bg, null, 'buiten', 'Voorgevel', 1.1, 2.4, { kind: 'deurkozijn', door: true, leafW: 0.98, leafH: 2.18, transoms: 1, sashes: 1, drip: false });
+  K(e1, null, 'buiten', 'Voorgevel', 2.4, 1.5, { mullions: 1, transoms: 1, sashes: 2 });
+  K(bg, null, 'buiten', 'Achtergevel', 2.4, 2.3, { kind: 'schuifpui', door: true, mullions: 1, sashes: 1, drip: false });
+  K(bg, null, 'buiten', 'Achtergevel', 1.2, 1.2, { sashes: 1 });
+  K(e1, null, 'buiten', 'Achtergevel', 1.8, 1.5, { mullions: 1, sashes: 1 });
+  K(e1, null, 'buiten', 'Achtergevel', 1.2, 1.5, { sashes: 1 });
+  const I = (cat, desc, extra) => p.items.push({ id: uid('i'), floorId: null, roomId: null, facade: '', loc: CAT[cat].group, cat, desc, unit: CAT[cat].unit, len: null, w: null, h: null, area: null, n: 1, conf: 0.85, note: '', src: { kind: 'demo' }, checked: false, ...extra });
+  I('trappen', 'Vurenhouten trap, 14 treden', { floorId: bg.id, roomId: hal.id });
+  I('trapleuning', 'Trapleuning', { floorId: bg.id, roomId: hal.id, len: 3.4 });
+  I('aftimmerlatten', 'Aftimmering trapgat', { floorId: e1.id, roomId: overloop.id, len: 6.2 });
+  I('dakgoten', 'Mastgoot voorgevel', { facade: 'Voorgevel', len: 5.4 });
+  I('dakgoten', 'Mastgoot achtergevel', { facade: 'Achtergevel', len: 5.4 });
+  I('boeiboorden', 'Boeiboord voorgevel (h 0,25 m)', { facade: 'Voorgevel', len: 5.4 });
+  I('boeiboorden', 'Boeiboord achtergevel (h 0,25 m)', { facade: 'Achtergevel', len: 5.4 });
+  I('regenpijpen', 'Regenpijp achtergevel', { facade: 'Achtergevel', len: 5.8 });
+  I('plafond_buiten', 'Onderzijde luifel voordeur', { facade: 'Voorgevel', w: 1.6, h: 0.8 });
+  I('dakkapellen', 'Dakkapel achterzijde', { facade: 'Achtergevel' });
+  P = save;
+  return p;
+}
+
+/* ---------- UI: algemeen ---------- */
+function toast(msg, ms = 3200) {
+  const t = $('#toast'); t.textContent = msg; t.classList.remove('hidden');
+  clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.add('hidden'), ms);
+}
+function modal(title, bodyHtml, buttons = [{ label: 'Sluiten', value: null }]) {
+  return new Promise(resolve => {
+    const root = $('#modalRoot');
+    root.innerHTML = `<div class="modal-bg"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle"><h3 id="mTitle">${esc(title)}</h3><div id="mBody">${bodyHtml}</div><div class="acts">${buttons.map((b, i) => `<button class="btn ${b.cls || ''}" data-mi="${i}" type="button">${esc(b.label)}</button>`).join('')}</div></div></div>`;
+    const close = v => { if (RT.modalClose !== close) return; RT.modalClose = null; root.innerHTML = ''; document.removeEventListener('keydown', onKey); resolve(v); };
+    RT.modalClose?.(null); RT.modalClose = close;
+    const onKey = e => { if (e.key === 'Escape') close(null); };
+    document.addEventListener('keydown', onKey);
+    root.querySelector('.modal-bg').addEventListener('click', e => {
+      const b = e.target.closest('[data-mi]');
+      if (b) { const def = buttons[+b.dataset.mi]; close(typeof def.value === 'function' ? def.value(root) : def.value); }
+      else if (e.target.classList.contains('modal-bg')) close(null);
+    });
+    const first = root.querySelector('input,select,textarea') || root.querySelector('[data-mi]'); first?.focus();
+  });
+}
+const confirmBox = (title, text, okLabel = 'Doorgaan', danger = false) => modal(title, `<p>${esc(text)}</p>`, [{ label: 'Annuleren', value: false }, { label: okLabel, value: true, cls: danger ? 'danger' : 'primary' }]);
+
+function renderAll() {
+  renderHeader(); renderBadges();
+  renderTekeningen(); renderOpname(); renderStaat(); renderControle(); renderInstellingen();
+}
+function renderActive() {
+  renderHeader();
+  ({ tekeningen: renderTekeningen, opname: renderOpname, staat: renderStaat, controle: renderControle, instellingen: renderInstellingen })[RT.tab]?.();
+}
+function renderHeader() { $('#projName').textContent = P.name + (P.client ? ' · ' + P.client : ''); }
+function renderBadges() {
+  $('#cntOpname').textContent = P.rooms.length + P.doors.length + P.frames.length + P.items.length;
+  const f = RT.issues.filter(i => i.lvl === 'fout').length, w = RT.issues.filter(i => i.lvl === 'waarschuwing').length;
+  const c = $('#cntControle'); c.textContent = f || w || '✓'; c.className = 'cnt' + (f ? ' bad' : w ? ' warn' : '');
+}
+function switchTab(t) {
+  RT.tab = t;
+  $$('.tab').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === t)));
+  $$('[role="tabpanel"]').forEach(s => s.classList.toggle('hidden', s.id !== 'tab-' + t));
+  renderActive();
+  if (t === 'tekeningen') requestAnimationFrame(() => { V.resize(); });
+}
+
+/* ---------- Tab: Opname ---------- */
+const COLS = {
+  rooms: [
+    { k: 'floorId', l: 'Verdieping', type: 'floor' },
+    { k: 'name', l: 'Ruimte', type: 'text' },
+    { k: 'loc', l: 'Binnen/buiten', type: 'select', opts: [['binnen', 'Binnen'], ['buiten', 'Buiten']] },
+    { k: 'L', l: 'Lengte m', type: 'len' },
+    { k: 'B', l: 'Breedte m', type: 'len' },
+    { k: 'H', l: 'Hoogte m', type: 'len', ph: r => fmtIn(r2(roomH(r))) },
+    { k: 'area', l: 'Opp. m²', type: 'num', ph: r => r.L && r.B ? fmtIn(r2(r.L * r.B)) : '' },
+    { k: 'perim', l: 'Omtrek m', type: 'len', ph: r => r.L && r.B ? fmtIn(r2(2 * (r.L + r.B))) : '' },
+    { k: 'tileH', l: 'Tegels tot m', type: 'len' },
+    { k: 'walls', l: 'Wand', type: 'bool' }, { k: 'ceiling', l: 'Plafond', type: 'bool' }, { k: 'plinth', l: 'Plint', type: 'bool' },
+    { k: 'note', l: 'Opmerking', type: 'text' },
+  ],
+  doors: [
+    { k: 'floorId', l: 'Verdieping', type: 'floor' },
+    { k: 'roomId', l: 'Ruimte', type: 'room' },
+    { k: 'toRoomId', l: 'Naar', type: 'roomOut' },
+    { k: 'kind', l: 'Soort', type: 'select', opts: DOOR_KINDS },
+    { k: 'w', l: 'Breedte m', type: 'len' },
+    { k: 'h', l: 'Hoogte m', type: 'len' },
+    { k: 'n', l: 'Aantal', type: 'int' },
+    { k: 'sides', l: 'Zijden', type: 'int', ph: d => d.toOutside ? '1' : String(P.settings.doorSides) },
+    { k: 'frame', l: 'Kozijn', type: 'bool' },
+    { k: 'note', l: 'Opmerking', type: 'text' },
+  ],
+  frames: [
+    { k: 'floorId', l: 'Verdieping', type: 'floor' },
+    { k: 'side', l: 'Zijde', type: 'select', opts: SIDES },
+    { k: 'roomId', l: 'Ruimte', type: 'room' },
+    { k: 'facade', l: 'Gevel', type: 'text', w: 110 },
+    { k: 'kind', l: 'Soort', type: 'select', opts: FRAME_KINDS },
+    { k: 'w', l: 'Breedte m', type: 'len' },
+    { k: 'h', l: 'Hoogte m', type: 'len', ph: k => RT.links.get(k.id)?.h ? fmtIn(RT.links.get(k.id).h) + ' (gevel)' : '' },
+    { k: 'n', l: 'Aantal', type: 'int' },
+    { k: 'mullions', l: 'Staanders', type: 'int0' },
+    { k: 'transoms', l: 'Liggers', type: 'int0' },
+    { k: 'sashes', l: 'Draaiend', type: 'int0' },
+    { k: 'door', l: 'Deur', type: 'bool' },
+    { k: 'sill', l: 'Vensterbank', type: 'bool' },
+    { k: 'drip', l: 'Waterslag', type: 'bool' },
+    { k: 'material', l: 'Materiaal', type: 'text', w: 80 },
+    { k: 'note', l: 'Opmerking', type: 'text' },
+  ],
+  items: [
+    { k: 'floorId', l: 'Verdieping', type: 'floor' },
+    { k: 'cat', l: 'Onderdeel', type: 'cat' },
+    { k: 'desc', l: 'Omschrijving', type: 'text' },
+    { k: 'roomId', l: 'Ruimte', type: 'room' },
+    { k: 'facade', l: 'Gevel', type: 'text', w: 110 },
+    { k: 'unit', l: 'Eenheid', type: 'unit' },
+    { k: 'len', l: 'Lengte m', type: 'len' },
+    { k: 'w', l: 'Breedte m', type: 'len' },
+    { k: 'h', l: 'Hoogte m', type: 'len' },
+    { k: 'area', l: 'Opp. m²', type: 'num' },
+    { k: 'n', l: 'Aantal', type: 'int' },
+    { k: 'note', l: 'Opmerking', type: 'text' },
+  ],
+};
+const SUB_HINT = {
+  rooms: 'Laat Hoogte, Opp. en Omtrek leeg om de berekende waarde (grijs) te gebruiken. Getallen boven 60 worden als millimeters gelezen.',
+  doors: 'Een binnendeur staat één keer in de lijst, met de ruimtes aan beide kanten. De deur wordt van de wanden en plinten van beide ruimtes afgetrokken.',
+  frames: 'Binnenzijde komt van de plattegrond (gekoppeld aan een ruimte), buitenzijde van het gevelaanzicht. Kies "Binnen + buiten" als je maar één bron hebt.',
+  items: 'Overige schilderbare onderdelen: dakgoten, boeiboorden, windveren, rabat, regenpijpen, trappen, aftimmeringen enz.',
+  floors: 'De standaard plafondhoogte geldt voor alle ruimtes op die verdieping zonder eigen hoogte.',
+};
+function entList(t) { return { rooms: P.rooms, doors: P.doors, frames: P.frames, items: P.items }[t]; }
+function newEntity(t) {
+  const f = RT.floorFilter !== 'all' ? RT.floorFilter : (P.floors[0]?.id || floorFor('Begane grond').id);
+  const base = { id: uid(t[0]), conf: null, note: '', src: { kind: 'hand' }, checked: false };
+  if (t === 'rooms') return { ...base, floorId: f, name: 'Nieuwe ruimte', loc: 'binnen', L: null, B: null, H: null, area: null, perim: null, tileH: 0, walls: true, ceiling: true, plinth: true };
+  if (t === 'doors') return { ...base, floorId: f, roomId: null, toRoomId: null, toOutside: false, kind: 'binnendeur', w: 0.83, h: 2.315, n: 1, sides: null, frame: true };
+  if (t === 'frames') return { ...base, floorId: f, roomId: null, facade: '', side: 'beide', kind: 'raamkozijn', w: null, h: null, n: 1, mullions: 0, mullionsM1: null, transoms: 0, transomsM1: null, sashes: 0, door: false, leafW: null, leafH: null, sill: true, drip: true, material: 'hout' };
+  return { ...base, floorId: f, roomId: null, facade: '', loc: 'buiten', cat: 'dakgoten', desc: '', unit: 'm1', len: null, w: null, h: null, area: null, n: 1 };
+}
+function renderOpname() {
+  $$('#subtabs [data-sub]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.sub === RT.sub)));
+  $('#btnAddRow').textContent = RT.sub === 'floors' ? '+ Verdieping toevoegen' : '+ Regel toevoegen';
+  $('#opnameHint').textContent = SUB_HINT[RT.sub] || '';
+  const ff = $('#floorFilter');
+  if (RT.sub === 'floors') ff.innerHTML = '';
+  else ff.innerHTML = `<span class="small muted">Verdieping:</span>` + [['all', 'Alle']].concat(P.floors.map(f => [f.id, f.name])).concat([['none', 'Zonder verdieping']])
+    .map(([id, nm]) => `<button class="btn sm" data-ff="${esc(id)}" aria-pressed="${RT.floorFilter === id}" type="button">${esc(nm)}</button>`).join('');
+  const body = $('#opnameBody');
+  const focusKey = document.activeElement?.dataset?.k;
+  if (RT.sub === 'floors') body.innerHTML = floorsTable();
+  else body.innerHTML = entityTable(RT.sub);
+  if (focusKey) { const el = body.querySelector(`[data-k="${CSS.escape(focusKey)}"]`); el?.focus(); }
+}
+function floorsTable() {
+  const rows = P.floors.map(f => {
+    const n = P.rooms.filter(r => r.floorId === f.id).length;
+    return `<tr id="row-${f.id}"><td><input class="in txt" data-fk="${f.id}:name" value="${esc(f.name)}"></td>
+      <td><input class="in num" data-fk="${f.id}:order" value="${f.order}" inputmode="decimal"></td>
+      <td><input class="in num" data-fk="${f.id}:H" value="${fmtIn(f.H)}" placeholder="${fmtIn(P.settings.defaultH)}" inputmode="decimal"></td>
+      <td class="q">${n}</td><td class="q">${fmt(sum(P.rooms.filter(r => r.floorId === f.id && r.loc !== 'buiten'), roomArea))}</td>
+      <td><button class="btn sm ghost danger" data-delfloor="${f.id}" type="button" ${n ? 'disabled title="Verdieping bevat nog ruimtes"' : ''}>Verwijder</button></td></tr>`;
+  }).join('');
+  return `<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Naam</th><th>Volgorde</th><th>Plafondhoogte m</th><th class="q">Ruimtes</th><th class="q">Netto m²</th><th></th></tr></thead><tbody>${rows || '<tr class="empty-row"><td colspan="6">Nog geen verdiepingen</td></tr>'}</tbody></table></div>`;
+}
+function roomOptions(sel, withOut, outSel) {
+  const groups = P.floors.map(f => `<optgroup label="${esc(f.name)}">${P.rooms.filter(r => r.floorId === f.id).map(r => `<option value="${r.id}" ${r.id === sel ? 'selected' : ''}>${esc(r.name)}</option>`).join('')}</optgroup>`).join('');
+  return `<option value="">—</option>${withOut ? `<option value="__out" ${outSel ? 'selected' : ''}>Buiten</option>` : ''}${groups}`;
+}
+function cellHTML(t, c, e) {
+  const key = `${t}:${e.id}:${c.k}`; const v = e[c.k];
+  const st = c.w ? ` style="width:${c.w}px"` : '';
+  switch (c.type) {
+    case 'text': return `<input class="in txt" data-k="${key}" value="${esc(v ?? '')}"${st}>`;
+    case 'len': case 'num': return `<input class="in num" inputmode="decimal" data-k="${key}" value="${fmtIn(v)}" placeholder="${esc(c.ph ? c.ph(e) : '')}">`;
+    case 'int': return `<input class="in num int" inputmode="numeric" data-k="${key}" value="${v ?? ''}" placeholder="${esc(c.ph ? c.ph(e) : '1')}">`;
+    case 'int0': return `<input class="in num int" inputmode="numeric" data-k="${key}" value="${v ?? ''}" placeholder="0">`;
+    case 'bool': return `<input type="checkbox" data-k="${key}" ${v !== false && v != null ? 'checked' : ''} aria-label="${esc(c.l)}">`;
+    case 'select': return `<select class="in" data-k="${key}">${c.opts.map(([k, l]) => `<option value="${esc(k)}" ${k === v ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select>`;
+    case 'unit': { const fixed = CAT[e.cat]?.unit; return fixed ? `<span class="small">${fixed}</span>` : `<select class="in" data-k="${key}">${UNITS.map(([k, l]) => `<option ${k === v ? 'selected' : ''}>${l}</option>`).join('')}</select>`; }
+    case 'floor': return `<select class="in" data-k="${key}"><option value="">—</option>${P.floors.map(f => `<option value="${f.id}" ${f.id === v ? 'selected' : ''}>${esc(f.name)}</option>`).join('')}</select>`;
+    case 'room': return `<select class="in" data-k="${key}">${roomOptions(v)}</select>`;
+    case 'roomOut': return `<select class="in" data-k="${key}">${roomOptions(v, true, e.toOutside)}</select>`;
+    case 'cat': return `<select class="in" data-k="${key}"><optgroup label="Binnen">${ITEM_CATS.filter(x => x[3] === 'binnen').map(([k, l]) => `<option value="${k}" ${k === v ? 'selected' : ''}>${esc(l)}</option>`).join('')}</optgroup><optgroup label="Buiten">${ITEM_CATS.filter(x => x[3] === 'buiten').map(([k, l]) => `<option value="${k}" ${k === v ? 'selected' : ''}>${esc(l)}</option>`).join('')}</optgroup></select>`;
+  }
+  return esc(v);
+}
+function srcChip(e) {
+  const k = e.src?.kind;
+  const confTxt = e.conf != null ? ` ${pct(e.conf)}` : '';
+  const cls = e.conf != null && e.conf < P.settings.minConf ? 'warn' : 'ai';
+  if (k === 'ai') return `<span class="chip ${cls}" title="Uitgelezen door Claude${e.src.view ? ': ' + esc(e.src.view) : ''}">Claude${confTxt}</span>${e.aiOk ? ' <span class="chip ok" title="Bevestigd in dubbelcheck">2× ✓</span>' : ''}`;
+  if (k === 'meet') return '<span class="chip info">Gemeten</span>';
+  if (k === 'demo') return '<span class="chip">Voorbeeld</span>';
+  return '<span class="chip">Handmatig</span>';
+}
+function entityTable(t) {
+  const cols = COLS[t];
+  let list = entList(t);
+  if (RT.floorFilter === 'none') list = list.filter(e => !e.floorId);
+  else if (RT.floorFilter !== 'all') list = list.filter(e => e.floorId === RT.floorFilter);
+  const fo = id => floorById(id)?.order ?? 99;
+  list = [...list].sort((a, b) => (fo(a.floorId) - fo(b.floorId)) || str(roomById(a.roomId)?.name || a.name || a.facade).localeCompare(str(roomById(b.roomId)?.name || b.name || b.facade), 'nl'));
+  const head = `<tr><th>✓</th>${cols.map(c => `<th${['len', 'num', 'int', 'int0'].includes(c.type) ? ' class="q"' : ''}>${esc(c.l)}</th>`).join('')}<th>Bron</th><th></th></tr>`;
+  const rows = list.map(e => `<tr id="row-${e.id}" class="${e.checked ? 'checked' : ''}">
+      <td><input type="checkbox" data-k="${t}:${e.id}:checked" ${e.checked ? 'checked' : ''} aria-label="Gecontroleerd"></td>
+      ${cols.map(c => `<td>${cellHTML(t, c, e)}</td>`).join('')}
+      <td style="white-space:nowrap">${srcChip(e)}${e.src?.bbox ? ` <button class="btn sm ghost" data-locate="${t}:${e.id}" type="button" title="Toon op tekening">Toon</button>` : ''}</td>
+      <td><button class="btn sm ghost danger" data-del="${t}:${e.id}" type="button" aria-label="Verwijder regel">×</button></td></tr>`).join('');
+  return `<div class="tbl-wrap"><table class="tbl"><thead>${head}</thead><tbody>${rows || `<tr class="empty-row"><td colspan="${cols.length + 3}">Geen regels${RT.floorFilter !== 'all' ? ' op deze verdieping' : ''}. Lees een tekening uit of voeg een regel toe.</td></tr>`}</tbody></table></div>`;
+}
+function onOpnameChange(el) {
+  if (el.dataset.fk) {
+    const [id, k] = el.dataset.fk.split(':'); const f = floorById(id); if (!f) return;
+    if (k === 'name') f.name = el.value.trim() || f.name;
+    else if (k === 'order') { f.order = num(el.value) ?? f.order; sortFloors(); }
+    else if (k === 'H') f.H = len(el.value);
+    changed(); return;
+  }
+  const [t, id, k] = el.dataset.k.split(':');
+  const e = entList(t)?.find(x => x.id === id); if (!e) return;
+  const col = COLS[t]?.find(c => c.k === k);
+  if (k === 'checked') { e.checked = el.checked; changed({ noRender: true }); el.closest('tr')?.classList.toggle('checked', el.checked); return; }
+  let v;
+  if (col.type === 'bool') v = el.checked;
+  else if (col.type === 'len') { v = len(el.value); if (num(el.value) > 60) toast('Ingevoerd als millimeters en omgerekend naar meters.'); }
+  else if (col.type === 'num') v = num(el.value);
+  else if (col.type === 'int') v = el.value === '' ? null : int(el.value);
+  else if (col.type === 'int0') v = el.value === '' ? null : int(el.value, 0);
+  else v = el.value;
+  if (col.type === 'roomOut') { e.toOutside = v === '__out'; e.toRoomId = (v && v !== '__out') ? v : null; }
+  else e[k] = (v === '' && ['floor', 'room'].includes(col.type)) ? null : v;
+  if (t === 'items' && k === 'cat') { e.loc = CAT[v].group; if (CAT[v].unit) e.unit = CAT[v].unit; }
+  if (t === 'frames' && k === 'kind') e.door = ['deurkozijn', 'schuifpui', 'garagedeur'].includes(v);
+  if ((t === 'doors' || t === 'frames' || t === 'items') && k === 'roomId' && v) { const r = roomById(v); if (r) e.floorId = r.floorId; }
+  if (e.src) e.src.edited = true;
+  e.aiOk = false;
+  changed();
+}
+
+/* ---------- Tab: Opmeetstaat ---------- */
+function filteredLines() {
+  return RT.lines.filter(l => (RT.staatGroup === 'all' || l.group === RT.staatGroup) && (RT.staatFloor === 'all' || l.floorId === RT.staatFloor || (RT.staatFloor === 'none' && !l.floorId)));
+}
+function renderStaat() {
+  $('#staatTitle').textContent = 'Opmeetstaat ' + P.name;
+  $('#staatMeta').textContent = [P.client, P.address, P.date && new Date(P.date).toLocaleDateString('nl-NL'), P.by && 'opgenomen door ' + P.by].filter(Boolean).join(' · ');
+  $('#staatFilters').innerHTML = `<span class="small muted">Toon:</span>` +
+    [['all', 'Alles'], ['binnen', 'Binnen'], ['buiten', 'Buiten']].map(([k, l]) => `<button class="btn sm" data-sg="${k}" aria-pressed="${RT.staatGroup === k}" type="button">${l}</button>`).join('') +
+    `<span class="sep" style="width:10px"></span><select class="in" id="staatFloor" aria-label="Verdieping"><option value="all">Alle verdiepingen</option>${P.floors.map(f => `<option value="${f.id}" ${RT.staatFloor === f.id ? 'selected' : ''}>${esc(f.name)}</option>`).join('')}<option value="none" ${RT.staatFloor === 'none' ? 'selected' : ''}>Zonder verdieping</option></select>`;
+  const lines = filteredLines();
+  const tot = totals(lines);
+  const checkedSet = new Set(lines.filter(l => entityOf(l.ref)?.checked).map(l => l.ref.id));
+  const allRefs = new Set(lines.map(l => l.ref.id));
+  const card = (g, title) => {
+    const rows = tot.filter(t => t.group === g);
+    if (!rows.length) return '';
+    return `<div class="panel sum-card"><h3>${title} <span class="chip">${rows.length} onderdelen</span></h3>${rows.map(t => `<div class="sum-row"><span>${esc(CAT[t.cat].label)}${t.st && t.unit !== 'st' ? `<span class="st">${t.st} st</span>` : ''}</span><span class="v">${fmt(t.qty, t.unit === 'st' ? 0 : 2)}</span><span class="u">${t.unit}</span></div>`).join('')}</div>`;
+  };
+  const chk = allRefs.size ? checkedSet.size / allRefs.size : 0;
+  $('#sumGrid').innerHTML = card('binnen', 'Binnenschilderwerk') + card('buiten', 'Buitenschilderwerk') +
+    `<div class="panel sum-card"><h3>Controle</h3>
+      <div class="sum-row"><span>Fouten</span><span class="v" style="color:var(--bad)">${RT.issues.filter(i => i.lvl === 'fout').length}</span><span class="u"></span></div>
+      <div class="sum-row"><span>Waarschuwingen</span><span class="v" style="color:var(--warn)">${RT.issues.filter(i => i.lvl === 'waarschuwing').length}</span><span class="u"></span></div>
+      <div class="sum-row"><span>Onderdelen gecontroleerd</span><span class="v">${checkedSet.size} / ${allRefs.size}</span><span class="u"></span></div>
+      <div class="meter" aria-hidden="true"><i style="width:${Math.round(chk * 100)}%"></i></div>
+      <p class="small muted" style="margin:8px 0 0">Vink een regel af als je de maat zelf op de tekening hebt gecontroleerd.</p></div>`;
+  let html = `<thead><tr><th>✓</th><th>Onderdeel</th><th>Omschrijving</th><th>Berekening</th><th class="q">Hoeveelheid</th><th>Eenheid</th></tr></thead><tbody>`;
+  let g = null, sp = null;
+  for (const l of lines) {
+    const gkey = l.group + '|' + (l.group === 'binnen' ? (l.floorId || '') : '');
+    if (gkey !== g) { g = gkey; sp = null; html += `<tr class="grp"><td colspan="6">${l.group === 'binnen' ? 'Binnen · ' + esc(floorName(l.floorId)) : 'Buiten · gevels en dak'}</td></tr>`; }
+    if (l.space !== sp) { sp = l.space; html += `<tr class="grp2"><td></td><td colspan="5">${esc(l.space)}${l.group === 'buiten' && l.floorId ? ` <span class="small muted">(${esc(floorName(l.floorId))})</span>` : ''}</td></tr>`; }
+    const e = entityOf(l.ref);
+    html += `<tr class="${e?.checked ? 'checked' : ''}"><td><input type="checkbox" data-chk="${l.ref.t}:${l.ref.id}" ${e?.checked ? 'checked' : ''} aria-label="Gecontroleerd"></td>
+      <td>${esc(CAT[l.cat].label)}</td><td>${esc(l.desc)} ${e?.aiOk ? '<span class="chip ok">2× ✓</span>' : ''}</td><td class="formula">${esc(l.formula)}</td><td class="q"><b>${fmt(l.qty, l.unit === 'st' ? 0 : 2)}</b></td><td>${l.unit}</td></tr>`;
+  }
+  if (!lines.length) html += `<tr class="empty-row"><td colspan="6">Nog geen posten. Lees eerst een tekening uit of vul de opname in.</td></tr>`;
+  $('#staatTbl').innerHTML = html + '</tbody>';
+}
+function entityOf(ref) { if (!ref) return null; return entList(ref.t)?.find(e => e.id === ref.id) || null; }
+
+/* ---------- Tab: Controle ---------- */
+function renderControle() {
+  const I = RT.issues;
+  const f = I.filter(i => i.lvl === 'fout').length, w = I.filter(i => i.lvl === 'waarschuwing').length, inf = I.filter(i => i.lvl === 'info').length;
+  const ents = [...P.rooms, ...P.doors, ...P.frames, ...P.items];
+  const chk = ents.filter(e => e.checked).length, ai2 = ents.filter(e => e.aiOk).length;
+  $('#ctrlTiles').innerHTML = `
+    <div class="tile bad"><span class="small muted">Fouten</span><b>${f}</b><span class="small">moeten opgelost</span></div>
+    <div class="tile warn"><span class="small muted">Waarschuwingen</span><b>${w}</b><span class="small">nakijken</span></div>
+    <div class="tile info"><span class="small muted">Informatie</span><b>${inf}</b><span class="small">ter kennisname</span></div>
+    <div class="tile ok"><span class="small muted">Zelf gecontroleerd</span><b>${chk}/${ents.length}</b><div class="meter"><i style="width:${ents.length ? Math.round(chk / ents.length * 100) : 0}%"></i></div></div>
+    <div class="tile ok"><span class="small muted">Bevestigd door dubbelcheck</span><b>${ai2}/${ents.length}</b><div class="meter"><i style="width:${ents.length ? Math.round(ai2 / ents.length * 100) : 0}%"></i></div></div>`;
+  $('#ctrlFilter').innerHTML = [['all', 'Alles'], ['fout', 'Fouten'], ['waarschuwing', 'Waarschuwingen'], ['info', 'Info']].map(([k, l]) => `<button class="btn sm" data-cf="${k}" aria-pressed="${RT.ctrlFilter === k}" type="button">${l}</button>`).join('');
+  const list = I.map((x, i) => [x, i]).filter(([x]) => RT.ctrlFilter === 'all' || x.lvl === RT.ctrlFilter);
+  $('#issueList').innerHTML = list.length ? list.map(([x, i]) => `<div class="issue ${x.lvl}"><span class="chip ${x.lvl === 'fout' ? 'bad' : x.lvl === 'waarschuwing' ? 'warn' : 'info'}">${x.lvl}</span><span>${esc(x.msg)}</span><span class="acts">${x.ref ? `<button class="btn sm" data-goto="${i}" type="button">Ga naar</button>` : ''}${x.fix ? `<button class="btn sm primary" data-fix="${i}" type="button">${esc(x.fix.label)}</button>` : ''}</span></div>`).join('')
+    : '<p class="muted">Geen meldingen in deze selectie.</p>';
+  const sug = arr(P.suggestions).filter(s => s.status === 'open');
+  const done = arr(P.suggestions).filter(s => s.status !== 'open').length;
+  $('#btnDoubleCheck').disabled = RT.busy;
+  $('#aiSuggest').innerHTML = (sug.length ? sug.map(s => `<div class="issue waarschuwing"><span class="chip ${s.type === 'ontbrekend' ? 'info' : 'warn'}">${s.type === 'ontbrekend' ? 'ontbreekt' : 'afwijking'}</span>
+      <span><b>${esc(s.title)}</b><br><span class="small">${esc(s.text)}</span>${s.view ? `<br><span class="small muted">${esc(s.view)}${s.conf != null ? ' · zekerheid ' + pct(s.conf) : ''}</span>` : ''}</span>
+      <span class="acts"><button class="btn sm primary" data-sapply="${s.id}" type="button">${s.type === 'ontbrekend' ? 'Toevoegen' : 'Toepassen'}</button><button class="btn sm" data-sskip="${s.id}" type="button">Negeren</button></span></div>`).join('')
+    : `<p class="small muted">${done ? `Alle ${done} voorstellen zijn behandeld.` : 'Nog geen dubbelcheck uitgevoerd.'} ${Object.keys(RT.sheetData).length ? '' : 'Voor de dubbelcheck moet de tekening geopend zijn op het tabblad Tekeningen.'}</p>`);
+}
+function gotoRef(ref) {
+  if (!ref) return;
+  const sub = { rooms: 'rooms', doors: 'doors', frames: 'frames', items: 'items', floors: 'floors' }[ref.t];
+  RT.sub = sub; RT.floorFilter = 'all'; switchTab('opname');
+  requestAnimationFrame(() => { const row = document.getElementById('row-' + ref.id); if (row) { row.scrollIntoView({ block: 'center', behavior: 'smooth' }); row.classList.add('flash'); setTimeout(() => row.classList.remove('flash'), 2200); } });
+}
+
+/* ---------- Tab: Instellingen ---------- */
+function renderInstellingen() {
+  const S = P.settings;
+  const pf = [['name', 'Projectnaam'], ['client', 'Opdrachtgever'], ['address', 'Adres'], ['date', 'Datum opname', 'date'], ['by', 'Opgenomen door'], ['company', 'Bedrijfsnaam op export']];
+  $('#projForm').innerHTML = pf.map(([k, l, t]) => `<div class="field"><label for="pf-${k}">${l}</label><input class="in" id="pf-${k}" data-pf="${k}" type="${t || 'text'}" value="${esc(P[k] || '')}"></div>`).join('') +
+    `<div class="field" style="grid-column:1/-1"><label for="pf-notes">Notities</label><textarea class="in" id="pf-notes" data-pf="notes" rows="3">${esc(P.notes || '')}</textarea></div>`;
+  const sel = (k, opts) => `<select class="in" id="sf-${k}" data-sf="${k}">${opts.map(([v, l]) => `<option value="${v}" ${String(S[k]) === String(v) ? 'selected' : ''}>${l}</option>`).join('')}</select>`;
+  $('#setForm').innerHTML = `
+    <div class="field"><label for="sf-defaultH">Standaard plafondhoogte (m)</label><input class="in" id="sf-defaultH" data-sf="defaultH" inputmode="decimal" value="${fmtIn(S.defaultH)}"></div>
+    <div class="field"><label for="sf-deductMin">Openingen niet aftrekken onder (m²)</label><input class="in" id="sf-deductMin" data-sf="deductMin" inputmode="decimal" value="${fmtIn(S.deductMin)}"></div>
+    <div class="field"><label for="sf-doorSides">Binnendeur: te schilderen zijden</label>${sel('doorSides', [[2, '2 zijden'], [1, '1 zijde']])}</div>
+    <div class="field"><label for="sf-glaslatten">Glaslatten berekenen</label>${sel('glaslatten', [['buiten', 'Buitenzijde'], ['binnen', 'Binnenzijde'], ['uit', 'Niet berekenen']])}</div>
+    <div class="field"><label for="sf-aiTier">Nauwkeurigheid uitlezen</label>${sel('aiTier', [['complex', 'Hoogste (langzamer)'], ['default', 'Standaard (sneller)']])}</div>
+    <div class="field"><label for="sf-maxTiles">Max. uitvergrotingen per aanzicht</label>${sel('maxTiles', [[4, '4'], [6, '6'], [9, '9'], [12, '12']])}</div>
+    <div class="field"><label for="sf-minConf">Waarschuw onder zekerheid</label>${sel('minConf', [[0.5, '50%'], [0.6, '60%'], [0.7, '70%'], [0.8, '80%'], [0.9, '90%']])}</div>
+    <div class="field chk"><input type="checkbox" id="sf-deduct" data-sf="deduct" ${S.deduct ? 'checked' : ''}><label for="sf-deduct">Deuren en ramen aftrekken van wanden</label></div>
+    <div class="field chk"><input type="checkbox" id="sf-plinth" data-sf="plinthMinusDoors" ${S.plinthMinusDoors ? 'checked' : ''}><label for="sf-plinth">Deurbreedtes aftrekken van plinten</label></div>
+    <div class="field chk"><input type="checkbox" id="sf-dagkanten" data-sf="dagkanten" ${S.dagkanten ? 'checked' : ''}><label for="sf-dagkanten">Dagkanten bij ramen berekenen</label></div>
+    <div class="field chk"><input type="checkbox" id="sf-autoViews" data-sf="autoViews" ${S.autoViews ? 'checked' : ''}><label for="sf-autoViews">Aanzichten op een blad automatisch herkennen</label></div>`;
+  $('#storeInfo').textContent = Store.mode === 'db' ? 'Projecten worden opgeslagen in je Claude-account en zijn alleen voor jou zichtbaar. Tekeningen zelf worden niet opgeslagen: voeg ze opnieuw toe om ze te bekijken.'
+    : Store.mode === 'local' ? 'Projecten worden alleen in deze browser opgeslagen. Exporteer belangrijke projecten als .json.'
+      : 'Opslag is hier niet beschikbaar. Exporteer het project als .json om het te bewaren.';
+}
+
+/* ---------- Tekeningen: bladen en aanzichten ---------- */
+function curSheet() { return P.sheets.find(s => s.id === RT.curSheet) || null; }
+function renderAIStatus() {
+  const el = $('#aiStatus');
+  if (!RT.capsDone) { el.innerHTML = '<span class="muted">Verbinding met Claude controleren…</span>'; return; }
+  if (RT.sample && RT.limits?.images) el.innerHTML = `<span class="chip ok">Claude beschikbaar</span> <span class="muted">Leest tot ${RT.limits.images.maxCount} afbeeldingen per keer.</span>`;
+  else if (RT.sample) el.innerHTML = '<span class="chip warn">Claude zonder afbeeldingen</span> <span class="muted">In deze weergave kan Claude geen tekeningen bekijken. Handmatig meten werkt wel.</span>';
+  else el.innerHTML = '<span class="chip warn">Claude niet beschikbaar</span> <span class="muted">Open deze app in Claude om tekeningen automatisch uit te lezen. Handmatig meten en invoeren werkt wel.</span>';
+  const can = canAI();
+  ['#btnAnalyzeAll', '#btnDetect'].forEach(s => { const b = $(s); if (b) b.disabled = !can || RT.busy; });
+}
+const canAI = () => !!(RT.sample && RT.limits?.images);
+function renderTekeningen() {
+  renderAIStatus();
+  const list = $('#sheetList');
+  $('#sheetCount').textContent = P.sheets.length ? `${P.sheets.length} blad${P.sheets.length === 1 ? '' : 'en'}` : '';
+  list.innerHTML = P.sheets.length ? P.sheets.map(s => {
+    const rt = RT.sheetData[s.id];
+    const done = arr(s.views).filter(v => v.analyzed).length;
+    return `<div class="sheet" data-sheet="${s.id}" aria-current="${s.id === RT.curSheet}" role="button" tabindex="0">
+      ${rt?.thumb ? `<img src="${rt.thumb}" alt="">` : '<div class="ph"></div>'}
+      <div class="meta"><b>${esc(s.fileName)}${s.pages > 1 ? ' · blad ' + s.page : ''}</b>
+      <span class="small muted">${rt ? (arr(s.views).length ? `${done}/${arr(s.views).length} aanzichten uitgelezen` : 'nog niet uitgelezen') : 'bestand opnieuw toevoegen om te bekijken'}</span></div>
+      <button class="btn sm ghost danger" data-delsheet="${s.id}" type="button" aria-label="Blad verwijderen">×</button></div>`;
+  }).join('') : '<p class="small muted">Nog geen bladen. Tip: lever plattegronden, gevelaanzichten en een doorsnede aan voor de volledigste opname.</p>';
+  const s = curSheet();
+  const vl = $('#viewList');
+  if (!s) vl.innerHTML = '<p class="small muted">Selecteer een blad.</p>';
+  else {
+    const views = arr(s.views);
+    vl.innerHTML = (views.length ? views.map(v => `<div class="view ${v.id === RT.curView ? 'sel' : ''}">
+        <div class="vt"><span class="t" data-vsel="${v.id}" role="button" tabindex="0">${esc(v.title)}</span>${v.analyzed ? '<span class="chip ok">uitgelezen</span>' : `<span class="chip">${['plattegrond', 'gevel', 'doorsnede'].includes(v.kind) ? 'nog uitlezen' : 'wordt overgeslagen'}</span>`}</div>
+        <span class="small muted">${esc(label(VIEW_KINDS, v.kind))}${v.floor ? ' · ' + esc(v.floor) : ''}${v.facade ? ' · ' + esc(v.facade) : ''}${v.scale ? ' · ' + esc(v.scale) : ''}</span>
+        ${v.counts ? `<span class="small">${esc(v.counts)}</span>` : ''}
+        <span class="btn-row">
+          ${['plattegrond', 'gevel', 'doorsnede'].includes(v.kind) ? `<button class="btn sm ${v.analyzed ? '' : 'accent'}" data-vrun="${v.id}" type="button" ${canAI() && !RT.busy && RT.sheetData[s.id] ? '' : 'disabled'}>${v.analyzed ? 'Opnieuw' : 'Uitlezen'}</button>` : ''}
+          <button class="btn sm ghost" data-vedit="${v.id}" type="button">Wijzig</button>
+          <button class="btn sm ghost danger" data-vdel="${v.id}" type="button" aria-label="Aanzicht verwijderen">×</button></span></div>`).join('')
+      : `<p class="small muted">${RT.sheetData[s.id] ? 'Nog geen aanzichten. Klik op "Herken aanzichten" of kies "Gebied uitlezen" en trek een kader om een plattegrond of gevel.' : 'Voeg het bestand opnieuw toe om dit blad te bekijken.'}</p>`);
+  }
+  const ml = $('#measureList');
+  const ms = arr(s?.measures);
+  ml.innerHTML = ms.length ? ms.map(m => `<div class="m"><span>${m.type === 'area' ? 'Oppervlak' : 'Lengte'}: <b class="tnum">${measureText(s, m)}</b></span><span class="btn-row"><button class="btn sm" data-madd="${m.id}" type="button">Naar opname</button><button class="btn sm ghost danger" data-mdel="${m.id}" type="button" aria-label="Meting verwijderen">×</button></span></div>`).join('')
+    : `<p class="small muted">${s ? (s.mpu ? `Schaal: ${s.calibrated ? 'gekalibreerd' : 'uit tekening'} (1 m = ${fmt(1 / s.mpu, 1)} eenheden).` : 'Kalibreer eerst de schaal: klik op twee punten van een bekende maat.') + ' Meet daarna lengtes of oppervlaktes en zet ze in de opname.' : ''}</p>`;
+  renderBusy();
+  renderLog();
+  V.draw();
+}
+function measureText(s, m) {
+  const mpu = mpuAt(s, m.pts[0]);
+  if (!mpu) return 'kalibreer de schaal';
+  if (m.type === 'area') { const a = polyArea(m.pts) * mpu * mpu, p = polyLen(m.pts, true) * mpu; return `${fmt(a)} m² · omtrek ${fmt(p)} m`; }
+  return `${fmt(polyLen(m.pts, false) * mpu)} m`;
+}
+function polyLen(pts, closed) { let s = 0; for (let i = 1; i < pts.length; i++) s += Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y); if (closed && pts.length > 2) s += Math.hypot(pts[0].x - pts.at(-1).x, pts[0].y - pts.at(-1).y); return s; }
+function polyArea(pts) { let a = 0; for (let i = 0; i < pts.length; i++) { const p = pts[i], q = pts[(i + 1) % pts.length]; a += p.x * q.y - q.x * p.y; } return Math.abs(a) / 2; }
+function scaleDen(s) { const m = str(s).replace(/\s/g, '').match(/1[:/](\d+)/); return m ? Number(m[1]) : null; }
+/* meters per basis-eenheid: gekalibreerd, of uit de schaal van het aanzicht (alleen PDF op ware papiergrootte) */
+function mpuAt(s, pt) {
+  if (s.calibrated && s.mpu) return s.mpu;
+  if (s.kind === 'pdf' && pt) {
+    const v = arr(s.views).find(v => v.bbox && v.scale && pt.x >= v.bbox[0] * s.baseW && pt.x <= v.bbox[2] * s.baseW && pt.y >= v.bbox[1] * s.baseH && pt.y <= v.bbox[3] * s.baseH);
+    const den = scaleDen(v?.scale) || scaleDen(s.scale);
+    if (den) return 0.0003527778 * den;
+  }
+  return s.mpu || null;
+}
+
+function log(msg, cls = '') {
+  RT.log.push({ t: new Date().toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit', second: '2-digit' }), msg, cls });
+  if (RT.log.length > 300) RT.log.shift();
+  renderLog();
+}
+function renderLog() {
+  const el = $('#aiLog'); if (!el) return;
+  el.innerHTML = RT.log.length ? RT.log.map(l => `<div class="l ${l.cls}"><time>${l.t}</time><span>${esc(l.msg)}</span></div>`).join('') : '<p class="small muted" style="margin:0">Hier zie je wat Claude aan het doen is tijdens het uitlezen.</p>';
+  el.scrollTop = el.scrollHeight;
+}
+function setBusy(text) { RT.busy = !!text; RT.busyText = text || ''; renderBusy(); renderAIStatus(); }
+function renderBusy() {
+  $('#busyBox').classList.toggle('hidden', !RT.busy);
+  $('#busyText').textContent = RT.busyText || '';
+}
+
+/* ---------- Bestanden inlezen ---------- */
+async function ensurePdfjs() {
+  await loadScript(LIB.pdf); await loadScript(LIB.pdfWorker);
+  const lib = window.pdfjsLib; if (!lib) throw new Error('PDF-lezer niet beschikbaar');
+  lib.GlobalWorkerOptions.workerSrc = LIB.pdfWorker;
+  return lib;
+}
+async function addFiles(files) {
+  files = Array.from(files || []).filter(f => /pdf|png|jpe?g|webp/i.test(f.type) || /\.(pdf|png|jpe?g|webp)$/i.test(f.name));
+  if (!files.length) { toast('Kies een PDF, JPG of PNG.'); return; }
+  await ensureRealProject();
+  let firstNew = null;
+  for (const file of files) {
+    try {
+      log(`Bestand ${file.name} openen…`);
+      if (/pdf/i.test(file.type) || /\.pdf$/i.test(file.name)) {
+        const lib = await ensurePdfjs();
+        const pdf = await lib.getDocument({ data: new Uint8Array(await file.arrayBuffer()), isEvalSupported: false }).promise;
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i); const vp = page.getViewport({ scale: 1 });
+          let s = P.sheets.find(x => x.fileName === file.name && x.page === i && x.fileSize === file.size);
+          if (!s) { s = { id: uid('s'), fileName: file.name, fileSize: file.size, page: i, pages: pdf.numPages, kind: 'pdf', baseW: vp.width, baseH: vp.height, mpu: null, calibrated: false, scale: null, views: [], measures: [] }; P.sheets.push(s); }
+          RT.sheetData[s.id] = { kind: 'pdf', pdf, page, baseW: vp.width, baseH: vp.height };
+          firstNew = firstNew || s.id;
+          makeThumb(s.id).then(() => RT.tab === 'tekeningen' && renderTekeningen());
+        }
+        log(`${file.name}: ${pdf.numPages} blad${pdf.numPages === 1 ? '' : 'en'} ingelezen.`, 'ok');
+      } else {
+        let bmp = await createImageBitmap(file);
+        const mp = bmp.width * bmp.height;
+        if (mp > 36e6) { const f = Math.sqrt(36e6 / mp); const w = Math.round(bmp.width * f), h = Math.round(bmp.height * f); bmp.close?.(); bmp = await createImageBitmap(file, { resizeWidth: w, resizeHeight: h, resizeQuality: 'high' }); }
+        let s = P.sheets.find(x => x.fileName === file.name && x.fileSize === file.size);
+        if (!s) { s = { id: uid('s'), fileName: file.name, fileSize: file.size, page: 1, pages: 1, kind: 'img', baseW: bmp.width, baseH: bmp.height, mpu: null, calibrated: false, scale: null, views: [], measures: [] }; P.sheets.push(s); }
+        RT.sheetData[s.id] = { kind: 'img', bitmap: bmp, baseW: bmp.width, baseH: bmp.height };
+        firstNew = firstNew || s.id;
+        await makeThumb(s.id);
+        log(`${file.name}: afbeelding ingelezen (${bmp.width} × ${bmp.height} px).`, 'ok');
+      }
+    } catch (e) {
+      console.error(e); log(`${file.name} kon niet worden geopend: ${e.message || e}`, 'err');
+    }
+  }
+  if (firstNew) { RT.curSheet = firstNew; RT.curView = null; V.fitPending = true; }
+  changed({ noRender: true }); renderTekeningen(); viewerLoadSheet();
+  if (canAI() && firstNew) toast('Tekening toegevoegd. Klik op "Alle bladen uitlezen met Claude" of kies een aanzicht.', 4500);
+}
+async function renderRegion(sheetId, rect, scale) {
+  const rt = RT.sheetData[sheetId]; if (!rt) throw new Error('Tekening niet geladen');
+  const cw = Math.max(1, Math.round(rect.w * scale)), ch = Math.max(1, Math.round(rect.h * scale));
+  const c = document.createElement('canvas'); c.width = cw; c.height = ch;
+  const ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, cw, ch);
+  if (rt.kind === 'pdf') {
+    const vp = rt.page.getViewport({ scale });
+    const task = rt.page.render({ canvasContext: ctx, viewport: vp, transform: [1, 0, 0, 1, -rect.x * scale, -rect.y * scale] });
+    await task.promise;
+  } else {
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(rt.bitmap, rect.x, rect.y, rect.w, rect.h, 0, 0, cw, ch);
+  }
+  return c;
+}
+async function makeThumb(sheetId) {
+  const rt = RT.sheetData[sheetId]; if (!rt) return;
+  try {
+    const s = 160 / Math.max(rt.baseW, rt.baseH);
+    const c = await renderRegion(sheetId, { x: 0, y: 0, w: rt.baseW, h: rt.baseH }, s);
+    rt.thumb = c.toDataURL('image/jpeg', 0.7);
+  } catch (e) { console.warn(e); }
+}
+async function midImage(sheetId) {
+  const rt = RT.sheetData[sheetId]; if (!rt) return null;
+  if (rt.kind === 'img') return { img: rt.bitmap, scale: 1 };
+  if (!rt.mid) {
+    const s = 2400 / Math.max(rt.baseW, rt.baseH);
+    rt.mid = { img: await renderRegion(sheetId, { x: 0, y: 0, w: rt.baseW, h: rt.baseH }, s), scale: s };
+  }
+  return rt.mid;
+}
+
+/* ---------- Viewer ---------- */
+const V = {
+  cv: null, ctx: null, w: 0, h: 0, dpr: 1, zoom: 1, ox: 0, oy: 0, tool: 'pan', img: null, imgScale: 1, hi: null, hiToken: 0,
+  pointers: new Map(), drag: null, pts: [], sel: null, fitPending: true, hover: null,
+  init() {
+    this.cv = $('#cv'); this.ctx = this.cv.getContext('2d');
+    new ResizeObserver(() => this.resize()).observe($('#viewer'));
+    const el = $('#viewer');
+    el.addEventListener('pointerdown', e => this.down(e));
+    el.addEventListener('pointermove', e => this.move(e));
+    el.addEventListener('pointerup', e => this.up(e));
+    el.addEventListener('pointercancel', e => { this.pointers.delete(e.pointerId); this.drag = null; });
+    el.addEventListener('wheel', e => { e.preventDefault(); const r = this.cv.getBoundingClientRect(); this.zoomAt(e.clientX - r.left, e.clientY - r.top, Math.exp(-e.deltaY * 0.0015)); }, { passive: false });
+    el.addEventListener('dblclick', e => { if (this.tool === 'len' || this.tool === 'area') { e.preventDefault(); this.finishMeasure(); } });
+    document.addEventListener('keydown', e => {
+      if (RT.tab !== 'tekeningen' || /INPUT|SELECT|TEXTAREA/.test(document.activeElement?.tagName)) return;
+      if (e.key === 'Escape') { this.pts = []; this.sel = null; this.draw(); this.hint(); }
+      if (e.key === 'Enter') this.finishMeasure();
+      if (e.key === 'Backspace' && this.pts.length) { this.pts.pop(); this.draw(); this.hint(); }
+    });
+  },
+  resize() {
+    const r = $('#viewer').getBoundingClientRect(); if (!r.width) return;
+    this.dpr = window.devicePixelRatio || 1; this.w = r.width; this.h = r.height;
+    this.cv.width = Math.round(r.width * this.dpr); this.cv.height = Math.round(r.height * this.dpr);
+    if (this.fitPending && this.img) this.fit();
+    this.draw();
+  },
+  fit() {
+    const s = curSheet(); if (!s || !this.w) return;
+    this.zoom = Math.min(this.w / s.baseW, this.h / s.baseH) * 0.96;
+    this.ox = (this.w - s.baseW * this.zoom) / 2; this.oy = (this.h - s.baseH * this.zoom) / 2;
+    this.fitPending = false; this.scheduleHi(); this.draw();
+  },
+  fitRect(b) {
+    const s = curSheet(); if (!s) return;
+    const x0 = b[0] * s.baseW, y0 = b[1] * s.baseH, x1 = b[2] * s.baseW, y1 = b[3] * s.baseH;
+    this.zoom = Math.min(this.w / (x1 - x0), this.h / (y1 - y0)) * 0.9;
+    this.ox = this.w / 2 - (x0 + x1) / 2 * this.zoom; this.oy = this.h / 2 - (y0 + y1) / 2 * this.zoom;
+    this.scheduleHi(); this.draw();
+  },
+  toBase(sx, sy) { return { x: (sx - this.ox) / this.zoom, y: (sy - this.oy) / this.zoom }; },
+  toScr(p) { return { x: this.ox + p.x * this.zoom, y: this.oy + p.y * this.zoom }; },
+  zoomAt(sx, sy, f) {
+    const nz = clamp(this.zoom * f, 0.02, 40);
+    const b = this.toBase(sx, sy); this.zoom = nz; this.ox = sx - b.x * nz; this.oy = sy - b.y * nz;
+    this.scheduleHi(); this.draw();
+  },
+  local(e) { const r = this.cv.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; },
+  down(e) {
+    if (!this.img) return;
+    $('#viewer').setPointerCapture?.(e.pointerId);
+    const p = this.local(e); this.pointers.set(e.pointerId, p);
+    if (this.pointers.size === 2) { const [a, b] = [...this.pointers.values()]; this.drag = { pinch: true, d: Math.hypot(a.x - b.x, a.y - b.y), cx: (a.x + b.x) / 2, cy: (a.y + b.y) / 2 }; return; }
+    this.drag = { x: p.x, y: p.y, ox: this.ox, oy: this.oy, moved: false, start: this.toBase(p.x, p.y) };
+  },
+  move(e) {
+    if (!this.img) return;
+    const p = this.local(e);
+    if (this.pointers.has(e.pointerId)) this.pointers.set(e.pointerId, p);
+    if (this.drag?.pinch && this.pointers.size === 2) {
+      const [a, b] = [...this.pointers.values()]; const d = Math.hypot(a.x - b.x, a.y - b.y), cx = (a.x + b.x) / 2, cy = (a.y + b.y) / 2;
+      this.ox += cx - this.drag.cx; this.oy += cy - this.drag.cy; this.zoomAt(cx, cy, d / this.drag.d); this.drag.d = d; this.drag.cx = cx; this.drag.cy = cy; return;
+    }
+    if (this.drag && !this.drag.pinch) {
+      const dx = p.x - this.drag.x, dy = p.y - this.drag.y;
+      if (Math.hypot(dx, dy) > 5) this.drag.moved = true;
+      if (this.tool === 'select' && this.drag.moved) { const b = this.toBase(p.x, p.y); this.sel = { x0: this.drag.start.x, y0: this.drag.start.y, x1: b.x, y1: b.y }; this.draw(); return; }
+      if (this.drag.moved) { this.ox = this.drag.ox + dx; this.oy = this.drag.oy + dy; this.draw(); }
+      return;
+    }
+    if (['calib', 'len', 'area'].includes(this.tool) && this.pts.length) { this.hover = this.toBase(p.x, p.y); this.draw(); }
+  },
+  up(e) {
+    const p = this.local(e); this.pointers.delete(e.pointerId);
+    const d = this.drag; if (!d) return;
+    if (d.pinch) { if (this.pointers.size === 0) this.drag = null; return; }
+    this.drag = null;
+    if (d.moved) { this.scheduleHi(); if (this.tool === 'select' && this.sel) this.finishSelect(); return; }
+    const b = this.toBase(p.x, p.y);
+    if (this.tool === 'calib') { this.pts.push(b); if (this.pts.length === 2) this.finishCalib(); this.draw(); this.hint(); return; }
+    if (this.tool === 'len' || this.tool === 'area') { this.pts.push(b); this.draw(); this.hint(); return; }
+    if (this.tool === 'pan') this.pickAt(b);
+  },
+  pickAt(b) {
+    const s = curSheet(); if (!s) return;
+    const nx = b.x / s.baseW, ny = b.y / s.baseH;
+    const v = arr(s.views).find(v => v.bbox && nx >= v.bbox[0] && nx <= v.bbox[2] && ny >= v.bbox[1] && ny <= v.bbox[3]);
+    if (v && v.id !== RT.curView) { RT.curView = v.id; renderTekeningen(); }
+  },
+  setTool(t) {
+    this.tool = t; this.pts = []; this.sel = null;
+    $$('[data-tool]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.tool === t)));
+    this.hint(); this.draw();
+  },
+  hint() {
+    const h = $('#toolHint'); const s = curSheet();
+    const msg = !this.img ? '' : {
+      pan: '',
+      select: 'Trek een kader om één plattegrond, gevel of doorsnede. Claude leest daarna alleen dat gebied uit, scherper dan het hele blad.',
+      calib: this.pts.length === 0 ? 'Klik op het begin van een maatlijn met een bekende maat.' : 'Klik op het einde van dezelfde maatlijn.',
+      len: this.pts.length < 2 ? 'Klik punten langs het onderdeel. Dubbelklik of Enter om af te ronden.' : `Lengte ${s ? measureText(s, { type: 'len', pts: this.pts }) : ''}. Dubbelklik of Enter om af te ronden.`,
+      area: this.pts.length < 3 ? 'Klik de hoeken van de ruimte. Dubbelklik of Enter om af te ronden.' : `${s ? measureText(s, { type: 'area', pts: this.pts }) : ''}. Dubbelklik of Enter om af te ronden.`,
+    }[this.tool];
+    h.textContent = msg; h.classList.toggle('hidden', !msg);
+  },
+  async finishCalib() {
+    const s = curSheet(); const [a, b] = this.pts; this.pts = [];
+    const d = Math.hypot(b.x - a.x, b.y - a.y);
+    const v = await modal('Schaal kalibreren', `<div class="field"><label for="calLen">Werkelijke lengte tussen de twee punten (meter, of mm)</label><input class="in" id="calLen" inputmode="decimal" placeholder="bijv. 3,60 of 3600"></div>`, [{ label: 'Annuleren', value: null }, { label: 'Opslaan', cls: 'primary', value: root => $('#calLen', root).value }]);
+    const L = len(v);
+    if (L && d > 0) {
+      s.mpu = L / d; s.calibrated = true; changed({ noRender: true }); renderTekeningen();
+      const auto = s.kind === 'pdf' ? mpuFromScale(s) : null;
+      toast(`Schaal ingesteld: 1 m = ${fmt(1 / s.mpu, 1)} eenheden.` + (auto ? ` Dat is ${pct(Math.abs(auto - s.mpu) / s.mpu)} verschil met de schaal op de tekening.` : ''), 5000);
+    }
+    this.setTool('len');
+  },
+  async finishMeasure() {
+    const s = curSheet(); if (!s) return;
+    if (this.tool === 'len' && this.pts.length >= 2) { s.measures = arr(s.measures); s.measures.push({ id: uid('m'), type: 'len', pts: this.pts }); }
+    else if (this.tool === 'area' && this.pts.length >= 3) { s.measures = arr(s.measures); s.measures.push({ id: uid('m'), type: 'area', pts: this.pts }); }
+    else return;
+    const m = s.measures.at(-1); this.pts = []; this.hover = null;
+    changed({ noRender: true }); renderTekeningen(); this.hint();
+    measureToOpname(s, m);
+  },
+  async finishSelect() {
+    const s = curSheet(); const sel = this.sel; this.sel = null; this.draw();
+    if (!s || !sel) return;
+    const x0 = clamp(Math.min(sel.x0, sel.x1) / s.baseW, 0, 1), x1 = clamp(Math.max(sel.x0, sel.x1) / s.baseW, 0, 1);
+    const y0 = clamp(Math.min(sel.y0, sel.y1) / s.baseH, 0, 1), y1 = clamp(Math.max(sel.y0, sel.y1) / s.baseH, 0, 1);
+    if ((x1 - x0) < 0.02 || (y1 - y0) < 0.02) return;
+    const v = await editViewDialog({ id: uid('v'), title: '', kind: 'plattegrond', floor: '', facade: '', scale: s.scale || '', bbox: [x0, y0, x1, y1], analyzed: false, manual: true }, true);
+    if (!v) return;
+    s.views.push(v); RT.curView = v.id; changed({ noRender: true }); renderTekeningen();
+    if (canAI()) runAI(signal => analyzeView(s, v, signal));
+  },
+  scheduleHi() {
+    clearTimeout(this._hiT); this._hiT = setTimeout(() => this.renderHi(), 260);
+  },
+  async renderHi() {
+    const s = curSheet(); const rt = s && RT.sheetData[s.id];
+    if (!rt || rt.kind !== 'pdf' || !this.img) return;
+    const want = this.zoom * this.dpr;
+    if (want <= this.imgScale * 1.15) { this.hi = null; this.draw(); return; }
+    const a = this.toBase(0, 0), b = this.toBase(this.w, this.h);
+    const rect = { x: clamp(a.x, 0, s.baseW), y: clamp(a.y, 0, s.baseH) }; rect.w = clamp(b.x, 0, s.baseW) - rect.x; rect.h = clamp(b.y, 0, s.baseH) - rect.y;
+    if (rect.w <= 1 || rect.h <= 1) return;
+    let sc = Math.min(want, 10); while (rect.w * rect.h * sc * sc > 14e6) sc *= 0.85;
+    const token = ++this.hiToken;
+    try { const c = await renderRegion(s.id, rect, sc); if (token === this.hiToken) { this.hi = { sheet: s.id, rect, c }; this.draw(); } } catch (e) { console.warn(e); }
+  },
+  draw() {
+    const ctx = this.ctx; if (!ctx) return;
+    const s = curSheet();
+    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, this.cv.width, this.cv.height);
+    const has = !!(s && this.img);
+    $('#viewerEmpty').classList.toggle('hidden', has);
+    if (s && !RT.sheetData[s.id]) $('#viewerEmpty').innerHTML = `<div><h3>${esc(s.fileName)}</h3><p class="small">Dit blad hoort bij het project, maar het bestand is niet geopend. Voeg ${esc(s.fileName)} opnieuw toe om het te bekijken. De opname blijft bewaard.</p></div>`;
+    else if (!s) $('#viewerEmpty').innerHTML = `<div><h3>Nog geen tekening geopend</h3><p class="small">Voeg links een bouwtekening toe. Claude leest daarna per verdieping alle ruimtes, deuren, kozijnen en gevelonderdelen uit.</p></div>`;
+    const si = $('#scaleInfo');
+    if (!has) { si.classList.add('hidden'); return; }
+    si.classList.remove('hidden');
+    si.textContent = s.calibrated ? 'Schaal gekalibreerd' : (s.kind === 'pdf' && (s.scale || arr(s.views).some(v => v.scale))) ? 'Schaal uit tekening' : 'Schaal niet gekalibreerd';
+    ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
+    ctx.fillStyle = '#ffffff'; ctx.fillRect(this.ox, this.oy, s.baseW * this.zoom, s.baseH * this.zoom);
+    ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(this.img, this.ox, this.oy, s.baseW * this.zoom, s.baseH * this.zoom);
+    if (this.hi && this.hi.sheet === s.id) { const r = this.hi.rect; ctx.drawImage(this.hi.c, this.ox + r.x * this.zoom, this.oy + r.y * this.zoom, r.w * this.zoom, r.h * this.zoom); }
+    const R = b => [this.ox + b[0] * s.baseW * this.zoom, this.oy + b[1] * s.baseH * this.zoom, (b[2] - b[0]) * s.baseW * this.zoom, (b[3] - b[1]) * s.baseH * this.zoom];
+    ctx.font = '600 12px Barlow, system-ui, sans-serif'; ctx.textBaseline = 'top';
+    for (const v of arr(s.views)) {
+      if (!v.bbox) continue; const [x, y, w, h] = R(v.bbox); const sel = v.id === RT.curView;
+      ctx.lineWidth = sel ? 3 : 1.5; ctx.strokeStyle = sel ? '#f2b21b' : (v.analyzed ? '#1d7a4c' : '#285f9f'); ctx.setLineDash(v.analyzed ? [] : [6, 4]);
+      ctx.strokeRect(x, y, w, h); ctx.setLineDash([]);
+      const t = v.title + (v.analyzed ? '  ✓' : ''); const tw = ctx.measureText(t).width + 10;
+      ctx.fillStyle = sel ? '#f2b21b' : (v.analyzed ? '#1d7a4c' : '#285f9f'); ctx.fillRect(x, y - 18 < 0 ? y : y - 18, tw, 18);
+      ctx.fillStyle = sel ? '#1d1500' : '#fff'; ctx.fillText(t, x + 5, (y - 18 < 0 ? y : y - 18) + 3);
+    }
+    if ($('#showRooms').checked) {
+      for (const r of P.rooms) {
+        if (r.src?.sheetId !== s.id || !r.src.bbox) continue;
+        const [x, y, w, h] = R(r.src.bbox);
+        const hl = RT.highlight === r.id;
+        ctx.fillStyle = hl ? 'rgba(242,178,27,.30)' : 'rgba(40,95,159,.08)'; ctx.fillRect(x, y, w, h);
+        ctx.strokeStyle = hl ? '#f2b21b' : 'rgba(40,95,159,.55)'; ctx.lineWidth = hl ? 3 : 1; ctx.strokeRect(x, y, w, h);
+        if (w > 40) {
+          const t = r.name; ctx.font = '600 11px Barlow, system-ui, sans-serif'; const tw = ctx.measureText(t).width + 8;
+          ctx.fillStyle = 'rgba(255,255,255,.88)'; ctx.fillRect(x + 2, y + 2, Math.min(tw, w - 4), 16); ctx.fillStyle = '#15233b'; ctx.fillText(t, x + 6, y + 4, w - 10);
+        }
+      }
+    }
+    const drawPoly = (pts, closed, color, labelTxt) => {
+      if (!pts.length) return;
+      ctx.strokeStyle = color; ctx.lineWidth = 2.5; ctx.beginPath();
+      pts.forEach((p, i) => { const q = this.toScr(p); i ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y); });
+      if (closed) { ctx.closePath(); ctx.fillStyle = 'rgba(242,178,27,.18)'; ctx.fill(); }
+      ctx.stroke();
+      for (const p of pts) { const q = this.toScr(p); ctx.fillStyle = color; ctx.beginPath(); ctx.arc(q.x, q.y, 4, 0, Math.PI * 2); ctx.fill(); }
+      if (labelTxt) { const q = this.toScr(pts[pts.length - 1]); ctx.font = '700 13px Barlow, system-ui, sans-serif'; const tw = ctx.measureText(labelTxt).width + 10; ctx.fillStyle = '#15233b'; ctx.fillRect(q.x + 8, q.y - 10, tw, 20); ctx.fillStyle = '#fff'; ctx.fillText(labelTxt, q.x + 13, q.y - 6); }
+    };
+    for (const m of arr(s.measures)) drawPoly(m.pts, m.type === 'area', '#d9480f', measureText(s, m));
+    if (this.pts.length) {
+      const pts = this.hover && this.tool !== 'calib' ? [...this.pts, this.hover] : (this.hover && this.tool === 'calib' ? [...this.pts, this.hover] : this.pts);
+      drawPoly(pts, this.tool === 'area' && pts.length > 2, '#f2b21b', '');
+    }
+    if (this.sel) { const a = this.toScr({ x: this.sel.x0, y: this.sel.y0 }), b = this.toScr({ x: this.sel.x1, y: this.sel.y1 }); ctx.strokeStyle = '#f2b21b'; ctx.lineWidth = 2; ctx.setLineDash([6, 4]); ctx.strokeRect(a.x, a.y, b.x - a.x, b.y - a.y); ctx.setLineDash([]); ctx.fillStyle = 'rgba(242,178,27,.12)'; ctx.fillRect(a.x, a.y, b.x - a.x, b.y - a.y); }
+  },
+};
+function mpuFromScale(s) { const den = scaleDen(s.scale) || scaleDen(arr(s.views).find(v => v.scale)?.scale); return den ? 0.0003527778 * den : null; }
+async function viewerLoadSheet() {
+  const s = curSheet(); V.hi = null;
+  if (!s || !RT.sheetData[s.id]) { V.img = null; V.draw(); V.hint(); return; }
+  const m = await midImage(s.id); if (!m) return;
+  if (curSheet()?.id !== s.id) return;
+  V.img = m.img; V.imgScale = m.scale;
+  if (V.fitPending) V.fit(); else V.draw();
+  V.hint();
+}
+async function editViewDialog(v, isNew) {
+  const kinds = VIEW_KINDS.map(([k, l]) => `<option value="${k}" ${v.kind === k ? 'selected' : ''}>${l}</option>`).join('');
+  const res = await modal(isNew ? 'Wat staat er in dit kader?' : 'Aanzicht wijzigen', `<div class="form">
+    <div class="field"><label for="vk">Soort tekening</label><select class="in" id="vk">${kinds}</select></div>
+    <div class="field"><label for="vt">Titel</label><input class="in" id="vt" value="${esc(v.title)}" placeholder="bijv. Plattegrond begane grond"></div>
+    <div class="field"><label for="vf">Verdieping</label><input class="in" id="vf" value="${esc(v.floor || '')}" placeholder="bijv. Begane grond" list="floorNames"></div>
+    <div class="field"><label for="vg">Gevel</label><input class="in" id="vg" value="${esc(v.facade || '')}" placeholder="bijv. Voorgevel"></div>
+    <div class="field"><label for="vs">Schaal</label><input class="in" id="vs" value="${esc(v.scale || '')}" placeholder="bijv. 1:50"></div>
+    <datalist id="floorNames">${['Kelder', 'Begane grond', '1e verdieping', '2e verdieping', 'Zolder', ...P.floors.map(f => f.name)].map(n => `<option value="${esc(n)}">`).join('')}</datalist></div>
+    <p class="small muted">${isNew ? (canAI() ? 'Claude leest dit gebied direct uit na Opslaan.' : 'Claude is hier niet beschikbaar; het kader wordt alleen bewaard.') : ''}</p>`,
+    [{ label: 'Annuleren', value: null }, { label: isNew ? 'Opslaan en uitlezen' : 'Opslaan', cls: 'primary', value: root => ({ kind: $('#vk', root).value, title: $('#vt', root).value.trim(), floor: $('#vf', root).value.trim(), facade: $('#vg', root).value.trim(), scale: $('#vs', root).value.trim() }) }]);
+  if (!res) return null;
+  Object.assign(v, res);
+  if (!v.title) v.title = v.kind === 'gevel' ? (v.facade || 'Gevel') : v.kind === 'plattegrond' ? 'Plattegrond ' + (v.floor || '').toLowerCase() : label(VIEW_KINDS, v.kind);
+  return v;
+}
+async function measureToOpname(s, m) {
+  const mpu = mpuAt(s, m.pts[0]);
+  if (!mpu) { toast('Kalibreer eerst de schaal om deze meting te gebruiken.'); return; }
+  const isArea = m.type === 'area';
+  const A = isArea ? polyArea(m.pts) * mpu * mpu : null, Lm = polyLen(m.pts, isArea) * mpu;
+  const floors = P.floors.map(f => `<option value="${f.id}">${esc(f.name)}</option>`).join('');
+  const body = isArea ? `<p>Gemeten: <b>${fmt(A)} m²</b>, omtrek <b>${fmt(Lm)} m</b>.</p><div class="form">
+      <div class="field"><label for="mt">Toevoegen als</label><select class="in" id="mt"><option value="room">Ruimte (binnen)</option><option value="roomout">Ruimte (buiten)</option><option value="item">Onderdeel in m²</option></select></div>
+      <div class="field"><label for="mn">Naam / omschrijving</label><input class="in" id="mn" value="Gemeten ruimte"></div>
+      <div class="field"><label for="mf">Verdieping</label><select class="in" id="mf"><option value="">—</option>${floors}<option value="__new">Nieuwe: Begane grond</option></select></div>
+      <div class="field"><label for="mc">Onderdeel (bij m²)</label><select class="in" id="mc">${ITEM_CATS.filter(c => c[2] === 'm²' || !c[2]).map(([k, l]) => `<option value="${k}">${esc(l)}</option>`).join('')}</select></div></div>`
+    : `<p>Gemeten: <b>${fmt(Lm)} m</b>.</p><div class="form">
+      <div class="field"><label for="mc">Onderdeel</label><select class="in" id="mc">${ITEM_CATS.filter(c => c[2] === 'm1' || !c[2]).map(([k, l]) => `<option value="${k}">${esc(l)}</option>`).join('')}</select></div>
+      <div class="field"><label for="mn">Omschrijving</label><input class="in" id="mn" value=""></div>
+      <div class="field"><label for="mf">Verdieping</label><select class="in" id="mf"><option value="">—</option>${floors}</select></div>
+      <div class="field"><label for="mg">Gevel (bij buitenwerk)</label><input class="in" id="mg" value=""></div></div>`;
+  const r = await modal('Meting overnemen in de opname?', body, [{ label: 'Alleen bewaren als meting', value: null }, { label: 'Toevoegen', cls: 'primary', value: root => ({ t: $('#mt', root)?.value || 'item', name: $('#mn', root).value.trim(), f: $('#mf', root).value, c: $('#mc', root).value, g: $('#mg', root)?.value.trim() || '' }) }]);
+  if (!r) return;
+  let floorId = r.f === '__new' ? floorFor('Begane grond').id : (r.f || null);
+  if (r.t === 'room' || r.t === 'roomout') {
+    if (!floorId) floorId = (P.floors[0] || floorFor('Begane grond')).id;
+    P.rooms.push({ id: uid('r'), floorId, name: r.name || 'Gemeten ruimte', loc: r.t === 'room' ? 'binnen' : 'buiten', L: null, B: null, H: null, area: r2(A), perim: r2(Lm), tileH: 0, walls: true, ceiling: true, plinth: r.t === 'room', conf: null, note: 'Gemeten op tekening', src: { kind: 'meet', sheetId: s.id }, checked: false });
+    RT.sub = 'rooms';
+  } else {
+    const c = CAT[r.c];
+    P.items.push({ id: uid('i'), floorId, roomId: null, facade: r.g, loc: c.group, cat: c.k, desc: r.name || c.label, unit: c.unit || (isArea ? 'm²' : 'm1'), len: isArea ? null : r2(Lm), w: null, h: null, area: isArea ? r2(A) : null, n: 1, conf: null, note: 'Gemeten op tekening', src: { kind: 'meet', sheetId: s.id }, checked: false });
+    RT.sub = 'items';
+  }
+  changed({ noRender: true }); toast('Toegevoegd aan de opname.');
+}
+
+/* ---------- Claude: uitlezen ---------- */
+const AI_ERR = {
+  not_granted: 'Je hebt de app geen toestemming gegeven om Claude te gebruiken. Herlaad de pagina om het opnieuw te vragen.',
+  sampling_disabled: 'Claude is niet beschikbaar voor dit account.',
+  rate_limited: 'Te veel aanvragen of je gebruikslimiet is bereikt. Probeer het later opnieuw.',
+  session_expired: 'Je sessie is verlopen. Log opnieuw in bij Claude.',
+  image_rejected: 'Een afbeelding werd geweigerd (te groot of onbekend formaat). Kies een kleiner gebied.',
+  images_unavailable: 'In deze weergave kan Claude geen afbeeldingen bekijken.',
+  refused: 'Claude wilde deze tekening niet uitlezen.',
+  empty_completion: 'Claude gaf geen antwoord. Probeer een kleiner gebied.',
+  invalid_json: 'Het antwoord van Claude was onvolledig. Probeer opnieuw of selecteer een kleiner gebied.',
+  prompt_too_large: 'De aanvraag was te groot. Selecteer een kleiner gebied.',
+  cancelled: 'Gestopt.',
+};
+const aiErr = e => AI_ERR[e?.code] || ('Er ging iets mis bij Claude' + (e?.message ? ': ' + e.message : '') + '. Probeer het opnieuw.');
+async function runAI(fn) {
+  if (RT.busy) { toast('Claude is nog bezig.'); return; }
+  if (!canAI()) { toast('Claude is hier niet beschikbaar.'); return; }
+  RT.abort = new AbortController();
+  setBusy('Claude aan het werk…');
+  try { await fn(RT.abort.signal); }
+  catch (e) {
+    console.error(e);
+    if (e?.code === 'cancelled' || e?.name === 'AbortError') log('Gestopt.', 'err');
+    else log(aiErr(e), 'err');
+    if (['not_granted', 'sampling_disabled', 'images_unavailable'].includes(e?.code)) { RT.sample = e.code === 'images_unavailable' ? RT.sample : null; if (e.code === 'images_unavailable') RT.limits = { ...RT.limits, images: null }; }
+  } finally {
+    setBusy(''); RT.abort = null; changed({ noRender: true }); renderActive();
+  }
+}
+async function askClaude(prompt, images, signal, what) {
+  const t0 = Date.now();
+  setBusy(`${what}: wachten op Claude…`);
+  const tick = setInterval(() => setBusy(`${what}: Claude bekijkt de tekening (${Math.round((Date.now() - t0) / 1000)} s)…`), 1000);
+  try {
+    return await RT.sample.json(prompt, {
+      images, signal, modelTier: P.settings.aiTier === 'default' ? 'default' : 'complex', cache: false,
+      onText: ({ text }) => { clearInterval(tick); setBusy(`${what}: antwoord ontvangen (${text.length.toLocaleString('nl-NL')} tekens)…`); },
+    });
+  } finally { clearInterval(tick); }
+}
+async function toBlob(canvas) {
+  const maxB = RT.limits?.images?.maxInputBytes || 5e6;
+  const types = RT.limits?.images?.mediaTypes || ['image/png', 'image/jpeg'];
+  const get = (t, q) => new Promise(res => canvas.toBlob(res, t, q));
+  let b = types.includes('image/png') ? await get('image/png') : null;
+  if (!b || b.size > maxB * 0.95) b = await get('image/jpeg', 0.9);
+  if (b && b.size > maxB * 0.95) b = await get('image/jpeg', 0.75);
+  return b;
+}
+const BUDGET = 1.1e6;
+function planTiles(sheet, rect, maxTiles) {
+  const ov = 0.08, sTarget = sheet.kind === 'pdf' ? 4 : 1;
+  const area = rect.w * rect.h;
+  let n = Math.ceil(area * sTarget * sTarget * (1 + ov) ** 2 / BUDGET);
+  n = clamp(n, 1, maxTiles);
+  if (n === 1) return { s: Math.min(sTarget, Math.sqrt(BUDGET / area)), tiles: [{ ...rect, r: 0, c: 0 }], cols: 1, rows: 1 };
+  const a = rect.w / rect.h;
+  let cols = Math.max(1, Math.round(Math.sqrt(n * a))), rows = Math.max(1, Math.ceil(n / cols));
+  while (cols * rows > maxTiles) { if (cols >= rows) cols--; else rows--; }
+  cols = Math.max(cols, 1); rows = Math.max(rows, 1);
+  const tw = rect.w / cols, th = rect.h / rows, ox = tw * ov / 2, oy = th * ov / 2;
+  const tiles = [];
+  for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+    const x0 = rect.x + c * tw - (c > 0 ? ox : 0), x1 = rect.x + (c + 1) * tw + (c < cols - 1 ? ox : 0);
+    const y0 = rect.y + r * th - (r > 0 ? oy : 0), y1 = rect.y + (r + 1) * th + (r < rows - 1 ? oy : 0);
+    tiles.push({ x: x0, y: y0, w: x1 - x0, h: y1 - y0, r, c });
+  }
+  const maxA = Math.max(...tiles.map(t => t.w * t.h));
+  return { s: Math.min(sTarget, Math.sqrt(BUDGET / maxA)), tiles, cols, rows };
+}
+async function viewImages(sheet, view) {
+  const pad = 0.012;
+  const b = [clamp(view.bbox[0] - pad, 0, 1), clamp(view.bbox[1] - pad, 0, 1), clamp(view.bbox[2] + pad, 0, 1), clamp(view.bbox[3] + pad, 0, 1)];
+  const rect = { x: b[0] * sheet.baseW, y: b[1] * sheet.baseH, w: (b[2] - b[0]) * sheet.baseW, h: (b[3] - b[1]) * sheet.baseH };
+  const maxCount = RT.limits?.images?.maxCount || 5;
+  const maxTiles = Math.max(1, Math.min(Number(P.settings.maxTiles) || 9, maxCount - 1));
+  const plan = planTiles(sheet, rect, maxTiles);
+  const sOv = Math.min(sheet.kind === 'pdf' ? 4 : 1, Math.sqrt(BUDGET / (rect.w * rect.h)));
+  const images = [await toBlob(await renderRegion(sheet.id, rect, sOv))];
+  const desc = [];
+  if (plan.tiles.length > 1) {
+    for (const [i, t] of plan.tiles.entries()) {
+      images.push(await toBlob(await renderRegion(sheet.id, t, plan.s)));
+      const px = v => Math.round(v * 100);
+      desc.push(`Afbeelding ${i + 2}: rij ${t.r + 1}, kolom ${t.c + 1}; beslaat x ${px((t.x - rect.x) / rect.w)}–${px((t.x + t.w - rect.x) / rect.w)}% en y ${px((t.y - rect.y) / rect.h)}–${px((t.y + t.h - rect.y) / rect.h)}% van afbeelding 1.`);
+    }
+  }
+  let scaleHint = '';
+  const den = scaleDen(view.scale) || scaleDen(sheet.scale);
+  const mpu = sheet.calibrated ? sheet.mpu : (sheet.kind === 'pdf' && den ? 0.0003527778 * den : null);
+  if (mpu) scaleHint = `Ter controle van je maten: in afbeelding 1 is 1 meter ongeveer ${fmt(sOv / mpu, 0)} pixels${plan.tiles.length > 1 ? `, in de uitvergrotingen ongeveer ${fmt(plan.s / mpu, 0)} pixels` : ''} (${sheet.calibrated ? 'gekalibreerd' : 'afgeleid uit schaal ' + (view.scale || sheet.scale)}).`;
+  return { images, rectN: b, tilesText: desc.join('\n'), nTiles: plan.tiles.length, scaleHint };
+}
+const DETECT_PROMPT = `Je bent een ervaren opnemer bij een Nederlands schildersbedrijf. Je krijgt één blad van een bouwtekening (verkleind).
+Taak: herken de afzonderlijke tekeningen (aanzichten) op dit blad, zodat ze daarna één voor één uitvergroot kunnen worden uitgelezen.
+
+Soorten: "plattegrond" (bovenaanzicht van een verdieping), "gevel" (gevelaanzicht), "doorsnede", "detail", "situatie", "overig" (titelblok/stempel, legenda, tekst, kozijnstaat).
+Geef per aanzicht een kader "bbox" = [x0, y0, x1, y1] in genormaliseerde coördinaten van de afbeelding (0,0 = linksboven, 1,1 = rechtsonder). Neem de maatlijnen en maatgetallen rondom het aanzicht ruim mee in het kader.
+- "verdieping": gebruik "Kelder", "Begane grond", "1e verdieping", "2e verdieping", "Zolder" enz.
+- "gevel": bij gevelaanzichten bv. "Voorgevel", "Achtergevel", "Linker zijgevel", "Rechter zijgevel" (of de windrichting zoals op de tekening).
+- "schaal": zoals vermeld, bv. "1:50" of "1:100"; anders null.
+Een kozijnstaat of maatstaat met kozijnen telt als "overig" maar vermeld dat in "opmerking".
+
+Antwoord uitsluitend met JSON in precies deze vorm:
+{"blad":{"titel":"","schaal":"1:100","maateenheid":"mm"},
+ "aanzichten":[{"titel":"Plattegrond begane grond","soort":"plattegrond","verdieping":"Begane grond","gevel":null,"schaal":"1:50","bbox":[0.04,0.08,0.49,0.61],"opmerking":""}]}`;
+
+function elementCatsText(group) {
+  return ITEM_CATS.filter(c => !group || c[3] === group).map(([k, l, u]) => `${k} (${l}${u ? ', ' + u : ''})`).join('; ');
+}
+const COMMON_RULES = `Algemene regels:
+- Alle maten in meters met een punt als decimaalteken (3900 mm op de tekening = 3.9). Oppervlakte in m².
+- Lees maatgetallen bij maatlijnen; tel deelmaten op en controleer ze met de totaalmaat. Gebruik schatten op het oog alleen als er geen maatgetal is, en verlaag dan de zekerheid.
+- Tel niets dubbel: de uitvergrotingen overlappen elkaar en tonen hetzelfde als afbeelding 1.
+- "zekerheid" is een getal van 0 tot 1. Noteer twijfels kort in "opmerking".
+- Gebruik null voor onbekende waarden. Verzin geen onderdelen die je niet ziet.`;
+
+function plattegrondPrompt(view, img) {
+  return `Je bent een zeer nauwkeurige opnemer voor een Nederlands schildersbedrijf. Je leest een plattegrond uit voor de opmeetstaat van het binnenschilderwerk.
+
+Aanzicht: "${view.title}" (plattegrond, verdieping: ${view.floor || 'onbekend'}, schaal: ${view.scale || 'onbekend'}).
+Afbeelding 1 is het hele aanzicht. ${img.nTiles > 1 ? `Afbeeldingen 2 t/m ${img.nTiles + 1} zijn uitvergrotingen van delen ervan om maatgetallen te lezen:\n${img.tilesText}` : ''}
+${img.scaleHint}
+
+Werkwijze:
+1. Ruimtes: neem elke ruimte op met haar naam zoals op de tekening (woonkamer, keuken, hal, toilet, meterkast, slaapkamer, badkamer, overloop, berging, trapkast enz.). Geef binnenwerkse (netto) lengte en breedte. Staat een maatlijn hart-op-hart of buitenwerks, trek dan de wanddikte af (binnenwand ca. 0.10, woningscheidend ca. 0.25, buitenmuur ca. 0.30) en verlaag de zekerheid.
+2. Staat er een vloeroppervlak bij de ruimte (bv. "21,1 m²"), neem dat over in "oppervlakte". Is de ruimte niet rechthoekig (L-vorm, schuine wand), geef dan oppervlakte én omtrek van de werkelijke vorm.
+3. "hoogte": alleen als de plafondhoogte op deze tekening staat; anders null. "tegelhoogte": alleen als tegelwerk met hoogte is aangegeven.
+4. Deuren: elke deur één keer, met de ruimtes aan beide zijden ("ruimte" en "naar", met de id's van de ruimtes; "buiten" voor een buitendeur). Breedte en hoogte van het deurblad (veel gebruikt in NL: 0.73 / 0.83 / 0.93 breed; 2.015 / 2.315 hoog). Staat de hoogte er niet, neem 2.315 bij nieuwbouw of 2.015 bij bestaande bouw en verlaag de zekerheid. Soort: binnendeur, buitendeur, schuifdeur, dubbele deur of doorgang (opening zonder deur).
+5. Kozijnen in de buitengevel (ramen, schuifpuien, buitendeurkozijnen): per ruimte. Breedte uit de maatvoering, hoogte alleen als bekend. Gebruik kozijnmerken (A, B, C…) om gelijke kozijnen te herkennen. Aantal staanders (verticale tussenstijlen) en liggers (horizontale tussendorpels) alleen als zichtbaar, anders null. "vensterbank": true als er een vensterbank in de ruimte zit (raam met borstwering).
+6. Overige schilderbare onderdelen in "elementen": trappen, trapleuningen, traphekken, aftimmeringen, kokers, betimmeringen, plafondlijsten, radiatoren, losse vensterbanken enz. Gebruik als "categorie" één van: ${elementCatsText('binnen')}.
+   Geef wanden, plafonds, vloerplinten, deuren en kozijnen NIET als element: die rekent de app zelf uit.
+7. Buitenruimtes op de plattegrond (overkapping, carport, inpandig balkon, berging met houten wanden) neem je op als ruimte met "locatie": "buiten".
+8. "bbox" van een ruimte: kader in genormaliseerde coördinaten van afbeelding 1, [x0,y0,x1,y1].
+9. "controle": buitenmaten van de verdieping (lengte en breedte van het gebouw) en het totaal vloeroppervlak als die op de tekening staan. Zet opvallende zaken in "opmerkingen".
+
+${COMMON_RULES}
+
+Antwoord uitsluitend met JSON in deze vorm:
+{"verdieping":"Begane grond","schaal":"1:50",
+ "ruimtes":[{"id":"R1","naam":"Woonkamer","locatie":"binnen","lengte":5.4,"breedte":3.9,"hoogte":null,"oppervlakte":null,"omtrek":null,"vorm":"rechthoek","tegelhoogte":null,"bbox":[0.1,0.2,0.45,0.6],"zekerheid":0.9,"opmerking":""}],
+ "deuren":[{"ruimte":"R1","naar":"R2","soort":"binnendeur","breedte":0.93,"hoogte":2.315,"aantal":1,"zekerheid":0.8,"opmerking":""}],
+ "kozijnen":[{"ruimte":"R1","gevel":"Voorgevel","merk":"A","soort":"raamkozijn","breedte":2.4,"hoogte":null,"aantal":1,"staanders":null,"liggers":null,"draaiende_delen":null,"vensterbank":true,"zekerheid":0.7,"opmerking":""}],
+ "elementen":[{"ruimte":"R3","categorie":"trappen","omschrijving":"Trap naar 1e verdieping","eenheid":"st","lengte":null,"breedte":null,"hoogte":null,"oppervlakte":null,"aantal":1,"zekerheid":0.8,"opmerking":""}],
+ "controle":{"buitenmaat_lengte":null,"buitenmaat_breedte":null,"totaal_vloeroppervlak":null,"opmerkingen":[]}}`;
+}
+function gevelPrompt(view, img) {
+  return `Je bent een zeer nauwkeurige opnemer voor een Nederlands schildersbedrijf. Je leest een gevelaanzicht uit voor de opmeetstaat van het buitenschilderwerk.
+
+Aanzicht: "${view.title}" (gevel: ${view.facade || 'onbekend'}, schaal: ${view.scale || 'onbekend'}).
+Afbeelding 1 is het hele aanzicht. ${img.nTiles > 1 ? `Afbeeldingen 2 t/m ${img.nTiles + 1} zijn uitvergrotingen van delen ervan om maatgetallen te lezen:\n${img.tilesText}` : ''}
+${img.scaleHint}
+
+Werkwijze:
+1. Kozijnen: elk kozijn in deze gevel (ramen, deuren, schuifpuien, garagedeuren, dakkapelkozijnen). Gelijke kozijnen mag je samennemen met "aantal". Lees breedte en hoogte (buitenwerks kozijn) uit maatlijnen en peilmaten; anders schatten via de schaal en zekerheid verlagen.
+   - "staanders": aantal verticale tussenstijlen; "liggers": aantal horizontale tussendorpels (ook die van een bovenlicht). Loopt een ligger maar over een deel van de breedte, geef dan ook "liggers_m1" (totale lengte in m); idem "staanders_m1".
+   - "draaiende_delen": aantal ramen/deuren dat open kan (herkenbaar aan de draairichtingslijnen).
+   - "deur": true bij een deurkozijn; geef dan "deurblad_breedte" en "deurblad_hoogte" als bekend.
+   - "waterslag": true als er een waterslag of onderdorpel zichtbaar is.
+   - "verdieping": de verdieping waarop het kozijn zit (Begane grond, 1e verdieping, Zolder…).
+   - "materiaal": hout, kunststof, aluminium of onbekend (staat vaak in de omschrijving of legenda).
+2. Overige onderdelen in "elementen", met als "categorie" één van: ${elementCatsText('buiten')}.
+   - Dakgoten, boeiboorden, windveren, daktrim en regenpijpen: lengte in meters (m1). Bij boeiboorden en windveren: de hoogte van de plank in "hoogte" als bekend. Een windveer volgt de dakhelling: geef de schuine lengte.
+   - Rabat/gevelbekleding, stucwerk en gevelvlakken: in m² (breedte × hoogte, of "oppervlakte") minus grote openingen.
+   - Overstekken en luifels (onderzijde), hekwerken, dakkapellen (st) enz.
+3. Neem alleen onderdelen op die geschilderd worden of kunnen worden. Metselwerk dat niet geschilderd wordt laat je weg.
+4. "gevelbreedte": totale breedte van deze gevel als bekend.
+
+${COMMON_RULES}
+
+Antwoord uitsluitend met JSON in deze vorm:
+{"gevel":"Voorgevel","schaal":"1:100","gevelbreedte":5.4,
+ "kozijnen":[{"id":"K1","verdieping":"Begane grond","merk":"A","soort":"raamkozijn","breedte":2.4,"hoogte":1.6,"aantal":1,"staanders":1,"staanders_m1":null,"liggers":1,"liggers_m1":null,"draaiende_delen":1,"deur":false,"deurblad_breedte":null,"deurblad_hoogte":null,"waterslag":true,"materiaal":"hout","zekerheid":0.8,"opmerking":""}],
+ "elementen":[{"categorie":"dakgoten","omschrijving":"Mastgoot","eenheid":"m1","lengte":5.4,"breedte":null,"hoogte":null,"oppervlakte":null,"aantal":1,"zekerheid":0.8,"opmerking":""}],
+ "controle":{"opmerkingen":[]}}`;
+}
+function doorsnedePrompt(view, img) {
+  return `Je bent een zeer nauwkeurige opnemer voor een Nederlands schildersbedrijf. Je leest een doorsnede uit.
+
+Aanzicht: "${view.title}" (doorsnede, schaal: ${view.scale || 'onbekend'}).
+Afbeelding 1 is het hele aanzicht. ${img.nTiles > 1 ? `Afbeeldingen 2 t/m ${img.nTiles + 1} zijn uitvergrotingen:\n${img.tilesText}` : ''}
+${img.scaleHint}
+
+Taak:
+1. Per verdieping de vrije plafondhoogte (afgewerkte vloer tot onderkant plafond) in meters. Leid die af uit peilmaten (bv. P = 0, +2.800) minus vloer- en plafondopbouw als dat niet direct staat, en verlaag dan de zekerheid.
+2. Schilderbare onderdelen die alleen in de doorsnede goed zichtbaar zijn in "elementen" (overstekken onderzijde, boeiboorden met hoogte, dakgoten, trap). Categorie één van: ${elementCatsText()}.
+
+${COMMON_RULES}
+
+Antwoord uitsluitend met JSON in deze vorm:
+{"verdiepingen":[{"verdieping":"Begane grond","plafondhoogte":2.6,"vloerpeil":0,"zekerheid":0.8}],
+ "elementen":[{"categorie":"plafond_buiten","omschrijving":"Overstek achtergevel onderzijde","eenheid":"m²","lengte":null,"breedte":5.4,"hoogte":0.5,"oppervlakte":null,"aantal":1,"locatie":"buiten","gevel":"Achtergevel","zekerheid":0.7,"opmerking":""}],
+ "controle":{"opmerkingen":[]}}`;
+}
+
+async function detectViews(sheet, signal) {
+  const rect = { x: 0, y: 0, w: sheet.baseW, h: sheet.baseH };
+  const s = Math.min(sheet.kind === 'pdf' ? 4 : 1, Math.sqrt(BUDGET / (rect.w * rect.h)));
+  const img = await toBlob(await renderRegion(sheet.id, rect, s));
+  log(`${sheet.fileName}${sheet.pages > 1 ? ' blad ' + sheet.page : ''}: aanzichten herkennen…`);
+  const res = await askClaude(DETECT_PROMPT, [img], signal, 'Aanzichten herkennen');
+  const views = arr(res?.aanzichten).map(a => {
+    const bb = arr(a.bbox).map(Number);
+    const ok = bb.length === 4 && bb.every(n => isFinite(n));
+    let b = ok ? [clamp(Math.min(bb[0], bb[2]), 0, 1), clamp(Math.min(bb[1], bb[3]), 0, 1), clamp(Math.max(bb[0], bb[2]), 0, 1), clamp(Math.max(bb[1], bb[3]), 0, 1)] : [0, 0, 1, 1];
+    if (b.some(n => n > 1.5)) b = [0, 0, 1, 1];
+    const kind = VIEW_KINDS.some(v => v[0] === a.soort) ? a.soort : 'overig';
+    return { id: uid('v'), title: str(a.titel) || label(VIEW_KINDS, kind), kind, floor: normFloorName(a.verdieping), facade: str(a.gevel), scale: str(a.schaal) || str(res?.blad?.schaal), bbox: b, analyzed: false, note: str(a.opmerking) };
+  }).filter(v => (v.bbox[2] - v.bbox[0]) > 0.02 && (v.bbox[3] - v.bbox[1]) > 0.02);
+  if (res?.blad?.schaal) sheet.scale = str(res.blad.schaal);
+  const keep = arr(sheet.views).filter(v => v.analyzed || v.manual);
+  sheet.views = [...keep, ...views.filter(v => !keep.some(k => overlap(k.bbox, v.bbox) > 0.6))];
+  log(`${views.length} aanzicht${views.length === 1 ? '' : 'en'} gevonden: ${views.map(v => v.title).join(', ') || 'geen'}.`, 'ok');
+  changed({ noRender: true }); renderTekeningen();
+  return sheet.views;
+}
+function overlap(a, b) {
+  const ix = Math.max(0, Math.min(a[2], b[2]) - Math.max(a[0], b[0])), iy = Math.max(0, Math.min(a[3], b[3]) - Math.max(a[1], b[1]));
+  const i = ix * iy, u = (a[2] - a[0]) * (a[3] - a[1]) + (b[2] - b[0]) * (b[3] - b[1]) - i;
+  return u > 0 ? i / u : 0;
+}
+async function analyzeSheet(sheet, signal) {
+  if (!RT.sheetData[sheet.id]) { log(`${sheet.fileName}: bestand niet geopend, overgeslagen.`, 'err'); return; }
+  let views = arr(sheet.views);
+  if (!views.length) {
+    if (P.settings.autoViews) views = await detectViews(sheet, signal);
+    if (!views.length) { const v = { id: uid('v'), title: 'Heel blad', kind: 'plattegrond', floor: '', facade: '', scale: sheet.scale || '', bbox: [0, 0, 1, 1], analyzed: false }; sheet.views = [v]; views = sheet.views; log('Geen aanzichten herkend; het hele blad wordt als plattegrond gelezen. Pas zo nodig de soort aan.'); }
+  }
+  for (const v of views) {
+    if (signal.aborted) throw { code: 'cancelled' };
+    if (!['plattegrond', 'gevel', 'doorsnede'].includes(v.kind)) continue;
+    if (v.analyzed) continue;
+    await analyzeView(sheet, v, signal);
+  }
+}
+async function analyzeView(sheet, view, signal) {
+  RT.curSheet = sheet.id; RT.curView = view.id;
+  const img = await viewImages(sheet, view);
+  log(`${view.title}: uitlezen met ${img.images.length} afbeelding${img.images.length === 1 ? '' : 'en'}…`);
+  const prompt = view.kind === 'gevel' ? gevelPrompt(view, img) : view.kind === 'doorsnede' ? doorsnedePrompt(view, img) : plattegrondPrompt(view, img);
+  const res = await askClaude(prompt, img.images, signal, view.title);
+  if (!res || typeof res !== 'object') throw { code: 'invalid_json' };
+  const counts = view.kind === 'gevel' ? mergeGevel(res, sheet, view) : view.kind === 'doorsnede' ? mergeDoorsnede(res, sheet, view) : mergePlattegrond(res, sheet, view);
+  view.analyzed = true; view.analyzedAt = new Date().toISOString(); view.counts = counts;
+  log(`${view.title}: ${counts}.`, 'ok');
+  changed({ noRender: true }); renderTekeningen();
+}
+function removeFromView(key) {
+  let kept = 0;
+  for (const t of ['rooms', 'doors', 'frames', 'items']) {
+    P[t] = P[t].filter(e => { if (e.src?.viewKey !== key) return true; if (e.checked || e.src.edited) { kept++; return true; } return false; });
+  }
+  P.suggestions = arr(P.suggestions).filter(s => s.viewKey !== key || s.status !== 'open');
+  if (kept) log(`${kept} regel${kept === 1 ? '' : 's'} die je al had aangepast of afgevinkt ${kept === 1 ? 'is' : 'zijn'} bewaard.`);
+}
+function mapBox(bb, view) {
+  const b = arr(bb).map(Number); if (b.length !== 4 || !b.every(isFinite)) return null;
+  const vb = [clamp(view.bbox[0] - 0.012, 0, 1), clamp(view.bbox[1] - 0.012, 0, 1), clamp(view.bbox[2] + 0.012, 0, 1), clamp(view.bbox[3] + 0.012, 0, 1)];
+  const W = vb[2] - vb[0], H = vb[3] - vb[1];
+  const x0 = Math.min(b[0], b[2]), x1 = Math.max(b[0], b[2]), y0 = Math.min(b[1], b[3]), y1 = Math.max(b[1], b[3]);
+  if (x1 > 1.5 || y1 > 1.5) return null;
+  return [vb[0] + x0 * W, vb[1] + y0 * H, vb[0] + x1 * W, vb[1] + y1 * H];
+}
+function mergePlattegrond(res, sheet, view) {
+  const key = sheet.id + ':' + view.id; removeFromView(key);
+  const floor = floorFor(res.verdieping || view.floor || 'Onbekende verdieping');
+  view.floor = floor.name; view.floorId = floor.id;
+  if (res.schaal && !view.scale) view.scale = str(res.schaal);
+  const src = extra => ({ kind: 'ai', viewKey: key, sheetId: sheet.id, view: view.title, ...extra });
+  const idMap = {};
+  const resolve = v => { const s = str(v).toLowerCase(); if (!s) return null; return idMap[s] || null; };
+  let nr = 0, nd = 0, nk = 0, ne = 0;
+  for (const r of arr(res.ruimtes)) {
+    const loc = /buiten/i.test(r.locatie) ? 'buiten' : 'binnen';
+    const room = { id: uid('r'), floorId: floor.id, name: str(r.naam) || 'Ruimte', loc, L: len(r.lengte), B: len(r.breedte), H: len(r.hoogte), area: num(r.oppervlakte), perim: len(r.omtrek), tileH: len(r.tegelhoogte) || 0,
+      walls: true, ceiling: true, plinth: loc === 'binnen' && !/badkamer|douche/i.test(str(r.naam)), conf: conf(r.zekerheid), note: [str(r.vorm) !== 'rechthoek' ? str(r.vorm) : '', str(r.opmerking)].filter(Boolean).join('; '), src: src({ bbox: mapBox(r.bbox, view) }), checked: false };
+    if (room.L && room.B && room.L < room.B) [room.L, room.B] = [room.B, room.L];
+    P.rooms.push(room); nr++;
+    if (r.id) idMap[str(r.id).toLowerCase()] = room.id;
+    idMap[room.name.toLowerCase()] = idMap[room.name.toLowerCase()] || room.id;
+  }
+  for (const d of arr(res.deuren)) {
+    const a = resolve(d.ruimte), toOut = /buiten/i.test(str(d.naar)) || /buiten/i.test(str(d.soort));
+    const b = toOut ? null : resolve(d.naar);
+    const kind = DOOR_KINDS.some(k => k[0] === str(d.soort).toLowerCase()) ? str(d.soort).toLowerCase() : (toOut ? 'buitendeur' : 'binnendeur');
+    P.doors.push({ id: uid('d'), floorId: floor.id, roomId: a || b, toRoomId: a ? b : null, toOutside: toOut, kind, w: len(d.breedte), h: len(d.hoogte), n: int(d.aantal, 1), sides: null, frame: kind !== 'doorgang', conf: conf(d.zekerheid), note: str(d.opmerking), src: src(), checked: false });
+    nd++;
+  }
+  for (const k of arr(res.kozijnen)) {
+    const kind = FRAME_KINDS.some(x => x[0] === str(k.soort).toLowerCase()) ? str(k.soort).toLowerCase() : 'raamkozijn';
+    P.frames.push({ id: uid('k'), floorId: floor.id, roomId: resolve(k.ruimte), facade: str(k.gevel), side: 'binnen', kind, mark: str(k.merk), w: len(k.breedte), h: len(k.hoogte), n: int(k.aantal, 1),
+      mullions: k.staanders == null ? null : int(k.staanders, 0), mullionsM1: null, transoms: k.liggers == null ? null : int(k.liggers, 0), transomsM1: null, sashes: k.draaiende_delen == null ? 0 : int(k.draaiende_delen, 0),
+      door: ['deurkozijn', 'schuifpui', 'garagedeur'].includes(kind), leafW: null, leafH: null, sill: k.vensterbank !== false && !['deurkozijn', 'schuifpui', 'garagedeur'].includes(kind), drip: false, material: '', conf: conf(k.zekerheid), note: str(k.opmerking), src: src(), checked: false });
+    nk++;
+  }
+  for (const e of arr(res.elementen)) { addItemFromAI(e, 'binnen', floor.id, resolve(e.ruimte), '', src()); ne++; }
+  const c = res.controle || {};
+  view.check = { L: len(c.buitenmaat_lengte), B: len(c.buitenmaat_breedte), total: num(c.totaal_vloeroppervlak), notes: arr(c.opmerkingen).map(str).filter(Boolean).slice(0, 6) };
+  return `${nr} ruimtes, ${nd} deuren, ${nk} kozijnen, ${ne} overige`;
+}
+function addItemFromAI(e, defLoc, floorId, roomId, facade, src) {
+  const loc = /binnen/i.test(e.locatie) ? 'binnen' : /buiten/i.test(e.locatie) ? 'buiten' : defLoc;
+  const cat = mapCategory(e.categorie, loc);
+  const c = CAT[cat];
+  const unitRaw = str(e.eenheid).toLowerCase().replace('m2', 'm²');
+  const unit = c.unit || (['m1', 'm²', 'st'].includes(unitRaw) ? unitRaw : (e.oppervlakte ? 'm²' : e.lengte ? 'm1' : 'st'));
+  const fl = e.verdieping ? floorFor(e.verdieping).id : floorId;
+  const desc = str(e.omschrijving) || c.label;
+  P.items.push({ id: uid('i'), floorId: fl, roomId: roomId || null, facade: str(e.gevel) || facade || '', loc: c.group, cat, desc, unit, len: len(e.lengte), w: len(e.breedte), h: len(e.hoogte), area: num(e.oppervlakte), n: int(e.aantal, 1), conf: conf(e.zekerheid), note: [CAT[str(e.categorie)] ? '' : str(e.categorie), str(e.opmerking)].filter(Boolean).join('; '), src, checked: false });
+}
+function mergeGevel(res, sheet, view) {
+  const key = sheet.id + ':' + view.id; removeFromView(key);
+  const facade = str(res.gevel) || view.facade || view.title;
+  view.facade = facade;
+  if (res.schaal && !view.scale) view.scale = str(res.schaal);
+  const src = () => ({ kind: 'ai', viewKey: key, sheetId: sheet.id, view: view.title });
+  let nk = 0, ne = 0;
+  for (const k of arr(res.kozijnen)) {
+    const kind = FRAME_KINDS.some(x => x[0] === str(k.soort).toLowerCase()) ? str(k.soort).toLowerCase() : (k.deur ? 'deurkozijn' : 'raamkozijn');
+    const isDoor = !!k.deur || ['deurkozijn', 'schuifpui', 'garagedeur'].includes(kind);
+    P.frames.push({ id: uid('k'), floorId: k.verdieping ? floorFor(k.verdieping).id : null, roomId: null, facade, side: 'buiten', kind, mark: str(k.merk), w: len(k.breedte), h: len(k.hoogte), n: int(k.aantal, 1),
+      mullions: k.staanders == null ? 0 : int(k.staanders, 0), mullionsM1: len(k.staanders_m1), transoms: k.liggers == null ? 0 : int(k.liggers, 0), transomsM1: len(k.liggers_m1), sashes: int(k.draaiende_delen, 0),
+      door: isDoor, leafW: len(k.deurblad_breedte), leafH: len(k.deurblad_hoogte), sill: false, drip: !!k.waterslag, material: str(k.materiaal), conf: conf(k.zekerheid), note: str(k.opmerking), src: src(), checked: false });
+    nk++;
+  }
+  for (const e of arr(res.elementen)) { addItemFromAI(e, 'buiten', null, null, facade, src()); ne++; }
+  view.check = { width: len(res.gevelbreedte), notes: arr(res.controle?.opmerkingen).map(str).filter(Boolean).slice(0, 6) };
+  return `${nk} kozijnen, ${ne} overige onderdelen`;
+}
+function mergeDoorsnede(res, sheet, view) {
+  const key = sheet.id + ':' + view.id; removeFromView(key);
+  const src = () => ({ kind: 'ai', viewKey: key, sheetId: sheet.id, view: view.title });
+  let nf = 0, ne = 0;
+  for (const v of arr(res.verdiepingen)) {
+    const h = len(v.plafondhoogte); if (!h || !v.verdieping) continue;
+    const f = floorFor(v.verdieping);
+    if (!f.H || f.Hsrc === 'ai') { f.H = h; f.Hsrc = 'ai'; nf++; }
+  }
+  for (const e of arr(res.elementen)) { addItemFromAI(e, 'buiten', null, null, str(e.gevel), src()); ne++; }
+  view.check = { notes: arr(res.controle?.opmerkingen).map(str).filter(Boolean).slice(0, 6) };
+  return `${nf} plafondhoogtes, ${ne} onderdelen`;
+}
+
+/* ---------- Dubbelcheck ---------- */
+function viewItemsText(key) {
+  const out = [], refs = {};
+  let i = 0;
+  const add = (pre, e, txt) => { const r = pre + (++i); refs[r] = e; out.push(`${r}: ${txt}`); };
+  for (const r of P.rooms.filter(e => e.src?.viewKey === key)) add('R', r, `ruimte "${r.name}" lengte ${r.L ?? '-'} breedte ${r.B ?? '-'} hoogte ${r.H ?? '-'} oppervlakte ${r.area ?? '-'} omtrek ${r.perim ?? '-'}`);
+  for (const d of P.doors.filter(e => e.src?.viewKey === key)) add('D', d, `deur ${roomById(d.roomId)?.name || '?'} naar ${d.toOutside ? 'buiten' : roomById(d.toRoomId)?.name || '?'} soort ${d.kind} breedte ${d.w ?? '-'} hoogte ${d.h ?? '-'} aantal ${d.n}`);
+  for (const k of P.frames.filter(e => e.src?.viewKey === key)) add('K', k, `kozijn ${k.side === 'binnen' ? 'in ' + (roomById(k.roomId)?.name || '?') : 'gevel ' + (k.facade || '?')} soort ${k.kind} breedte ${k.w ?? '-'} hoogte ${k.h ?? '-'} aantal ${k.n} staanders ${k.mullions ?? '-'} liggers ${k.transoms ?? '-'} draaiende_delen ${k.sashes ?? '-'}`);
+  for (const it of P.items.filter(e => e.src?.viewKey === key)) add('E', it, `element ${it.cat} "${it.desc}" lengte ${it.len ?? '-'} breedte ${it.w ?? '-'} hoogte ${it.h ?? '-'} oppervlakte ${it.area ?? '-'} aantal ${it.n}`);
+  return { text: out.join('\n'), refs };
+}
+const FIELD_MAP = {
+  R: { naam: 'name', lengte: 'L', breedte: 'B', hoogte: 'H', oppervlakte: 'area', omtrek: 'perim', tegelhoogte: 'tileH' },
+  D: { breedte: 'w', hoogte: 'h', aantal: 'n', soort: 'kind' },
+  K: { breedte: 'w', hoogte: 'h', aantal: 'n', staanders: 'mullions', liggers: 'transoms', draaiende_delen: 'sashes', soort: 'kind' },
+  E: { lengte: 'len', breedte: 'w', hoogte: 'h', oppervlakte: 'area', aantal: 'n', omschrijving: 'desc' },
+};
+async function doubleCheckView(sheet, view, signal) {
+  const key = sheet.id + ':' + view.id;
+  const { text, refs } = viewItemsText(key);
+  if (!text) { log(`${view.title}: niets om te controleren.`); return; }
+  const img = await viewImages(sheet, view);
+  log(`${view.title}: dubbelcheck…`);
+  const prompt = `Je bent een tweede, onafhankelijke controleur bij een Nederlands schildersbedrijf. Een collega heeft dit aanzicht ("${view.title}", ${label(VIEW_KINDS, view.kind).toLowerCase()}) uitgelezen. Controleer zijn werk tegen de tekening.
+
+Afbeelding 1 is het hele aanzicht. ${img.nTiles > 1 ? `Afbeeldingen 2 t/m ${img.nTiles + 1} zijn uitvergrotingen:\n${img.tilesText}` : ''}
+${img.scaleHint}
+
+Opname van de collega (maten in meters):
+${text}
+
+Doe dit:
+1. Lees elk maatgetal zelf opnieuw van de tekening en vergelijk. Tel deelmaten op en vergelijk met totaalmaten. Meld alleen echte afwijkingen (meer dan 2 cm of een ander aantal).
+2. Zoek onderdelen die de collega heeft gemist (ruimtes, deuren, kozijnen, schilderbare elementen) of dubbel heeft opgenomen.
+3. Noem in "akkoord" de refs die volgens jou kloppen.
+
+Antwoord uitsluitend met JSON:
+{"afwijkingen":[{"ref":"R2","veld":"lengte","huidig":3.9,"voorstel":4.2,"toelichting":"Maatlijn toont 4200 mm","zekerheid":0.8}],
+ "dubbel":[{"ref":"D3","toelichting":"Zelfde deur als D2"}],
+ "ontbrekend":[{"type":"ruimte|deur|kozijn|element","omschrijving":"Meterkast naast voordeur","gegevens":{}}],
+ "akkoord":["R1","D1"],
+ "oordeel":"korte samenvatting in één zin"}
+Velden die je mag noemen: ruimte: naam, lengte, breedte, hoogte, oppervlakte, omtrek, tegelhoogte; deur: breedte, hoogte, aantal, soort; kozijn: breedte, hoogte, aantal, staanders, liggers, draaiende_delen; element: lengte, breedte, hoogte, oppervlakte, aantal.
+Bij "ontbrekend" vul je "gegevens" met dezelfde velden als bij het uitlezen (bv. voor een ruimte: naam, lengte, breedte, hoogte, oppervlakte, omtrek; voor een element: categorie, omschrijving, eenheid, lengte, breedte, hoogte, oppervlakte, aantal; voor een kozijn: ruimte of gevel, breedte, hoogte, aantal, staanders, liggers).`;
+  const res = await askClaude(prompt, img.images, signal, 'Dubbelcheck ' + view.title);
+  let nA = 0, nM = 0;
+  const okRefs = new Set(arr(res?.akkoord).map(x => str(x).toUpperCase()));
+  for (const [r, e] of Object.entries(refs)) if (okRefs.has(r)) e.aiOk = true;
+  for (const a of arr(res?.afwijkingen)) {
+    const r = str(a.ref).toUpperCase(); const e = refs[r]; if (!e) continue;
+    const field = FIELD_MAP[r[0]]?.[str(a.veld).toLowerCase()]; if (!field) continue;
+    e.aiOk = false;
+    P.suggestions.push({ id: uid('g'), status: 'open', type: 'afwijking', viewKey: key, view: view.title, ent: e._ref || refOf(e), field, value: a.voorstel,
+      title: `${entTitle(e)}: ${str(a.veld)} ${fmtVal(a.huidig)} → ${fmtVal(a.voorstel)}`, text: str(a.toelichting), conf: conf(a.zekerheid) });
+    nA++;
+  }
+  for (const a of arr(res?.dubbel)) {
+    const r = str(a.ref).toUpperCase(); const e = refs[r]; if (!e) continue;
+    P.suggestions.push({ id: uid('g'), status: 'open', type: 'dubbel', viewKey: key, view: view.title, ent: e._ref || refOf(e), title: `${entTitle(e)} staat mogelijk dubbel`, text: str(a.toelichting) + ' Toepassen verwijdert deze regel.' });
+    nA++;
+  }
+  for (const m of arr(res?.ontbrekend)) {
+    P.suggestions.push({ id: uid('g'), status: 'open', type: 'ontbrekend', viewKey: key, view: view.title, kind: str(m.type).toLowerCase(), data: m.gegevens || {}, title: `Ontbreekt: ${str(m.omschrijving) || str(m.type)}`, text: `Gevonden in ${view.title}.` });
+    nM++;
+  }
+  view.checkedAt = new Date().toISOString();
+  log(`${view.title}: ${nA} afwijking${nA === 1 ? '' : 'en'}, ${nM} ontbrekend, ${okRefs.size} bevestigd. ${str(res?.oordeel)}`, nA || nM ? '' : 'ok');
+}
+function refOf(e) { for (const t of ['rooms', 'doors', 'frames', 'items']) if (P[t].includes(e)) return { t, id: e.id }; return null; }
+function entTitle(e) {
+  if (P.rooms.includes(e)) return `${e.name} (${floorName(e.floorId)})`;
+  if (P.doors.includes(e)) return `Deur ${roomById(e.roomId)?.name || '?'} → ${e.toOutside ? 'buiten' : roomById(e.toRoomId)?.name || '?'}`;
+  if (P.frames.includes(e)) return `Kozijn ${fmtmm(e.w)} (${e.side === 'binnen' ? roomById(e.roomId)?.name || '?' : e.facade || 'gevel'})`;
+  return `${CAT[e.cat]?.label || 'Onderdeel'} ${e.desc || ''}`;
+}
+const fmtVal = v => typeof v === 'number' ? fmt(v, v % 1 ? 3 : 0).replace(/(,\d*?)0+$/, '$1').replace(/,$/, '') : str(v) || '–';
+function applySuggestion(id) {
+  const s = arr(P.suggestions).find(x => x.id === id); if (!s) return;
+  if (s.type === 'afwijking') {
+    const e = entityOf(s.ent); if (!e) { s.status = 'vervallen'; changed(); return; }
+    const isLen = ['L', 'B', 'H', 'perim', 'tileH', 'w', 'h', 'len'].includes(s.field);
+    const isInt = ['n', 'mullions', 'transoms', 'sashes'].includes(s.field);
+    e[s.field] = isLen ? len(s.value) : isInt ? int(s.value, 0) : s.field === 'area' ? num(s.value) : str(s.value);
+    if (e.src) e.src.edited = true; e.aiOk = true;
+  } else if (s.type === 'dubbel') {
+    const list = entList(s.ent?.t); const i = list ? list.findIndex(x => x.id === s.ent.id) : -1; if (i >= 0) list.splice(i, 1);
+  } else if (s.type === 'ontbrekend') {
+    const [sheetId, viewId] = s.viewKey.split(':'); const sheet = P.sheets.find(x => x.id === sheetId); const view = arr(sheet?.views).find(v => v.id === viewId);
+    const g = s.data || {}; const src = { kind: 'ai', viewKey: s.viewKey, sheetId, view: s.view, edited: true };
+    const floor = view?.floorId ? floorById(view.floorId) : (view?.floor ? floorFor(view.floor) : null);
+    if (/ruimte/.test(s.kind)) {
+      P.rooms.push({ id: uid('r'), floorId: floor?.id || floorFor(g.verdieping || 'Onbekende verdieping').id, name: str(g.naam) || 'Ruimte', loc: /buiten/i.test(g.locatie) ? 'buiten' : 'binnen', L: len(g.lengte), B: len(g.breedte), H: len(g.hoogte), area: num(g.oppervlakte), perim: len(g.omtrek), tileH: len(g.tegelhoogte) || 0, walls: true, ceiling: true, plinth: true, conf: conf(g.zekerheid), note: 'Toegevoegd door dubbelcheck', src, checked: false });
+    } else if (/deur/.test(s.kind)) {
+      const find = n => P.rooms.find(r => r.name.toLowerCase() === str(n).toLowerCase() && (!floor || r.floorId === floor.id))?.id || null;
+      const out = /buiten/i.test(g.naar);
+      P.doors.push({ id: uid('d'), floorId: floor?.id || null, roomId: find(g.ruimte), toRoomId: out ? null : find(g.naar), toOutside: out, kind: str(g.soort) || (out ? 'buitendeur' : 'binnendeur'), w: len(g.breedte), h: len(g.hoogte), n: int(g.aantal, 1), sides: null, frame: true, conf: conf(g.zekerheid), note: 'Toegevoegd door dubbelcheck', src, checked: false });
+    } else if (/kozijn/.test(s.kind)) {
+      const outside = view?.kind === 'gevel';
+      P.frames.push({ id: uid('k'), floorId: floor?.id || (g.verdieping ? floorFor(g.verdieping).id : null), roomId: outside ? null : (P.rooms.find(r => r.name.toLowerCase() === str(g.ruimte).toLowerCase())?.id || null), facade: str(g.gevel) || view?.facade || '', side: outside ? 'buiten' : 'binnen', kind: str(g.soort) || 'raamkozijn', w: len(g.breedte), h: len(g.hoogte), n: int(g.aantal, 1), mullions: int(g.staanders, 0), mullionsM1: null, transoms: int(g.liggers, 0), transomsM1: null, sashes: int(g.draaiende_delen, 0), door: !!g.deur, leafW: null, leafH: null, sill: !outside, drip: outside, material: str(g.materiaal), conf: conf(g.zekerheid), note: 'Toegevoegd door dubbelcheck', src, checked: false });
+    } else {
+      addItemFromAI(g, view?.kind === 'plattegrond' ? 'binnen' : 'buiten', floor?.id || null, null, view?.facade || '', src);
+    }
+  }
+  s.status = 'toegepast';
+  changed(); toast('Voorstel verwerkt.');
+}
+
+/* ---------- Export ---------- */
+function exportRows(lines) {
+  return lines.map(l => [l.group === 'binnen' ? 'Binnen' : 'Buiten', floorName(l.floorId), l.space, CAT[l.cat].label, l.desc, l.formula, l.qty, l.unit, entityOf(l.ref)?.checked ? 'ja' : '']);
+}
+const EXP_HEAD = ['Binnen/buiten', 'Verdieping', 'Ruimte / gevel', 'Onderdeel', 'Omschrijving', 'Berekening', 'Hoeveelheid', 'Eenheid', 'Gecontroleerd'];
+const fileBase = () => ('Opmeetstaat ' + P.name).replace(/[\\/:*?"<>|]+/g, '-').slice(0, 80);
+async function saveFile(filename, data, mime) {
+  if (RT.downloads) {
+    try { await RT.downloads.save({ filename, data }); toast('Bestand aangeboden: ' + filename); }
+    catch (e) { toast(e?.code === 'declined' ? 'Downloaden geannuleerd.' : 'Downloaden lukt hier niet. Gebruik "Kopieer tabel".'); }
+    return;
+  }
+  const blob = data instanceof Blob ? data : new Blob([data], { type: mime });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename; document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+}
+async function exportCsv() {
+  const rows = [EXP_HEAD, ...exportRows(filteredLines()).map(r => r.map((v, i) => i === 6 ? fmt(v, 2).replace(/\./g, '') : v))];
+  const csv = '﻿' + rows.map(r => r.map(v => { const s = String(v ?? ''); return /[;"\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }).join(';')).join('\r\n');
+  await saveFile(fileBase() + '.csv', csv, 'text/csv');
+}
+async function exportXlsx() {
+  try { await loadScript(LIB.xlsx); } catch { toast('Excel-module kon niet laden. Gebruik CSV.'); return; }
+  const X = window.XLSX; const lines = filteredLines();
+  const wb = X.utils.book_new();
+  const info = [['Opmeetstaat schilderwerk'], ['Project', P.name], ['Opdrachtgever', P.client], ['Adres', P.address], ['Datum', P.date], ['Opgenomen door', P.by], [P.company || '']];
+  const tot = totals(lines);
+  const sumRows = [...info, [], ['Binnen/buiten', 'Onderdeel', 'Totaal', 'Eenheid', 'Aantal stuks'], ...tot.map(t => [t.group === 'binnen' ? 'Binnen' : 'Buiten', CAT[t.cat].label, r2(t.qty), t.unit, t.st || ''])];
+  const ws1 = X.utils.aoa_to_sheet(sumRows); ws1['!cols'] = [{ wch: 16 }, { wch: 38 }, { wch: 12 }, { wch: 9 }, { wch: 12 }];
+  X.utils.book_append_sheet(wb, ws1, 'Samenvatting');
+  const ws2 = X.utils.aoa_to_sheet([EXP_HEAD, ...exportRows(lines)]); ws2['!cols'] = [{ wch: 12 }, { wch: 16 }, { wch: 22 }, { wch: 30 }, { wch: 40 }, { wch: 40 }, { wch: 12 }, { wch: 8 }, { wch: 12 }];
+  X.utils.book_append_sheet(wb, ws2, 'Opmeetstaat');
+  const ctrl = [['Soort', 'Melding'], ...RT.issues.map(i => [i.lvl, i.msg])];
+  X.utils.book_append_sheet(wb, X.utils.aoa_to_sheet(ctrl), 'Controle');
+  const buf = X.write(wb, { bookType: 'xlsx', type: 'array' });
+  await saveFile(fileBase() + '.xlsx', new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
+}
+async function exportPdf() {
+  try { await loadScript(LIB.jspdf); await loadScript(LIB.autotable); } catch { toast('PDF-module kon niet laden. Gebruik Excel of CSV.'); return; }
+  const { jsPDF } = window.jspdf; const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const T = s => String(s ?? '').replace(/−/g, '-').replace(/≈/g, '~').replace(/→/g, '->').replace(/[^\x00-\xFF€–…]/g, '');
+  const lines = filteredLines(), tot = totals(lines);
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(17); doc.text(T('Opmeetstaat schilderwerk'), 14, 18);
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
+  const meta = [P.company, P.name, [P.client, P.address].filter(Boolean).join(' · '), [P.date && new Date(P.date).toLocaleDateString('nl-NL'), P.by && 'opgenomen door ' + P.by].filter(Boolean).join(' · ')].filter(Boolean);
+  meta.forEach((m, i) => doc.text(T(m), 14, 25 + i * 5));
+  let y = 27 + meta.length * 5;
+  const f = RT.issues.filter(i => i.lvl === 'fout').length, w = RT.issues.filter(i => i.lvl === 'waarschuwing').length;
+  doc.setTextColor(f ? 179 : 29, f ? 51 : 122, f ? 42 : 76); doc.text(T(`Controle: ${f} fouten, ${w} waarschuwingen`), 14, y); doc.setTextColor(0, 0, 0); y += 4;
+  doc.autoTable({ startY: y, head: [['Onderdeel', 'Totaal', 'Eenheid', 'Stuks']], body: ['binnen', 'buiten'].flatMap(g => { const r = tot.filter(t => t.group === g); return r.length ? [[{ content: g === 'binnen' ? 'Binnen' : 'Buiten', colSpan: 4, styles: { fontStyle: 'bold', fillColor: [242, 244, 247] } }], ...r.map(t => [T(CAT[t.cat].label), fmt(t.qty, t.unit === 'st' ? 0 : 2), T(t.unit), t.st || ''])] : []; }),
+    theme: 'grid', styles: { fontSize: 9, cellPadding: 1.6 }, headStyles: { fillColor: [29, 58, 102] }, columnStyles: { 1: { halign: 'right' }, 3: { halign: 'right' } } });
+  const body = []; let g = null, sp = null;
+  for (const l of lines) {
+    const gk = l.group + (l.group === 'binnen' ? l.floorId : '');
+    if (gk !== g) { g = gk; sp = null; body.push([{ content: T(l.group === 'binnen' ? 'Binnen - ' + floorName(l.floorId) : 'Buiten - gevels en dak'), colSpan: 5, styles: { fontStyle: 'bold', fillColor: [242, 244, 247] } }]); }
+    if (l.space !== sp) { sp = l.space; body.push([{ content: T(l.space), colSpan: 5, styles: { fontStyle: 'bold' } }]); }
+    body.push([T(CAT[l.cat].label), T(l.desc), T(l.formula), fmt(l.qty, l.unit === 'st' ? 0 : 2), T(l.unit)]);
+  }
+  doc.autoTable({ startY: doc.lastAutoTable.finalY + 8, head: [['Onderdeel', 'Omschrijving', 'Berekening', 'Hoeveelheid', 'Eenh.']], body, theme: 'striped', styles: { fontSize: 8, cellPadding: 1.4 }, headStyles: { fillColor: [29, 58, 102] }, columnStyles: { 3: { halign: 'right' }, 2: { textColor: [91, 104, 125] } } });
+  const pages = doc.getNumberOfPages();
+  for (let i = 1; i <= pages; i++) { doc.setPage(i); doc.setFontSize(8); doc.setTextColor(120); doc.text(T(`${P.name} · pagina ${i} van ${pages}`), 14, 290); }
+  await saveFile(fileBase() + '.pdf', doc.output('arraybuffer'));
+}
+async function exportCopy() {
+  const rows = [EXP_HEAD, ...exportRows(filteredLines()).map(r => r.map((v, i) => i === 6 ? fmt(v, 2).replace(/\./g, '') : v))];
+  const tsv = rows.map(r => r.map(v => String(v ?? '').replace(/\t|\n/g, ' ')).join('\t')).join('\n');
+  try { await navigator.clipboard.writeText(tsv); toast('Tabel gekopieerd. Plak hem in Excel of je offerteprogramma.'); }
+  catch { await modal('Kopiëren', `<p class="small">Kopiëren werd geweigerd. Selecteer de tekst hieronder en kopieer handmatig.</p><textarea class="in" rows="10" style="width:100%">${esc(tsv)}</textarea>`); }
+}
+
+/* ---------- Projecten ---------- */
+async function openProjects() {
+  let list = [];
+  try { list = await Store.list(); } catch (e) { console.warn(e); }
+  const html = `<p class="small muted">${Store.mode === 'db' ? 'Opgeslagen in je Claude-account.' : Store.mode === 'local' ? 'Opgeslagen in deze browser.' : 'Opslag niet beschikbaar.'}</p>
+    <div class="plist">${list.length ? list.map(p => `<div class="pitem" aria-current="${p.id === P.id}"><div><b>${esc(p.name)}</b><br><span class="small muted">${esc(p.client || '')}${p.updated ? ' · ' + new Date(p.updated).toLocaleString('nl-NL', { dateStyle: 'short', timeStyle: 'short' }) : ''}</span></div><span class="btn-row"><button class="btn sm primary" data-popen="${p.id}" type="button">Openen</button></span></div>`).join('') : '<p class="muted">Nog geen opgeslagen projecten.</p>'}</div>`;
+  const root = $('#modalRoot');
+  const pr = modal('Projecten', html, [{ label: 'Voorbeeld bekijken', value: 'demo' }, { label: 'Sluiten', value: null }]);
+  root.querySelector('.plist')?.addEventListener('click', e => { const b = e.target.closest('[data-popen]'); if (b) RT.modalClose?.('open:' + b.dataset.popen); });
+  const v = await pr;
+  if (v === 'demo') { RT.sheetData = {}; setProject(demoProject(), true); }
+  else if (typeof v === 'string' && v.startsWith('open:')) {
+    const p = await Store.load(v.slice(5)).catch(() => null);
+    if (p) { RT.sheetData = {}; setProject(p, false); toast('Project geopend.'); } else toast('Project kon niet worden geladen.');
+  }
+}
+
+/* ---------- Gebeurtenissen ---------- */
+function bindUI() {
+  $$('.tab').forEach(b => b.addEventListener('click', () => switchTab(b.dataset.tab)));
+  $('#btnNew').addEventListener('click', async () => {
+    const name = await modal('Nieuw project', `<div class="field"><label for="npName">Projectnaam</label><input class="in" id="npName" placeholder="bijv. Lindelaan 12, Zwolle"></div>`, [{ label: 'Annuleren', value: null }, { label: 'Aanmaken', cls: 'primary', value: root => $('#npName', root).value.trim() || 'Nieuw project' }]);
+    if (!name) return; RT.sheetData = {}; await startNewProject(name); switchTab('tekeningen');
+  });
+  $('#btnProjects').addEventListener('click', openProjects);
+  $('#btnDemoNew').addEventListener('click', async () => { RT.sheetData = {}; await startNewProject(); switchTab('tekeningen'); });
+  $('#btnDemoKeep').addEventListener('click', async () => { const p = JSON.parse(JSON.stringify(P)); p.id = uid('p'); p.name = p.name.replace(/^Voorbeeld: /, ''); setProject(migrate(p), false); await doSave(); toast('Opgeslagen als eigen project.'); });
+
+  const fileIn = $('#fileIn'), drop = $('#drop');
+  fileIn.addEventListener('change', () => { addFiles(fileIn.files); fileIn.value = ''; });
+  ['dragenter', 'dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
+  ['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('over'); }));
+  drop.addEventListener('drop', e => addFiles(e.dataTransfer.files));
+  drop.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileIn.click(); } });
+  drop.tabIndex = 0;
+
+  $('#btnAnalyzeAll').addEventListener('click', () => runAI(async signal => {
+    const sheets = P.sheets.filter(s => RT.sheetData[s.id]);
+    if (!sheets.length) { log('Voeg eerst een tekening toe.', 'err'); return; }
+    for (const s of sheets) { if (signal.aborted) throw { code: 'cancelled' }; RT.curSheet = s.id; V.fitPending = true; await viewerLoadSheet(); renderTekeningen(); await analyzeSheet(s, signal); }
+    log('Klaar. Bekijk de opname en de controles.', 'ok');
+    toast('Uitlezen klaar. Kijk bij Controle of alles klopt.', 4500);
+  }));
+  $('#btnDetect').addEventListener('click', () => { const s = curSheet(); if (!s || !RT.sheetData[s.id]) { toast('Open eerst een blad.'); return; } runAI(signal => detectViews(s, signal)); });
+  $('#btnStop').addEventListener('click', () => RT.abort?.abort());
+  $('#btnClearLog').addEventListener('click', () => { RT.log = []; renderLog(); });
+  $('#btnDoubleCheck').addEventListener('click', () => runAI(async signal => {
+    const todo = P.sheets.filter(s => RT.sheetData[s.id]).flatMap(s => arr(s.views).filter(v => v.analyzed && v.kind !== 'doorsnede').map(v => [s, v]));
+    if (!todo.length) { log('Geen uitgelezen aanzichten met geopende tekening. Voeg de tekening toe op het tabblad Tekeningen.', 'err'); toast('Open eerst de tekening op het tabblad Tekeningen.'); return; }
+    P.suggestions = arr(P.suggestions).filter(s => s.status !== 'open');
+    for (const [s, v] of todo) { if (signal.aborted) throw { code: 'cancelled' }; await doubleCheckView(s, v, signal); }
+    log('Dubbelcheck klaar.', 'ok'); toast('Dubbelcheck klaar.');
+  }));
+
+  document.addEventListener('click', async e => {
+    const t = e.target.closest('[data-sheet],[data-delsheet],[data-vsel],[data-vrun],[data-vedit],[data-vdel],[data-madd],[data-mdel],[data-tool],[data-sub],[data-ff],[data-del],[data-delfloor],[data-locate],[data-sg],[data-cf],[data-goto],[data-fix],[data-sapply],[data-sskip],[data-chk]');
+    if (!t) return;
+    const d = t.dataset;
+    if (d.delsheet) {
+      e.stopPropagation();
+      const s = P.sheets.find(x => x.id === d.delsheet);
+      if (!(await confirmBox('Blad verwijderen?', `Het blad "${s.fileName}" en de kaders erop worden verwijderd. De opname zelf blijft staan.`, 'Verwijderen', true))) return;
+      P.sheets = P.sheets.filter(x => x.id !== d.delsheet); delete RT.sheetData[d.delsheet];
+      if (RT.curSheet === d.delsheet) { RT.curSheet = P.sheets[0]?.id || null; V.fitPending = true; viewerLoadSheet(); }
+      changed(); return;
+    }
+    if (d.sheet) { if (RT.curSheet !== d.sheet) { RT.curSheet = d.sheet; RT.curView = null; V.fitPending = true; V.hi = null; renderTekeningen(); viewerLoadSheet(); } return; }
+    if (d.vsel) { RT.curView = d.vsel; const v = arr(curSheet()?.views).find(x => x.id === d.vsel); renderTekeningen(); if (v?.bbox) V.fitRect(v.bbox); return; }
+    if (d.vrun) { const s = curSheet(); const v = arr(s?.views).find(x => x.id === d.vrun); if (s && v) runAI(signal => analyzeView(s, v, signal)); return; }
+    if (d.vedit) { const s = curSheet(); const v = arr(s?.views).find(x => x.id === d.vedit); if (v && await editViewDialog(v, false)) changed(); return; }
+    if (d.vdel) {
+      const s = curSheet(); const v = arr(s?.views).find(x => x.id === d.vdel); if (!v) return;
+      const n = ['rooms', 'doors', 'frames', 'items'].reduce((a, t) => a + P[t].filter(x => x.src?.viewKey === s.id + ':' + v.id).length, 0);
+      const r = await modal('Aanzicht verwijderen?', `<p>Het kader "${esc(v.title)}" wordt verwijderd.${n ? ` Er ${n === 1 ? 'is' : 'zijn'} ${n} regel${n === 1 ? '' : 's'} uit dit aanzicht in de opname.` : ''}</p>`, n ? [{ label: 'Annuleren', value: null }, { label: 'Alleen kader', value: 'frame' }, { label: 'Kader en regels', value: 'all', cls: 'danger' }] : [{ label: 'Annuleren', value: null }, { label: 'Verwijderen', value: 'frame', cls: 'danger' }]);
+      if (!r) return;
+      if (r === 'all') for (const t of ['rooms', 'doors', 'frames', 'items']) P[t] = P[t].filter(x => x.src?.viewKey !== s.id + ':' + v.id);
+      s.views = s.views.filter(x => x.id !== v.id); changed(); return;
+    }
+    if (d.mdel) { const s = curSheet(); s.measures = arr(s.measures).filter(m => m.id !== d.mdel); changed(); return; }
+    if (d.madd) { const s = curSheet(); const m = arr(s.measures).find(x => x.id === d.madd); if (m) measureToOpname(s, m); return; }
+    if (d.tool) { if (!V.img) { toast('Open eerst een tekening.'); return; } V.setTool(d.tool); return; }
+    if (d.sub) { RT.sub = d.sub; renderOpname(); return; }
+    if (d.ff) { RT.floorFilter = d.ff; renderOpname(); return; }
+    if (d.sg) { RT.staatGroup = d.sg; renderStaat(); return; }
+    if (d.cf) { RT.ctrlFilter = d.cf; renderControle(); return; }
+    if (d.del) {
+      const [tt, id] = d.del.split(':'); const list = entList(tt); const i = list.findIndex(x => x.id === id); if (i < 0) return;
+      const removed = list.splice(i, 1)[0];
+      if (tt === 'rooms') { for (const dd of P.doors) { if (dd.roomId === id) dd.roomId = null; if (dd.toRoomId === id) dd.toRoomId = null; } for (const k of P.frames) if (k.roomId === id) k.roomId = null; for (const it of P.items) if (it.roomId === id) it.roomId = null; }
+      changed(); toast(`Regel verwijderd${removed.name ? ': ' + removed.name : ''}.`); return;
+    }
+    if (d.delfloor) { P.floors = P.floors.filter(f => f.id !== d.delfloor); changed(); return; }
+    if (d.locate) {
+      const [tt, id] = d.locate.split(':'); const ent = entList(tt).find(x => x.id === id); if (!ent?.src?.sheetId) return;
+      if (!RT.sheetData[ent.src.sheetId]) { toast('Voeg de tekening opnieuw toe om de plek te tonen.'); return; }
+      RT.curSheet = ent.src.sheetId; RT.highlight = ent.id; $('#showRooms').checked = true; switchTab('tekeningen'); await viewerLoadSheet(); renderTekeningen();
+      if (ent.src.bbox) { const b = ent.src.bbox; const m = 0.05; V.fitRect([b[0] - m, b[1] - m, b[2] + m, b[3] + m]); }
+      return;
+    }
+    if (d.goto) { gotoRef(RT.issues[+d.goto]?.ref); return; }
+    if (d.fix) { const f = RT.issues[+d.fix]?.fix; if (f && FIXES[f.fn]) FIXES[f.fn](); return; }
+    if (d.sapply) { applySuggestion(d.sapply); return; }
+    if (d.sskip) { const s = P.suggestions.find(x => x.id === d.sskip); if (s) s.status = 'genegeerd'; changed(); return; }
+  });
+  document.addEventListener('change', e => {
+    const el = e.target;
+    if (el.dataset.chk) { const [t, id] = el.dataset.chk.split(':'); const ent = entList(t)?.find(x => x.id === id); if (ent) { ent.checked = el.checked; changed(); } return; }
+    if (el.closest('#opnameBody') && (el.dataset.k || el.dataset.fk)) { onOpnameChange(el); return; }
+    if (el.id === 'staatFloor') { RT.staatFloor = el.value; renderStaat(); return; }
+    if (el.dataset.pf) { P[el.dataset.pf] = el.value; changed({ noRender: true }); renderHeader(); return; }
+    if (el.dataset.sf) {
+      const k = el.dataset.sf, S = P.settings;
+      if (el.type === 'checkbox') S[k] = el.checked;
+      else if (['defaultH'].includes(k)) S[k] = len(el.value) || S[k];
+      else if (['deductMin', 'minConf', 'doorSides', 'maxTiles'].includes(k)) S[k] = num(el.value) ?? S[k];
+      else S[k] = el.value;
+      changed({ noRender: true }); return;
+    }
+    if (el.id === 'showRooms') { V.draw(); return; }
+  });
+  $('#btnAddRow').addEventListener('click', () => {
+    if (RT.sub === 'floors') { const f = { id: uid('f'), name: 'Nieuwe verdieping', order: (P.floors.at(-1)?.order ?? -1) + 1, H: null }; P.floors.push(f); sortFloors(); changed(); return; }
+    if (!P.floors.length) floorFor('Begane grond');
+    const e = newEntity(RT.sub); entList(RT.sub).push(e); changed();
+    requestAnimationFrame(() => { const row = document.getElementById('row-' + e.id); row?.scrollIntoView({ block: 'center' }); row?.querySelector('input.txt, input.num')?.focus(); });
+  });
+  $('#zoomIn').addEventListener('click', () => V.zoomAt(V.w / 2, V.h / 2, 1.4));
+  $('#zoomOut').addEventListener('click', () => V.zoomAt(V.w / 2, V.h / 2, 1 / 1.4));
+  $('#zoomFit').addEventListener('click', () => V.fit());
+  $('#expCsv').addEventListener('click', exportCsv);
+  $('#expXlsx').addEventListener('click', exportXlsx);
+  $('#expPdf').addEventListener('click', exportPdf);
+  $('#expCopy').addEventListener('click', exportCopy);
+  $('#btnExportJson').addEventListener('click', () => saveFile((P.name || 'project').replace(/[\\/:*?"<>|]+/g, '-') + '.json', JSON.stringify(P, (k, v) => k.startsWith('_') ? undefined : v, 1), 'application/json'));
+  $('#jsonIn').addEventListener('change', async e => {
+    const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+    try { const p = migrate(JSON.parse(await f.text())); if (!p) throw 0; p.id = uid('p'); RT.sheetData = {}; setProject(p, false); await doSave(); toast('Project geïmporteerd.'); }
+    catch { toast('Dit bestand is geen geldig project.'); }
+  });
+  $('#btnDeleteProject').addEventListener('click', async () => {
+    if (RT.isDemo) { toast('Het voorbeeld wordt niet opgeslagen en hoeft niet verwijderd te worden.'); return; }
+    if (!(await confirmBox('Project verwijderen?', `"${P.name}" wordt definitief verwijderd.`, 'Verwijderen', true))) return;
+    try { await Store.remove(P.id); } catch (e) { console.warn(e); }
+    RT.sheetData = {}; const list = await Store.list().catch(() => []);
+    const next = list[0] ? await Store.load(list[0].id).catch(() => null) : null;
+    if (next) setProject(next, false); else setProject(demoProject(), true);
+    toast('Project verwijderd.');
+  });
+}
+
+/* ---------- Start ---------- */
+async function initCaps() {
+  const c = window.claude;
+  if (c && typeof c.use === 'function') {
+    const get = n => Promise.resolve().then(() => c.use(n)).catch(() => null);
+    const [sample, db, user, downloads] = await Promise.all([get('sample'), get('db'), get('user'), get('downloads')]);
+    RT.sample = sample; RT.downloads = downloads;
+    if (sample) { try { RT.limits = await sample.limits(); } catch { RT.limits = null; } }
+    if (db && user) { try { const id = await user.id(); if (id) { RT.db = db; RT.uid = id; Store.mode = 'db'; } } catch {} }
+  }
+  if (Store.mode !== 'db') Store.mode = lsSet('opmeet.test', '1') ? 'local' : 'mem';
+  RT.capsDone = true;
+  if (RT.isDemo && !P.sheets.length) {
+    try {
+      const list = await Store.list();
+      if (list.length && RT.isDemo) { const last = lsGet('opmeet.last'); const pick = list.find(p => p.id === last) || list[0]; const p = await Store.load(pick.id); if (p && RT.isDemo) setProject(p, false); }
+    } catch (e) { console.warn('Projecten laden mislukt', e); }
+  }
+  renderAll();
+}
+function boot() {
+  P = demoProject(); RT.isDemo = true;
+  V.init(); bindUI();
+  $('#demoBanner').classList.remove('hidden');
+  recompute(); renderAll(); setSaveState('Voorbeeld, niet opgeslagen');
+  initCaps();
+}
+window.addEventListener('error', e => console.error('Fout:', e.message));
+boot();
+</script>
+</body>
+</html>
