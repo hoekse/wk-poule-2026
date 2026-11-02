@@ -642,10 +642,10 @@ function computeLines() {
     const framesIn = P.frames.filter(k => k.roomId === r.id && k.side !== 'buiten');
     let ded = 0, nDed = 0;
     if (S.deduct) {
-      for (const d of doorsIn) { if (!d.w || !d.h) continue; if (d.w * d.h < S.deductMin) continue; ded += d.w * Math.max(0, d.h - tile) * (d.n || 1); nDed += d.n || 1; }
+      for (const d of doorsIn) { if (!d.w || !d.h) continue; if (d.w * d.h < S.deductMin) continue; ded += d.w * Math.max(0, d.h - tile) * (d.n ?? 1); nDed += d.n ?? 1; }
       for (const k of framesIn) {
         const h = k.h || RT.links.get(k.id)?.h; if (!k.w || !h) continue; if (k.w * h < S.deductMin) continue;
-        const band = Math.max(0, H - tile); ded += k.w * Math.min(h, band) * (k.n || 1); nDed += k.n || 1;
+        const band = Math.max(0, H - tile); ded += k.w * Math.min(h, band) * (k.n ?? 1); nDed += k.n ?? 1;
       }
     }
     const gross = Pm ? Pm * Math.max(0, H - tile) : 0;
@@ -661,7 +661,7 @@ function computeLines() {
         formula: r.area ? `vloeroppervlak ${fm(r.area)}` : `${fm(r.L)} × ${fm(r.B)}` });
     }
     if (!buiten && r.plinth !== false && Pm) {
-      const dw = S.plinthMinusDoors ? sum(doorsIn, d => (d.w || 0) * (d.n || 1)) + sum(framesIn.filter(isFrameDoor), k => (k.w || 0) * (k.n || 1)) : 0;
+      const dw = S.plinthMinusDoors ? sum(doorsIn, d => (d.w || 0) * (d.n ?? 1)) + sum(framesIn.filter(isFrameDoor), k => (k.w || 0) * (k.n ?? 1)) : 0;
       add({ ...base, cat: 'plinten', desc: 'Vloerplint', qty: Math.max(0, Pm - dw), unit: 'm1', formula: `${fm(Pm)}` + (dw ? ` − ${fm(dw)} deuropeningen` : '') });
     }
   }
@@ -669,7 +669,7 @@ function computeLines() {
   for (const d of P.doors) {
     const ra = roomById(d.roomId), rb = roomById(d.toRoomId);
     const space = ra ? (rb ? `${ra.name} / ${rb.name}` : d.toOutside ? `${ra.name} / buiten` : ra.name) : (rb ? rb.name : 'Deur zonder ruimte');
-    const n = d.n || 1, outside = !!d.toOutside || d.kind === 'buitendeur';
+    const n = d.n ?? 1, outside = !!d.toOutside || d.kind === 'buitendeur';
     const base = { floorId: d.floorId || ra?.floorId || rb?.floorId, space, ref: { t: 'doors', id: d.id }, st: n };
     const sides = outside ? 1 : (d.sides || S.doorSides);
     const nm = `${label(DOOR_KINDS, d.kind)} ${fmtmm(d.w)} × ${fmtmm(d.h)}`;
@@ -684,7 +684,7 @@ function computeLines() {
   }
 
   for (const k of P.frames) {
-    const { n, link, h, mull, trans, stM1, ligM1 } = frameCalc(k);
+    const fc = frameCalc(k), { n, link, h, mull, trans, stM1, ligM1 } = fc;
     const room = roomById(k.roomId);
     const sides = k.side === 'beide' ? ['binnen', 'buiten'] : [k.side === 'binnen' ? 'binnen' : 'buiten'];
     const nm = `${label(FRAME_KINDS, k.kind)} ${fmtmm(k.w)} × ${h ? fmtmm(h) : '?'}` + (link && !k.h ? ' (hoogte uit gevel)' : '');
@@ -699,12 +699,12 @@ function computeLines() {
       if (ligM1 > 0) add({ ...base, cat: s === 'binnen' ? 'liggers_binnen' : 'liggers_buiten', desc: `Liggers ${nm}`, qty: ligM1 * n, unit: 'm1',
         formula: k.transomsM1 ? `opgegeven ${fm(k.transomsM1)}${sfx}` : `${trans} × ${fm(k.w)}${sfx}` });
       if (k.sashes > 0) add({ ...base, cat: s === 'binnen' ? 'draaiend_binnen' : 'draaiend_buiten', desc: `Draaiende delen ${nm}`, qty: k.sashes * n, unit: 'st', formula: `${k.sashes}${sfx}` });
-      if (S.glaslatten === s && k.w && h && !['garagedeur', 'deurkozijn'].includes(k.kind)) {
-        add({ ...base, cat: s === 'binnen' ? 'glaslat_binnen' : 'glaslat_buiten', desc: `Glaslatten ${nm}`, qty: (2 * (k.w + h) + 2 * stM1 + 2 * ligM1) * n, unit: 'm1',
+      if (S.glaslatten === s && fc.glas > 0) {
+        add({ ...base, cat: s === 'binnen' ? 'glaslat_binnen' : 'glaslat_buiten', desc: `Glaslatten ${nm}`, qty: fc.glas * n, unit: 'm1',
           formula: `≈ 2 × (${fm(k.w)} + ${fm(h)}) + 2 × ${fm(stM1)} + 2 × ${fm(ligM1)}${sfx}` });
       }
-      if (isFrameDoor(k) && k.w && h) {
-        const lw = k.leafW || Math.max(0.6, k.w - 0.12), lh = k.leafH || Math.max(1.8, h - 0.1);
+      if (fc.leaf > 0) {
+        const { lw, lh } = fc;
         const cat = k.kind === 'garagedeur' ? 'garagedeuren' : (s === 'binnen' ? 'deurbladen' : 'buitendeuren');
         add({ ...base, cat, desc: `Deurblad ${nm} (${s}zijde)`, qty: lw * lh * n, unit: 'm²',
           formula: `${fm(lw)} × ${fm(lh)}` + (k.leafW ? '' : ' (geschat)') + sfx });
@@ -724,7 +724,7 @@ function computeLines() {
   for (const it of P.items) {
     const c = CAT[it.cat] || CAT[it.loc === 'binnen' ? 'overig_binnen' : 'overig_buiten'];
     const unit = c.unit || it.unit || 'st';
-    const n = it.n || 1, room = roomById(it.roomId);
+    const n = it.n ?? 1, room = roomById(it.roomId);
     let qty = 0, formula = '';
     if (unit === 'm1') { qty = (it.len || 0) * n; formula = `${fm(it.len)}` + (n > 1 ? ` × ${n}` : ''); }
     else if (unit === 'm²') {
@@ -732,7 +732,9 @@ function computeLines() {
       qty = a * n; formula = it.area ? `${fm(it.area)}` : (it.w && it.h ? `${fm(it.w)} × ${fm(it.h)}` : `${fm(it.len)} × ${fm(it.h)}`); if (n > 1) formula += ` × ${n}`;
     } else { qty = n; formula = `${n} st`; }
     const space = c.group === 'binnen' ? (room?.name || 'Algemeen') : (it.facade || room?.name || 'Algemeen');
-    add({ floorId: it.floorId || room?.floorId, space, cat: c.k, desc: it.desc || c.label, qty, unit, formula, ref: { t: 'items', id: it.id }, zero: true });
+    let desc = it.desc || c.label;
+    if (unit === 'm1' && it.h && !desc.includes(fmt(it.h))) desc += ` (hoogte ${fmt(it.h)} m)`;
+    add({ floorId: it.floorId || room?.floorId, space, cat: c.k, desc, qty, unit, formula, ref: { t: 'items', id: it.id }, zero: true });
   }
 
   const order = { binnen: 0, buiten: 1 };
@@ -744,13 +746,13 @@ function computeLines() {
 function fmtmm(m) { return m ? String(Math.round(m * 1000)) : '?'; }
 /* Alle afgeleide maten van één kozijn (per stuk; vermenigvuldig met n). */
 function frameCalc(k) {
-  const n = k.n || 1, link = RT.links.get(k.id);
+  const n = k.n ?? 1, link = RT.links.get(k.id);
   const h = k.h || link?.h || null;
   const mull = k.mullions ?? link?.mullions ?? 0, trans = k.transoms ?? link?.transoms ?? 0;
   const stM1 = k.mullionsM1 || (h ? mull * h : 0), ligM1 = k.transomsM1 || (k.w ? trans * k.w : 0);
   const omtrek = k.w ? 2 * (k.w + (h || 0)) : 0;
   const glas = (k.w && h && !['garagedeur', 'deurkozijn'].includes(k.kind)) ? 2 * (k.w + h) + 2 * stM1 + 2 * ligM1 : 0;
-  const door = !!(isFrameDoor(k) && k.w && h);
+  const door = !!(isFrameDoor(k) && k.w && h && (k.kind !== 'schuifpui' || k.leafW));
   const lw = door ? (k.leafW || Math.max(0.6, k.w - 0.12)) : 0, lh = door ? (k.leafH || Math.max(1.8, h - 0.1)) : 0;
   return { n, link, h, mull, trans, stM1, ligM1, omtrek, glas, lw, lh, leaf: lw * lh, wood: omtrek + stM1 + ligM1 };
 }
@@ -862,9 +864,9 @@ function runChecks() {
     const inn = P.frames.filter(k => k.floorId === f.id && k.side !== 'buiten');
     const outDoors = P.doors.filter(d => (d.toOutside || d.kind === 'buitendeur') && (d.floorId || roomById(d.roomId)?.floorId) === f.id);
     const out = P.frames.filter(k => k.floorId === f.id && k.side !== 'binnen');
-    const ci = sum(inn, k => k.n || 1) + sum(outDoors, d => d.n || 1), co = sum(out, k => k.n || 1);
+    const ci = sum(inn, k => k.n ?? 1) + sum(outDoors, d => d.n ?? 1), co = sum(out, k => k.n ?? 1);
     if (inn.length && co) {
-      const wi = sum(inn, k => (k.w || 0) * (k.n || 1)) + sum(outDoors, d => ((d.w || 0) + 0.12) * (d.n || 1)), wo = sum(out, k => (k.w || 0) * (k.n || 1));
+      const wi = sum(inn, k => (k.w || 0) * (k.n ?? 1)) + sum(outDoors, d => ((d.w || 0) + 0.12) * (d.n ?? 1)), wo = sum(out, k => (k.w || 0) * (k.n ?? 1));
       if (ci !== co || Math.abs(wi - wo) > 0.08 * Math.max(wi, wo)) push('waarschuwing', `${f.name}: plattegrond toont ${ci} kozijnen en buitendeuren (samen ca. ${fmt(wi)} m breed), de gevels ${co} kozijnen (samen ${fmt(wo)} m breed). Controleer of er een kozijn ontbreekt of dubbel staat.`, { t: 'frames', id: (inn[0] || out[0]).id });
       else push('info', `${f.name}: aantal en breedte van de kozijnen op plattegrond en gevels komen overeen (${ci} st).`, null);
     }
@@ -1057,7 +1059,7 @@ function renderActive() {
 function renderHeader() { $('#projName').textContent = P.name + (P.client ? ' · ' + P.client : ''); }
 function renderBadges() {
   $('#cntOpname').textContent = P.rooms.length + P.doors.length + P.frames.length + P.items.length;
-  $('#cntKoz').textContent = sum(P.frames.filter(k => k.side !== 'binnen'), k => k.n || 1);
+  $('#cntKoz').textContent = sum(P.frames.filter(k => k.side !== 'binnen'), k => k.n ?? 1);
   const f = RT.issues.filter(i => i.lvl === 'fout').length, w = RT.issues.filter(i => i.lvl === 'waarschuwing').length;
   const c = $('#cntControle'); c.textContent = f || w || '✓'; c.className = 'cnt' + (f ? ' bad' : w ? ' warn' : '');
 }
