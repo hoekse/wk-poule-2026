@@ -153,6 +153,10 @@ table.tbl{border-collapse:collapse;width:100%;font-size:.88rem}
 .tbl .grp td{background:var(--paper);font-family:var(--display);font-weight:600;font-size:1rem;color:var(--ink);padding-top:9px}
 .tbl .grp2 td{font-weight:600;background:transparent;border-bottom:1px solid var(--line)}
 .tbl .formula{color:var(--muted);font-size:.82rem;white-space:nowrap}
+.tbl tr.subtot td{font-weight:700;border-bottom:2px solid var(--line);background:var(--surface)}
+.tbl tfoot td{font-weight:700;background:var(--paper);border-top:2px solid var(--ink);padding-top:8px;padding-bottom:8px}
+.tbl td.miss{color:var(--bad);font-weight:600}
+.tbl td.derived{color:var(--info)}
 .in{border:1px solid var(--line);background:var(--surface);border-radius:5px;padding:4px 6px;min-width:0;width:100%}
 .in.num{width:76px;text-align:right;font-variant-numeric:tabular-nums}
 .in.int{width:54px;text-align:right}
@@ -226,7 +230,8 @@ td .in.txt{min-width:120px}
     <button class="tab" role="tab" data-tab="tekeningen" aria-selected="true" type="button">1 · Tekeningen</button>
     <button class="tab" role="tab" data-tab="opname" aria-selected="false" type="button">2 · Opname <span class="cnt" id="cntOpname">0</span></button>
     <button class="tab" role="tab" data-tab="staat" aria-selected="false" type="button">3 · Opmeetstaat</button>
-    <button class="tab" role="tab" data-tab="controle" aria-selected="false" type="button">4 · Controle <span class="cnt" id="cntControle">0</span></button>
+    <button class="tab" role="tab" data-tab="kozijnen" aria-selected="false" type="button">4 · Kozijnstaat <span class="cnt" id="cntKoz">0</span></button>
+    <button class="tab" role="tab" data-tab="controle" aria-selected="false" type="button">5 · Controle <span class="cnt" id="cntControle">0</span></button>
     <button class="tab" role="tab" data-tab="instellingen" aria-selected="false" type="button">Instellingen</button>
   </nav>
 </header>
@@ -333,6 +338,28 @@ td .in.txt{min-width:120px}
     </div>
     <div class="sum-grid" id="sumGrid"></div>
     <div class="tbl-wrap"><table class="tbl" id="staatTbl"></table></div>
+  </section>
+
+  <!-- TAB: KOZIJNSTAAT -->
+  <section id="tab-kozijnen" role="tabpanel" class="hidden">
+    <div class="panel" style="margin-bottom:12px">
+      <div class="panel-h">
+        <div>
+          <h2>Kozijnstaat</h2>
+          <div class="small muted" id="kzMeta"></div>
+        </div>
+        <div class="btn-row">
+          <button class="btn" id="kzXlsx" type="button">Excel</button>
+          <button class="btn" id="kzPdf" type="button">PDF</button>
+          <button class="btn" id="kzCsv" type="button">CSV</button>
+          <button class="btn" id="kzCopy" type="button">Kopieer tabel</button>
+        </div>
+      </div>
+      <div class="filters" id="kzFilters" style="margin-bottom:0"></div>
+    </div>
+    <div class="tiles" id="kzTiles"></div>
+    <div id="kzBody"></div>
+    <p class="small muted" id="kzNote" style="max-width:80ch"></p>
   </section>
 
   <!-- TAB: CONTROLE -->
@@ -657,11 +684,7 @@ function computeLines() {
   }
 
   for (const k of P.frames) {
-    const n = k.n || 1;
-    const link = RT.links.get(k.id);
-    const h = k.h || link?.h || null;
-    const mull = k.mullions ?? link?.mullions ?? 0, trans = k.transoms ?? link?.transoms ?? 0;
-    const stM1 = k.mullionsM1 || (h ? mull * h : 0), ligM1 = k.transomsM1 || (k.w ? trans * k.w : 0);
+    const { n, link, h, mull, trans, stM1, ligM1 } = frameCalc(k);
     const room = roomById(k.roomId);
     const sides = k.side === 'beide' ? ['binnen', 'buiten'] : [k.side === 'binnen' ? 'binnen' : 'buiten'];
     const nm = `${label(FRAME_KINDS, k.kind)} ${fmtmm(k.w)} × ${h ? fmtmm(h) : '?'}` + (link && !k.h ? ' (hoogte uit gevel)' : '');
@@ -719,6 +742,18 @@ function computeLines() {
   return lines;
 }
 function fmtmm(m) { return m ? String(Math.round(m * 1000)) : '?'; }
+/* Alle afgeleide maten van één kozijn (per stuk; vermenigvuldig met n). */
+function frameCalc(k) {
+  const n = k.n || 1, link = RT.links.get(k.id);
+  const h = k.h || link?.h || null;
+  const mull = k.mullions ?? link?.mullions ?? 0, trans = k.transoms ?? link?.transoms ?? 0;
+  const stM1 = k.mullionsM1 || (h ? mull * h : 0), ligM1 = k.transomsM1 || (k.w ? trans * k.w : 0);
+  const omtrek = k.w ? 2 * (k.w + (h || 0)) : 0;
+  const glas = (k.w && h && !['garagedeur', 'deurkozijn'].includes(k.kind)) ? 2 * (k.w + h) + 2 * stM1 + 2 * ligM1 : 0;
+  const door = !!(isFrameDoor(k) && k.w && h);
+  const lw = door ? (k.leafW || Math.max(0.6, k.w - 0.12)) : 0, lh = door ? (k.leafH || Math.max(1.8, h - 0.1)) : 0;
+  return { n, link, h, mull, trans, stM1, ligM1, omtrek, glas, lw, lh, leaf: lw * lh, wood: omtrek + stM1 + ligM1 };
+}
 
 function totals(lines) {
   const t = {};
@@ -916,7 +951,7 @@ async function doSave() {
 const RT = {
   sample: null, limits: null, db: null, uid: null, downloads: null, capsDone: false,
   sheetData: {}, curSheet: null, curView: null,
-  tab: 'tekeningen', sub: 'rooms', floorFilter: 'all', staatGroup: 'all', staatFloor: 'all', ctrlFilter: 'all',
+  tab: 'tekeningen', sub: 'rooms', floorFilter: 'all', staatGroup: 'all', staatFloor: 'all', ctrlFilter: 'all', kzSide: 'buiten', kzFacade: 'all', kzFloor: 'all',
   lines: [], issues: [], roomCalc: {}, links: new Map(), busy: false, abort: null, log: [], isDemo: true,
 };
 let P = null;
@@ -966,13 +1001,13 @@ function demoProject() {
   const K = (f, room, side, facade, w, h, extra = {}) => p.frames.push({ id: uid('k'), floorId: f.id, roomId: room?.id || null, facade, side, kind: 'raamkozijn', w, h, n: 1, mullions: null, mullionsM1: null, transoms: null, transomsM1: null, sashes: 0, door: false, leafW: null, leafH: null, sill: side !== 'buiten', drip: side !== 'binnen', material: 'hout', conf: 0.85, note: '', src: { kind: 'demo' }, checked: false, ...extra });
   K(bg, woon, 'binnen', 'Voorgevel', 2.7, null); K(bg, woon, 'binnen', 'Achtergevel', 2.4, null, { kind: 'schuifpui', sill: false }); K(bg, keuken, 'binnen', 'Achtergevel', 1.2, null);
   K(e1, s1, 'binnen', 'Voorgevel', 2.4, null); K(e1, s2, 'binnen', 'Achtergevel', 1.8, null); K(e1, s3, 'binnen', 'Achtergevel', 1.2, null); K(e1, bad, 'binnen', 'Achtergevel', 0.6, 0.6, { sill: false });
-  K(bg, null, 'buiten', 'Voorgevel', 2.7, 1.6, { mullions: 2, transoms: 1, sashes: 1 });
-  K(bg, null, 'buiten', 'Voorgevel', 1.1, 2.4, { kind: 'deurkozijn', door: true, leafW: 0.98, leafH: 2.18, transoms: 1, sashes: 1, drip: false });
-  K(e1, null, 'buiten', 'Voorgevel', 2.4, 1.5, { mullions: 1, transoms: 1, sashes: 2 });
-  K(bg, null, 'buiten', 'Achtergevel', 2.4, 2.3, { kind: 'schuifpui', door: true, mullions: 1, sashes: 1, drip: false });
-  K(bg, null, 'buiten', 'Achtergevel', 1.2, 1.2, { sashes: 1 });
-  K(e1, null, 'buiten', 'Achtergevel', 1.8, 1.5, { mullions: 1, sashes: 1 });
-  K(e1, null, 'buiten', 'Achtergevel', 1.2, 1.5, { sashes: 1 });
+  K(bg, null, 'buiten', 'Voorgevel', 2.7, 1.6, { mark: 'A', mullions: 2, transoms: 1, sashes: 1 });
+  K(bg, null, 'buiten', 'Voorgevel', 1.1, 2.4, { mark: 'B', kind: 'deurkozijn', door: true, leafW: 0.98, leafH: 2.18, transoms: 1, sashes: 1, drip: false });
+  K(e1, null, 'buiten', 'Voorgevel', 2.4, 1.5, { mark: 'C', mullions: 1, transoms: 1, sashes: 2 });
+  K(bg, null, 'buiten', 'Achtergevel', 2.4, 2.3, { mark: 'D', kind: 'schuifpui', door: true, mullions: 1, sashes: 1, drip: false });
+  K(bg, null, 'buiten', 'Achtergevel', 1.2, 1.2, { mark: 'E', sashes: 1 });
+  K(e1, null, 'buiten', 'Achtergevel', 1.8, 1.5, { mark: 'F', mullions: 1, sashes: 1 });
+  K(e1, null, 'buiten', 'Achtergevel', 1.2, 1.5, { mark: 'G', sashes: 1 });
   const I = (cat, desc, extra) => p.items.push({ id: uid('i'), floorId: null, roomId: null, facade: '', loc: CAT[cat].group, cat, desc, unit: CAT[cat].unit, len: null, w: null, h: null, area: null, n: 1, conf: 0.85, note: '', src: { kind: 'demo' }, checked: false, ...extra });
   I('trappen', 'Vurenhouten trap, 14 treden', { floorId: bg.id, roomId: hal.id });
   I('trapleuning', 'Trapleuning', { floorId: bg.id, roomId: hal.id, len: 3.4 });
@@ -1013,15 +1048,16 @@ const confirmBox = (title, text, okLabel = 'Doorgaan', danger = false) => modal(
 
 function renderAll() {
   renderHeader(); renderBadges();
-  renderTekeningen(); renderOpname(); renderStaat(); renderControle(); renderInstellingen();
+  renderTekeningen(); renderOpname(); renderStaat(); renderKozijnstaat(); renderControle(); renderInstellingen();
 }
 function renderActive() {
   renderHeader();
-  ({ tekeningen: renderTekeningen, opname: renderOpname, staat: renderStaat, controle: renderControle, instellingen: renderInstellingen })[RT.tab]?.();
+  ({ tekeningen: renderTekeningen, opname: renderOpname, staat: renderStaat, kozijnen: renderKozijnstaat, controle: renderControle, instellingen: renderInstellingen })[RT.tab]?.();
 }
 function renderHeader() { $('#projName').textContent = P.name + (P.client ? ' · ' + P.client : ''); }
 function renderBadges() {
   $('#cntOpname').textContent = P.rooms.length + P.doors.length + P.frames.length + P.items.length;
+  $('#cntKoz').textContent = sum(P.frames.filter(k => k.side !== 'binnen'), k => k.n || 1);
   const f = RT.issues.filter(i => i.lvl === 'fout').length, w = RT.issues.filter(i => i.lvl === 'waarschuwing').length;
   const c = $('#cntControle'); c.textContent = f || w || '✓'; c.className = 'cnt' + (f ? ' bad' : w ? ' warn' : '');
 }
@@ -1066,6 +1102,7 @@ const COLS = {
     { k: 'roomId', l: 'Ruimte', type: 'room' },
     { k: 'facade', l: 'Gevel', type: 'text', w: 110 },
     { k: 'kind', l: 'Soort', type: 'select', opts: FRAME_KINDS },
+    { k: 'mark', l: 'Merk', type: 'text', w: 52 },
     { k: 'w', l: 'Breedte m', type: 'len' },
     { k: 'h', l: 'Hoogte m', type: 'len', ph: k => RT.links.get(k.id)?.h ? fmtIn(RT.links.get(k.id).h) + ' (gevel)' : '' },
     { k: 'n', l: 'Aantal', type: 'int' },
@@ -1106,7 +1143,7 @@ function newEntity(t) {
   const base = { id: uid(t[0]), conf: null, note: '', src: { kind: 'hand' }, checked: false };
   if (t === 'rooms') return { ...base, floorId: f, name: 'Nieuwe ruimte', loc: 'binnen', L: null, B: null, H: null, area: null, perim: null, tileH: 0, walls: true, ceiling: true, plinth: true };
   if (t === 'doors') return { ...base, floorId: f, roomId: null, toRoomId: null, toOutside: false, kind: 'binnendeur', w: 0.83, h: 2.315, n: 1, sides: null, frame: true };
-  if (t === 'frames') return { ...base, floorId: f, roomId: null, facade: '', side: 'beide', kind: 'raamkozijn', w: null, h: null, n: 1, mullions: 0, mullionsM1: null, transoms: 0, transomsM1: null, sashes: 0, door: false, leafW: null, leafH: null, sill: true, drip: true, material: 'hout' };
+  if (t === 'frames') return { ...base, floorId: f, roomId: null, facade: '', side: 'beide', kind: 'raamkozijn', mark: '', w: null, h: null, n: 1, mullions: 0, mullionsM1: null, transoms: 0, transomsM1: null, sashes: 0, door: false, leafW: null, leafH: null, sill: true, drip: true, material: 'hout' };
   return { ...base, floorId: f, roomId: null, facade: '', loc: 'buiten', cat: 'dakgoten', desc: '', unit: 'm1', len: null, w: null, h: null, area: null, n: 1 };
 }
 function renderOpname() {
@@ -2187,6 +2224,147 @@ function applySuggestion(id) {
   changed(); toast('Voorstel verwerkt.');
 }
 
+/* ---------- Tab: Kozijnstaat ---------- */
+const kzFloorOf = k => k.floorId || roomById(k.roomId)?.floorId || null;
+const kzFacadeOf = k => k.facade || 'Gevel onbekend';
+function kzSorted(list) {
+  const fo = id => floorById(id)?.order ?? 99;
+  return [...list].sort((a, b) => kzFacadeOf(a).localeCompare(kzFacadeOf(b), 'nl') || (fo(kzFloorOf(a)) - fo(kzFloorOf(b))) ||
+    str(a.mark).localeCompare(str(b.mark), 'nl', { numeric: true }) || ((b.w || 0) - (a.w || 0)));
+}
+function kzFrames() {
+  const side = RT.kzSide;
+  let list = P.frames.filter(k => side === 'alle' || (side === 'buiten' ? k.side !== 'binnen' : k.side !== 'buiten'));
+  if (RT.kzFacade !== 'all') list = list.filter(k => kzFacadeOf(k) === RT.kzFacade);
+  if (RT.kzFloor !== 'all') list = list.filter(k => (kzFloorOf(k) || 'none') === RT.kzFloor);
+  return kzSorted(list);
+}
+function kzTotals(list) {
+  const t = { n: 0, omtrek: 0, st: 0, lig: 0, wood: 0, glas: 0, leaf: 0, sashes: 0, noH: 0 };
+  for (const k of list) {
+    const c = frameCalc(k);
+    t.n += c.n; t.omtrek += c.omtrek * c.n; t.st += c.stM1 * c.n; t.lig += c.ligM1 * c.n; t.wood += c.wood * c.n;
+    t.glas += c.glas * c.n; t.leaf += c.leaf * c.n; t.sashes += (k.sashes || 0) * c.n; if (!c.h) t.noH += c.n;
+  }
+  return t;
+}
+function renderKozijnstaat() {
+  const sideTxt = { buiten: 'buitenzijde, per gevel', binnen: 'binnenzijde', alle: 'binnen- en buitenzijde' }[RT.kzSide];
+  $('#kzMeta').textContent = `${P.name} · ${sideTxt}`;
+  const pool = P.frames.filter(k => RT.kzSide === 'alle' || (RT.kzSide === 'buiten' ? k.side !== 'binnen' : k.side !== 'buiten'));
+  const facades = [...new Set(pool.map(kzFacadeOf))].sort((a, b) => a.localeCompare(b, 'nl'));
+  if (RT.kzFacade !== 'all' && !facades.includes(RT.kzFacade)) RT.kzFacade = 'all';
+  $('#kzFilters').innerHTML = `<span class="small muted">Zijde:</span>` +
+    [['buiten', 'Buitenzijde (gevels)'], ['binnen', 'Binnenzijde'], ['alle', 'Beide']].map(([k, l]) => `<button class="btn sm" data-kzs="${k}" aria-pressed="${RT.kzSide === k}" type="button">${l}</button>`).join('') +
+    `<select class="in" id="kzFacade" aria-label="Gevel"><option value="all">Alle gevels</option>${facades.map(f => `<option value="${esc(f)}" ${RT.kzFacade === f ? 'selected' : ''}>${esc(f)}</option>`).join('')}</select>` +
+    `<select class="in" id="kzFloor" aria-label="Verdieping"><option value="all">Alle verdiepingen</option>${P.floors.map(f => `<option value="${f.id}" ${RT.kzFloor === f.id ? 'selected' : ''}>${esc(f.name)}</option>`).join('')}<option value="none" ${RT.kzFloor === 'none' ? 'selected' : ''}>Zonder verdieping</option></select>`;
+  const list = kzFrames(), T = kzTotals(list);
+  $('#kzTiles').innerHTML = `
+    <div class="tile"><span class="small muted">Kozijnen</span><b>${T.n}</b><span class="small">${list.length} regel${list.length === 1 ? '' : 's'}${RT.kzFacade === 'all' ? ` · ${new Set(list.map(kzFacadeOf)).size} gevel(s)` : ''}</span></div>
+    <div class="tile ok"><span class="small muted">Totaal hout</span><b>${fmt(T.wood, 1)}</b><span class="small">m1 · kozijn ${fmt(T.omtrek, 1)} + staanders ${fmt(T.st, 1)} + liggers ${fmt(T.lig, 1)}</span></div>
+    <div class="tile"><span class="small muted">Draaiende delen</span><b>${T.sashes}</b><span class="small">st</span></div>
+    <div class="tile"><span class="small muted">Glaslatten (benadering)</span><b>${fmt(T.glas, 1)}</b><span class="small">m1</span></div>
+    <div class="tile"><span class="small muted">Deurbladen</span><b>${fmt(T.leaf, 1)}</b><span class="small">m²</span></div>
+    <div class="tile ${T.noH ? 'bad' : 'ok'}"><span class="small muted">Hoogte ontbreekt</span><b>${T.noH}</b><span class="small">${T.noH ? 'hout is te laag geteld' : 'alle hoogtes bekend'}</span></div>`;
+  const body = $('#kzBody');
+  if (!list.length) {
+    const binnenOnly = RT.kzSide === 'buiten' && P.frames.some(k => k.side === 'binnen');
+    body.innerHTML = `<div class="panel"><h3>${RT.kzSide === 'buiten' ? 'Nog geen gevelkozijnen' : 'Geen kozijnen in deze selectie'}</h3>
+      <p class="small" style="max-width:70ch">${RT.kzSide === 'buiten' ? 'Gevelkozijnen komen uit de gevelaanzichten. Lees die uit op het tabblad Tekeningen, of voeg kozijnen toe bij Opname &gt; Kozijnen &amp; ramen met zijde "Buitenzijde" of "Binnen + buiten".' : 'Kies een andere zijde, gevel of verdieping.'}</p>
+      ${binnenOnly ? `<p class="small">Er staan wel kozijnen van de plattegronden in de opname (binnenzijde). Heb je geen gevelaanzichten, dan kun je die ook voor buiten laten tellen.</p><button class="btn primary sm" data-kzfix="1" type="button">Plattegrondkozijnen ook voor buiten tellen</button>` : ''}</div>`;
+  } else {
+    const showSide = RT.kzSide === 'alle';
+    const cols = 17 + (showSide ? 1 : 0);
+    let html = `<div class="tbl-wrap"><table class="tbl"><thead><tr><th>✓</th><th>Merk</th><th>Soort</th>${showSide ? '<th>Zijde</th>' : ''}<th>Verdieping</th><th>Ruimte</th>
+      <th class="q">Breedte</th><th class="q">Hoogte</th><th class="q">Aantal</th><th class="q">Staanders</th><th class="q">Liggers</th><th class="q">Draaiend</th>
+      <th class="q">Kozijnhout m1</th><th class="q">Staanders m1</th><th class="q">Liggers m1</th><th class="q">Totaal hout m1</th><th class="q">Glaslatten m1</th><th class="q">Deurblad m²</th><th></th></tr></thead><tbody>`;
+    const groups = new Map();
+    for (const k of list) { const g = kzFacadeOf(k); if (!groups.has(g)) groups.set(g, []); groups.get(g).push(k); }
+    for (const [g, ks] of groups) {
+      html += `<tr class="grp"><td colspan="${cols + 2}">${esc(g)}</td></tr>`;
+      for (const k of ks) {
+        const c = frameCalc(k), n = c.n;
+        const hCell = c.h ? (k.h ? `<td class="q">${fmt(c.h)}</td>` : `<td class="q derived" title="Overgenomen van een even breed gevelkozijn">${fmt(c.h)}*</td>`) : `<td class="q miss">ontbreekt</td>`;
+        html += `<tr class="${k.checked ? 'checked' : ''}"><td><input type="checkbox" data-chk="frames:${k.id}" ${k.checked ? 'checked' : ''} aria-label="Gecontroleerd"></td>
+          <td><b>${esc(k.mark || '–')}</b></td><td>${esc(label(FRAME_KINDS, k.kind))}${k.material && !/hout|onbekend/i.test(k.material) ? ` <span class="chip warn">${esc(k.material)}</span>` : ''}</td>
+          ${showSide ? `<td>${esc(label(SIDES, k.side))}</td>` : ''}<td style="white-space:nowrap">${esc(floorName(kzFloorOf(k)))}</td><td>${esc(roomById(k.roomId)?.name || '')}</td>
+          <td class="q">${fmt(k.w)}</td>${hCell}<td class="q">${n}</td><td class="q">${c.mull || ''}</td><td class="q">${c.trans || ''}</td><td class="q">${k.sashes || ''}</td>
+          <td class="q">${fmt(c.omtrek * n)}</td><td class="q">${c.stM1 ? fmt(c.stM1 * n) : ''}</td><td class="q">${c.ligM1 ? fmt(c.ligM1 * n) : ''}</td><td class="q"><b>${fmt(c.wood * n)}</b></td>
+          <td class="q">${c.glas ? fmt(c.glas * n) : ''}</td><td class="q">${c.leaf ? fmt(c.leaf * n) : ''}</td>
+          <td><button class="btn sm ghost" data-kzedit="${k.id}" type="button">Wijzig</button></td></tr>`;
+      }
+      if (groups.size > 1) {
+        const t = kzTotals(ks);
+        html += `<tr class="subtot"><td></td><td colspan="${showSide ? 7 : 6}">Subtotaal ${esc(g)}</td><td class="q">${t.n}</td><td></td><td></td><td class="q">${t.sashes || ''}</td>
+          <td class="q">${fmt(t.omtrek)}</td><td class="q">${fmt(t.st)}</td><td class="q">${fmt(t.lig)}</td><td class="q">${fmt(t.wood)}</td><td class="q">${fmt(t.glas)}</td><td class="q">${fmt(t.leaf)}</td><td></td></tr>`;
+      }
+    }
+    html += `</tbody><tfoot><tr><td></td><td colspan="${showSide ? 7 : 6}">Totaal</td><td class="q">${T.n}</td><td></td><td></td><td class="q">${T.sashes || ''}</td>
+      <td class="q">${fmt(T.omtrek)}</td><td class="q">${fmt(T.st)}</td><td class="q">${fmt(T.lig)}</td><td class="q">${fmt(T.wood)}</td><td class="q">${fmt(T.glas)}</td><td class="q">${fmt(T.leaf)}</td><td></td></tr></tfoot></table></div>`;
+    body.innerHTML = html;
+  }
+  $('#kzNote').textContent = `Kozijnhout = 2 × (breedte + hoogte). Staanders = aantal × hoogte, liggers = aantal × breedte, tenzij een lengte is opgegeven. Totaal hout = kozijnhout + staanders + liggers, maal aantal. Een hoogte met * is overgenomen van een even breed gevelkozijn. Glaslatten zijn een benadering; in de opmeetstaat tellen ze ${P.settings.glaslatten === 'uit' ? 'niet mee' : 'aan de ' + P.settings.glaslatten + 'zijde'}.`;
+}
+function kzExportRows(list) {
+  const head = ['Gevel', 'Merk', 'Soort', 'Zijde', 'Verdieping', 'Ruimte', 'Breedte m', 'Hoogte m', 'Aantal', 'Staanders', 'Liggers', 'Draaiende delen', 'Kozijnhout m1', 'Staanders m1', 'Liggers m1', 'Totaal hout m1', 'Glaslatten m1 (benadering)', 'Deurblad m²', 'Gecontroleerd'];
+  const rows = list.map(k => {
+    const c = frameCalc(k), n = c.n;
+    return [kzFacadeOf(k), k.mark || '', label(FRAME_KINDS, k.kind), label(SIDES, k.side), floorName(kzFloorOf(k)), roomById(k.roomId)?.name || '',
+      k.w ? Math.round(k.w * 1000) / 1000 : '', c.h ? Math.round(c.h * 1000) / 1000 : '', n, c.mull || 0, c.trans || 0, k.sashes || 0,
+      r2(c.omtrek * n), r2(c.stM1 * n), r2(c.ligM1 * n), r2(c.wood * n), r2(c.glas * n), r2(c.leaf * n), k.checked ? 'ja' : ''];
+  });
+  const t = kzTotals(list);
+  rows.push(['Totaal', '', '', '', '', '', '', '', t.n, '', '', t.sashes, r2(t.omtrek), r2(t.st), r2(t.lig), r2(t.wood), r2(t.glas), r2(t.leaf), '']);
+  return { head, rows };
+}
+const nlCell = v => typeof v === 'number' ? String(v).replace('.', ',') : String(v ?? '');
+const kzBase = () => ('Kozijnstaat ' + P.name).replace(/[\\/:*?"<>|]+/g, '-').slice(0, 80);
+async function kzExportCsv() {
+  const { head, rows } = kzExportRows(kzFrames());
+  const csv = '﻿' + [head, ...rows].map(r => r.map(v => { const s = nlCell(v); return /[;"\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }).join(';')).join('\r\n');
+  await saveFile(kzBase() + '.csv', csv, 'text/csv');
+}
+async function kzExportCopy() {
+  const { head, rows } = kzExportRows(kzFrames());
+  const tsv = [head, ...rows].map(r => r.map(v => nlCell(v).replace(/\t|\n/g, ' ')).join('\t')).join('\n');
+  try { await navigator.clipboard.writeText(tsv); toast('Kozijnstaat gekopieerd. Plak hem in Excel of je offerteprogramma.'); }
+  catch { await modal('Kopiëren', `<p class="small">Kopiëren werd geweigerd. Selecteer de tekst hieronder en kopieer handmatig.</p><textarea class="in" rows="10" style="width:100%">${esc(tsv)}</textarea>`); }
+}
+async function kzExportXlsx() {
+  try { await loadScript(LIB.xlsx); } catch { toast('Excel-module kon niet laden. Gebruik CSV.'); return; }
+  const X = window.XLSX; const { head, rows } = kzExportRows(kzFrames());
+  const wb = X.utils.book_new();
+  const ws = X.utils.aoa_to_sheet([['Kozijnstaat ' + P.name], [[P.client, P.address].filter(Boolean).join(' · ')], [], head, ...rows]);
+  ws['!cols'] = head.map((h, i) => ({ wch: i < 6 ? 16 : 11 }));
+  X.utils.book_append_sheet(wb, ws, 'Kozijnstaat');
+  const buf = X.write(wb, { bookType: 'xlsx', type: 'array' });
+  await saveFile(kzBase() + '.xlsx', new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
+}
+async function kzExportPdf() {
+  try { await loadScript(LIB.jspdf); await loadScript(LIB.autotable); } catch { toast('PDF-module kon niet laden. Gebruik Excel of CSV.'); return; }
+  const { jsPDF } = window.jspdf; const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'landscape' });
+  const Tx = s => String(s ?? '').replace(/−/g, '-').replace(/≈/g, '~').replace(/[^\x00-\xFF€–…]/g, '');
+  const list = kzFrames(), T = kzTotals(list);
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(16); doc.text(Tx('Kozijnstaat'), 14, 16);
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
+  const meta = [P.company, P.name, [P.client, P.address].filter(Boolean).join(' · '), { buiten: 'Buitenzijde', binnen: 'Binnenzijde', alle: 'Binnen- en buitenzijde' }[RT.kzSide]].filter(Boolean);
+  meta.forEach((m, i) => doc.text(Tx(m), 14, 22 + i * 5));
+  const body = []; let g = null;
+  for (const k of list) {
+    const c = frameCalc(k), n = c.n;
+    if (kzFacadeOf(k) !== g) { g = kzFacadeOf(k); body.push([{ content: Tx(g), colSpan: 14, styles: { fontStyle: 'bold', fillColor: [242, 244, 247] } }]); }
+    body.push([Tx(k.mark || '-'), Tx(label(FRAME_KINDS, k.kind)), Tx(floorName(kzFloorOf(k))), fmt(k.w), c.h ? fmt(c.h) + (k.h ? '' : '*') : 'ontbreekt', n, c.mull || '', c.trans || '', k.sashes || '',
+      fmt(c.omtrek * n), c.stM1 ? fmt(c.stM1 * n) : '', c.ligM1 ? fmt(c.ligM1 * n) : '', fmt(c.wood * n), c.glas ? fmt(c.glas * n) : '']);
+  }
+  body.push([{ content: 'Totaal', colSpan: 5, styles: { fontStyle: 'bold' } }, { content: String(T.n), styles: { fontStyle: 'bold' } }, '', '', String(T.sashes || ''), fmt(T.omtrek), fmt(T.st), fmt(T.lig), { content: fmt(T.wood), styles: { fontStyle: 'bold' } }, fmt(T.glas)]);
+  doc.autoTable({ startY: 24 + meta.length * 5, head: [['Merk', 'Soort', 'Verdieping', 'Breedte', 'Hoogte', 'Aantal', 'Staand.', 'Ligg.', 'Draaiend', 'Kozijnhout m1', 'Staanders m1', 'Liggers m1', 'Totaal hout m1', 'Glaslatten m1']], body,
+    theme: 'grid', styles: { fontSize: 8.5, cellPadding: 1.5 }, headStyles: { fillColor: [29, 58, 102] },
+    columnStyles: Object.fromEntries([3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13].map(i => [i, { halign: 'right' }])) });
+  doc.setFontSize(8); doc.setTextColor(100);
+  doc.text(Tx('Kozijnhout = 2 x (breedte + hoogte); staanders = aantal x hoogte; liggers = aantal x breedte; totaal hout = som, maal aantal. * = hoogte overgenomen uit gevel. Glaslatten zijn een benadering.'), 14, doc.lastAutoTable.finalY + 6);
+  await saveFile(kzBase() + '.pdf', doc.output('arraybuffer'));
+}
+
 /* ---------- Export ---------- */
 function exportRows(lines) {
   return lines.map(l => [l.group === 'binnen' ? 'Binnen' : 'Buiten', floorName(l.floorId), l.space, CAT[l.cat].label, l.desc, l.formula, l.qty, l.unit, entityOf(l.ref)?.checked ? 'ja' : '']);
@@ -2219,6 +2397,7 @@ async function exportXlsx() {
   X.utils.book_append_sheet(wb, ws1, 'Samenvatting');
   const ws2 = X.utils.aoa_to_sheet([EXP_HEAD, ...exportRows(lines)]); ws2['!cols'] = [{ wch: 12 }, { wch: 16 }, { wch: 22 }, { wch: 30 }, { wch: 40 }, { wch: 40 }, { wch: 12 }, { wch: 8 }, { wch: 12 }];
   X.utils.book_append_sheet(wb, ws2, 'Opmeetstaat');
+  if (P.frames.length) { const kz = kzExportRows(kzSorted(P.frames)); const wsK = X.utils.aoa_to_sheet([kz.head, ...kz.rows]); wsK['!cols'] = kz.head.map((h, i) => ({ wch: i < 6 ? 16 : 11 })); X.utils.book_append_sheet(wb, wsK, 'Kozijnstaat'); }
   const ctrl = [['Soort', 'Melding'], ...RT.issues.map(i => [i.lvl, i.msg])];
   X.utils.book_append_sheet(wb, X.utils.aoa_to_sheet(ctrl), 'Controle');
   const buf = X.write(wb, { bookType: 'xlsx', type: 'array' });
@@ -2312,7 +2491,7 @@ function bindUI() {
   }));
 
   document.addEventListener('click', async e => {
-    const t = e.target.closest('[data-sheet],[data-delsheet],[data-vsel],[data-vrun],[data-vedit],[data-vdel],[data-madd],[data-mdel],[data-tool],[data-sub],[data-ff],[data-del],[data-delfloor],[data-locate],[data-sg],[data-cf],[data-goto],[data-fix],[data-sapply],[data-sskip],[data-chk]');
+    const t = e.target.closest('[data-sheet],[data-delsheet],[data-vsel],[data-vrun],[data-vedit],[data-vdel],[data-madd],[data-mdel],[data-tool],[data-sub],[data-ff],[data-del],[data-delfloor],[data-locate],[data-sg],[data-cf],[data-goto],[data-fix],[data-sapply],[data-sskip],[data-chk],[data-kzs],[data-kzedit],[data-kzfix]');
     if (!t) return;
     const d = t.dataset;
     if (d.delsheet) {
@@ -2342,6 +2521,9 @@ function bindUI() {
     if (d.ff) { RT.floorFilter = d.ff; renderOpname(); return; }
     if (d.sg) { RT.staatGroup = d.sg; renderStaat(); return; }
     if (d.cf) { RT.ctrlFilter = d.cf; renderControle(); return; }
+    if (d.kzs) { RT.kzSide = d.kzs; RT.kzFacade = 'all'; renderKozijnstaat(); return; }
+    if (d.kzedit) { RT.sub = 'frames'; gotoRef({ t: 'frames', id: d.kzedit }); return; }
+    if (d.kzfix) { FIXES.framesBoth(); return; }
     if (d.del) {
       const [tt, id] = d.del.split(':'); const list = entList(tt); const i = list.findIndex(x => x.id === id); if (i < 0) return;
       const removed = list.splice(i, 1)[0];
@@ -2366,6 +2548,8 @@ function bindUI() {
     if (el.dataset.chk) { const [t, id] = el.dataset.chk.split(':'); const ent = entList(t)?.find(x => x.id === id); if (ent) { ent.checked = el.checked; changed(); } return; }
     if (el.closest('#opnameBody') && (el.dataset.k || el.dataset.fk)) { onOpnameChange(el); return; }
     if (el.id === 'staatFloor') { RT.staatFloor = el.value; renderStaat(); return; }
+    if (el.id === 'kzFacade') { RT.kzFacade = el.value; renderKozijnstaat(); return; }
+    if (el.id === 'kzFloor') { RT.kzFloor = el.value; renderKozijnstaat(); return; }
     if (el.dataset.pf) { P[el.dataset.pf] = el.value; changed({ noRender: true }); renderHeader(); return; }
     if (el.dataset.sf) {
       const k = el.dataset.sf, S = P.settings;
@@ -2390,6 +2574,10 @@ function bindUI() {
   $('#expXlsx').addEventListener('click', exportXlsx);
   $('#expPdf').addEventListener('click', exportPdf);
   $('#expCopy').addEventListener('click', exportCopy);
+  $('#kzXlsx').addEventListener('click', kzExportXlsx);
+  $('#kzPdf').addEventListener('click', kzExportPdf);
+  $('#kzCsv').addEventListener('click', kzExportCsv);
+  $('#kzCopy').addEventListener('click', kzExportCopy);
   $('#btnExportJson').addEventListener('click', () => saveFile((P.name || 'project').replace(/[\\/:*?"<>|]+/g, '-') + '.json', JSON.stringify(P, (k, v) => k.startsWith('_') ? undefined : v, 1), 'application/json'));
   $('#jsonIn').addEventListener('change', async e => {
     const f = e.target.files[0]; e.target.value = ''; if (!f) return;
