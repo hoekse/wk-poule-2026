@@ -17,10 +17,26 @@
       "De winter is hét moment voor binnenschilderwerk",
       "Plan je buitenschilderwerk voor het voorjaar nu alvast in"
     ],
-    "mededeling": { "tekst": "", "kleur": "rood", "tot": null },
-    "weer": { "plaats": "" },
-    "weergave": { "standaard_duur": 12, "overgang": "vervagen", "verversen_sec": 30, "ticker_snelheid": 110 },
-    "nachtstand": { "aan": false, "van": "19:00", "tot": "07:00", "weekend": false },
+    "mededeling": {
+      "tekst": "",
+      "kleur": "rood",
+      "tot": null
+    },
+    "weer": {
+      "plaats": "Kampen"
+    },
+    "weergave": {
+      "standaard_duur": 12,
+      "overgang": "vervagen",
+      "verversen_sec": 30,
+      "ticker_snelheid": 110
+    },
+    "nachtstand": {
+      "aan": false,
+      "van": "19:00",
+      "tot": "07:00",
+      "weekend": false
+    },
     "herladen": 1
   },
   "slides": [
@@ -46,11 +62,31 @@
         "titel": "Vakwerk voor binnen én buiten",
         "thema": "licht",
         "items": [
-          { "naam": "Binnenschilderwerk", "icoon": "roller", "tekst": "Wanden, plafonds, deuren en kozijnen strak afgewerkt" },
-          { "naam": "Buitenschilderwerk", "icoon": "huis", "tekst": "Kozijnen, gevels en houtwerk beschermd tegen weer en wind" },
-          { "naam": "Beglazing", "icoon": "glas", "tekst": "Glas vervangen of vernieuwen, vakkundig geplaatst" },
-          { "naam": "Wandafwerking", "icoon": "muur", "tekst": "Een strakke, verzorgde afwerking van je wanden" },
-          { "naam": "Kleuradvies", "icoon": "palet", "tekst": "De juiste kleur op de juiste plek" }
+          {
+            "naam": "Binnenschilderwerk",
+            "icoon": "roller",
+            "tekst": "Wanden, plafonds, deuren en kozijnen strak afgewerkt"
+          },
+          {
+            "naam": "Buitenschilderwerk",
+            "icoon": "huis",
+            "tekst": "Kozijnen, gevels en houtwerk beschermd tegen weer en wind"
+          },
+          {
+            "naam": "Beglazing",
+            "icoon": "glas",
+            "tekst": "Glas vervangen of vernieuwen, vakkundig geplaatst"
+          },
+          {
+            "naam": "Wandafwerking",
+            "icoon": "muur",
+            "tekst": "Een strakke, verzorgde afwerking van je wanden"
+          },
+          {
+            "naam": "Kleuradvies",
+            "icoon": "palet",
+            "tekst": "De juiste kleur op de juiste plek"
+          }
         ]
       }
     },
@@ -74,7 +110,10 @@
       "volgorde": 40,
       "type": "weer",
       "duur": 14,
-      "inhoud": { "thema": "licht", "kleur": "blauw" }
+      "inhoud": {
+        "thema": "licht",
+        "kleur": "blauw"
+      }
     },
     {
       "naam": "tip-buiten-schilderen",
@@ -144,7 +183,11 @@
         "kop": "Vacature",
         "titel": "Wij zoeken versterking!",
         "functie": "Allround schilder (m/v)",
-        "punten": ["Binnen- en buitenschilderwerk", "Gevarieerde projecten", "Vakmanschap en netjes werken staan voorop"],
+        "punten": [
+          "Binnen- en buitenschilderwerk",
+          "Gevarieerde projecten",
+          "Vakmanschap en netjes werken staan voorop"
+        ],
         "tekst": "Interesse? Spreek ons aan of kijk op de website.",
         "link": "schildersbedrijfhoeksema.nl",
         "thema": "licht",

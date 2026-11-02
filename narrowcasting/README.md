@@ -24,7 +24,7 @@ Open Claude met de Supabase-koppeling (en/of deze GitHub-repository) en vraag ge
 - "Zet de vacature voor allround schilder aan."
 - "Maak een slide met deze foto van het project aan de Dorpsstraat."
 - "Voeg aan de lopende tekst toe: *Nu 10% korting op binnenschilderwerk*."
-- "Laat de schilderweer-slide de verwachting voor Drachten zien."
+- "Laat de schilderweer-slide de verwachting voor Zwolle zien."
 - "Zet het scherm 's avonds na 19:00 en in het weekend op zwart."
 - "Welke slides staan er nu aan?"
 

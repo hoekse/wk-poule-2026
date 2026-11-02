@@ -63,7 +63,7 @@ Kolommen in `narrowcasting_slides`: `naam` (uniek, kebab-case), `volgorde` (stap
 | `bedrijf` | `{"naam":"Hoeksema Schilderwerken","slogan":"…","website":"…","telefoon":"","email":"","adres":"","logo":"media/logo.svg","logo_wit":"media/logo-wit.svg"}` | bedrijfsgegevens, gebruikt door contact-slide en onderbalk |
 | `ticker` | `["regel 1","regel 2"]` | lopende tekst onderin |
 | `mededeling` | `{"tekst":"","kleur":"rood","tot":null}` | opvallende balk bovenin over alle slides; lege tekst = uit; `tot` = ISO-tijd waarna hij verdwijnt |
-| `weer` | `{"plaats":"Drachten"}` (of `lat`/`lon`) | plaats voor de weerslide |
+| `weer` | `{"plaats":"Kampen"}` (of `lat`/`lon`) | plaats voor de weerslide |
 | `weergave` | `{"standaard_duur":12,"overgang":"vervagen","verversen_sec":30,"ticker_snelheid":110}` | overgang: `vervagen` \| `schuiven` \| `geen` |
 | `nachtstand` | `{"aan":false,"van":"19:00","tot":"07:00","weekend":false}` | zwart scherm buiten openingstijden |
 | `herladen` | `1` | waarde wijzigen = alle schermen laden de pagina opnieuw (na een code-update) |
@@ -98,7 +98,7 @@ insert into narrowcasting_slides (naam, volgorde, type, duur, van, tot, dagen, i
 update narrowcasting_slides set volgorde = 15 where naam = 'schilderweer';
 
 -- Plaats voor het weer / contactgegevens
-update narrowcasting_instellingen set waarde = '{"plaats":"Drachten"}' where sleutel = 'weer';
+update narrowcasting_instellingen set waarde = '{"plaats":"Kampen"}' where sleutel = 'weer';
 update narrowcasting_instellingen set waarde = waarde || '{"telefoon":"06 …","email":"…"}' where sleutel = 'bedrijf';
 
 -- Alle schermen opnieuw laten laden (na een nieuwe versie van de speler)

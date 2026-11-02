@@ -6,7 +6,7 @@ insert into public.narrowcasting_instellingen (sleutel, waarde) values
   ('bedrijf', $j${"naam":"Hoeksema Schilderwerken","slogan":"Jouw partner in kleurrijk meesterschap","website":"schildersbedrijfhoeksema.nl","telefoon":"","email":"","adres":"","logo":"media/logo.svg","logo_wit":"media/logo-wit.svg"}$j$::jsonb),
   ('ticker', $j$["Vakwerk voor binnen én buiten — vraag vrijblijvend advies","Schilderwerk · Beglazing · Wandafwerking · Kleuradvies","De winter is hét moment voor binnenschilderwerk","Plan je buitenschilderwerk voor het voorjaar nu alvast in"]$j$::jsonb),
   ('mededeling', $j${"tekst":"","kleur":"rood","tot":null}$j$::jsonb),
-  ('weer', $j${"plaats":""}$j$::jsonb),
+  ('weer', $j${"plaats":"Kampen"}$j$::jsonb),
   ('weergave', $j${"standaard_duur":12,"overgang":"vervagen","verversen_sec":30,"ticker_snelheid":110}$j$::jsonb),
   ('nachtstand', $j${"aan":false,"van":"19:00","tot":"07:00","weekend":false}$j$::jsonb),
   ('herladen', $j$1$j$::jsonb)
