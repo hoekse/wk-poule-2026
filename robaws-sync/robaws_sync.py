@@ -33,9 +33,11 @@ class RobawsFout(Exception):
 
 
 def _auth():
+    """Basic-auth uit ROBAWS_KEY/ROBAWS_SECRET; ontbreken die, dan None: de proxy van de omgeving
+    zet de sleutel (netwerkgeheim 'Basic' voor app.robaws.com) er zelf bij."""
     key, secret = os.environ.get('ROBAWS_KEY'), os.environ.get('ROBAWS_SECRET')
     if not key or not secret:
-        raise RobawsFout('ROBAWS_KEY en ROBAWS_SECRET staan niet in de omgeving.')
+        return None
     return 'Basic ' + base64.b64encode(f'{key}:{secret}'.encode()).decode()
 
 
@@ -45,7 +47,7 @@ def haal(pad, params=None, auth=True, pogingen=5):
     if params:
         url += '?' + urllib.parse.urlencode(params)
     kop = {'Accept': 'application/json'}
-    if auth:
+    if auth and _auth():
         kop['Authorization'] = _auth()
     for poging in range(pogingen):
         try:
@@ -57,7 +59,7 @@ def haal(pad, params=None, auth=True, pogingen=5):
                 time.sleep(min(wacht, 30))
                 continue
             if e.code in (401, 403):
-                raise RobawsFout(f'Robaws weigert de sleutel (HTTP {e.code}). Controleer API access van de API-gebruiker.')
+                raise RobawsFout(f'Robaws weigert de sleutel (HTTP {e.code}). Controleer of de sleutel als netwerkgeheim (Basic, app.robaws.com) of als ROBAWS_KEY/ROBAWS_SECRET in de omgeving staat, en of de API-gebruiker in Robaws API-toegang heeft.')
             raise RobawsFout(f'Robaws gaf HTTP {e.code} op {pad}')
         except urllib.error.URLError as e:
             raise RobawsFout(f'Robaws niet bereikbaar ({e.reason}). Staat app.robaws.com bij de toegestane domeinen?')
