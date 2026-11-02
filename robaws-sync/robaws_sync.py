@@ -43,7 +43,7 @@ def _auth():
 
 
 def haal(pad, params=None, auth=True, pogingen=5):
-    """GET op de Robaws-API met wachten bij de limiet van Robaws (HTTP 429)."""
+    """GET op de Robaws-API; wacht en probeert opnieuw bij de limiet van Robaws (HTTP 429) en bij een losse weigering (403)."""
     url = pad if pad.startswith('http') else BASE + pad
     if params:
         url += '?' + urllib.parse.urlencode(params, doseq=True)
@@ -58,6 +58,10 @@ def haal(pad, params=None, auth=True, pogingen=5):
             if e.code == 429 and poging < pogingen - 1:
                 wacht = float(e.headers.get('Retry-After') or 2 ** poging)
                 time.sleep(min(wacht, 30))
+                continue
+            if e.code == 403 and auth and poging < pogingen - 1:
+                # Robaws weigert soms los een verzoek dat even later wel mag (gezien na een rolwijziging): opnieuw.
+                time.sleep(1 + poging)
                 continue
             if e.code in (401, 403) and auth:
                 raise RobawsFout(waarom_geweigerd(pad, e.code))
@@ -77,10 +81,8 @@ def waarom_geweigerd(pad, code):
         return (f'Robaws herkent de sleutel niet (HTTP {code}). Controleer of de sleutel als netwerkgeheim '
                 '(Basic, app.robaws.com) of als ROBAWS_KEY/ROBAWS_SECRET in de omgeving staat, en of de '
                 'API-gebruiker in Robaws API-toegang heeft.')
-    rechten = wie.get('permissions') or []
     return (f'De sleutel werkt, maar de API-gebruiker mag {pad} niet lezen (HTTP {code}). '
-            f'Hij heeft nu {len(rechten)} rechten. Geef hem in Robaws een rol met leesrechten op '
-            'Klanten (met contactpersonen) en Projecten.')
+            'Geef hem in Robaws een rol met leesrechten op Klanten (met contactpersonen) en Projecten.')
 
 
 def lijst_uit(antwoord):
@@ -114,8 +116,9 @@ def alles(pad, params=None, grootte=100):
 # Lege of ontbrekende velden laat de Werkplaats staan, dus alleen vullen wat Robaws echt heeft.
 # Veldnamen van Robaws komen uit de API-beschrijving (ClientReadDTO, ContactReadDTO, ProjectReadDTO, AddressDTO).
 
-KLANT_INCLUDE = ['contacts', 'legalForm', 'paymentCondition', 'vatTariff']
-PROJECT_INCLUDE = ['statusDetails']
+# legalForm en statusDetails vragen extra rechten (Robaws geeft 403); rechtsvorm en statusnaam laten we daarom weg.
+KLANT_INCLUDE = ['contacts', 'paymentCondition', 'vatTariff']
+PROJECT_INCLUDE = []
 BTW_TARIEVEN = (0, 9, 21)  # wat de Werkplaats kent
 
 # Robaws laat elk bedrijf zelf projectstatussen kiezen. Herkend op woorddelen, eerste treffer wint;
@@ -139,11 +142,15 @@ def _schoon(d):
     return {k: v for k, v in d.items() if v not in (None, '', [])}
 
 
+LANDEN = {'NL': 'Nederland', 'BE': 'België', 'DE': 'Duitsland', 'FR': 'Frankrijk', 'LU': 'Luxemburg'}  # zoals de Werkplaats
+
+
 def _adres(a):
     a = a or {}
     straat = ', '.join(x for x in (_tekst(a.get('addressLine1')), _tekst(a.get('addressLine2'))) if x)
+    land = _tekst(a.get('country'))
     return {'straat': straat, 'postcode': _tekst(a.get('postalCode')), 'plaats': _tekst(a.get('city')),
-            'land': _tekst(a.get('country'))}
+            'land': LANDEN.get(land.upper(), land)}
 
 
 def _weg(r):
@@ -156,7 +163,11 @@ def map_contact(c):
     naam = ' '.join(x for x in (_tekst(c.get('name')), _tekst(c.get('surname'))) if x)
     if not naam:
         return None
-    return {'naam': naam, 'functie': _tekst(c.get('position')), 'email': _tekst(c.get('email')),
+    naam = ' '.join(x for x in (_tekst(c.get('title')), naam) if x)  # zoals de Werkplaats: "Dhr. Jan Jansen"
+    if not naam:
+        return None
+    # Sleutels op alfabet, zoals de opslag van de Werkplaats ze teruggeeft: die vergelijkt met JSON.stringify.
+    return {'email': _tekst(c.get('email')), 'functie': _tekst(c.get('position')), 'naam': naam,
             'tel': _tekst(c.get('tel')) or _tekst(c.get('gsm'))}
 
 
@@ -167,7 +178,8 @@ def map_klant(c):
     btw = (c.get('vatTariff') or {}).get('percentage')
     btw = int(btw) if isinstance(btw, (int, float)) and btw in BTW_TARIEVEN else None
     rechtsvorm = _tekst((c.get('legalForm') or {}).get('name'))
-    zakelijk = any(_tekst(c.get(v)) for v in ('vatIdNumber', 'kvk', 'belgianCompanyNumber')) or rechtsvorm
+    # Alleen btw-nummer of KvK telt als bewijs: in Robaws heeft ook "particulier" een rechtsvorm-id.
+    zakelijk = any(_tekst(c.get(v)) for v in ('vatIdNumber', 'kvk', 'belgianCompanyNumber'))
     contacten = [x for x in (map_contact(k) for k in (c.get('contacts') or [])) if x]
     return _schoon({
         'robawsId': str(c['id']),
@@ -200,13 +212,15 @@ def project_status(p):
 
 
 def project_naam(p, klantnamen):
-    """Robaws-projecten hebben geen naamveld: planningsnaam, anders klantreferentie, anders klant + plaats."""
-    for veld in ('planningName', 'clientReference'):
-        if _tekst(p.get(veld)):
-            return _tekst(p.get(veld))
+    """Robaws-projecten hebben geen naamveld. Naam = "klant - omschrijving", met als omschrijving de
+    planningsnaam, anders de klantreferentie, anders de plaats. Alleen de omschrijving is vaak niet
+    genoeg: veel projecten heten "Buitenschilderwerk woning"."""
     klant = klantnamen.get(str(p.get('clientId') or ''), '')
-    plaats = _tekst((p.get('siteAddress') or {}).get('city'))
-    samen = ' - '.join(x for x in (klant, plaats) if x)
+    oms = (_tekst(p.get('planningName')) or _tekst(p.get('clientReference'))
+           or _tekst((p.get('siteAddress') or {}).get('city'))).rstrip('.').strip()
+    if klant and oms.lower().startswith(klant.lower()):
+        oms = oms[len(klant):].lstrip(' -').strip()
+    samen = ' - '.join(x for x in (klant, oms) if x)
     return samen or _tekst(p.get('logicId'))
 
 
@@ -264,7 +278,7 @@ def schrijf(pakket_lijst, map_=UIT):
 
 def cmd_check(_):
     wie = haal('/api/v2/whoami')
-    print(f"Sleutel werkt. API-gebruiker heeft {len(wie.get('permissions') or [])} rechten.")
+    print('Sleutel werkt.' if wie else 'Sleutel werkt, maar Robaws gaf geen gebruiker terug.')
     for soort, pad in (('Klanten', '/api/v2/clients'), ('Projecten', '/api/v2/projects')):
         deel, totaal = lijst_uit(haal(pad, {'page': 0, 'size': 1}))
         print(f'{soort}: {totaal if totaal is not None else "onbekend (eerste pagina " + str(len(deel)) + ")"}')
@@ -313,7 +327,7 @@ def cmd_export(args):
     ruwe_klanten = alles('/api/v2/clients', {'include': ','.join(KLANT_INCLUDE)})
     klanten = [k for k in (map_klant(c) for c in ruwe_klanten) if k]
     klantnamen = {k['robawsId']: k['naam'] for k in klanten}
-    ruwe_projecten = alles('/api/v2/projects', {'include': ','.join(PROJECT_INCLUDE)})
+    ruwe_projecten = alles('/api/v2/projects', {'include': ','.join(PROJECT_INCLUDE)} if PROJECT_INCLUDE else None)
     projecten = [p for p in (map_project(x, klantnamen) for x in ruwe_projecten) if p]
     pak = pakketten('klanten', klanten, run) + pakketten('projecten', projecten, run)
     print(f'Klanten: {len(klanten)}, projecten: {len(projecten)}, pakketten: {len(pak)}')
