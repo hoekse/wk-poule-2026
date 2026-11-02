@@ -3,7 +3,7 @@
 -- dus dit script is veilig om opnieuw te draaien.
 
 insert into public.narrowcasting_instellingen (sleutel, waarde) values
-  ('bedrijf', $j${"naam":"Hoeksema Schilderwerken","slogan":"Jouw partner in kleurrijk meesterschap","website":"schildersbedrijfhoeksema.nl","telefoon":"06 41 14 43 58","email":"","adres":"Industrieweg 3-U, 8263 AA Kampen","logo":"media/logo.svg","logo_wit":"media/logo-wit.svg"}$j$::jsonb),
+  ('bedrijf', $j${"naam":"Hoeksema Schilderwerken","slogan":"Jouw partner in kleurrijk meesterschap","website":"schildersbedrijfhoeksema.nl","telefoon":"06 41 14 43 58","email":"dennis@schildersbedrijfhoeksema.nl","adres":"Industrieweg 3-U, 8263 AA Kampen","logo":"media/logo.svg","logo_wit":"media/logo-wit.svg"}$j$::jsonb),
   ('ticker', $j$["Vakwerk voor binnen én buiten — vraag vrijblijvend advies","Schilderwerk · Beglazing · Wandafwerking · Kleuradvies","De winter is hét moment voor binnenschilderwerk","Plan je buitenschilderwerk voor het voorjaar nu alvast in"]$j$::jsonb),
   ('mededeling', $j${"tekst":"","kleur":"rood","tot":null}$j$::jsonb),
   ('weer', $j${"plaats":"Kampen"}$j$::jsonb),
