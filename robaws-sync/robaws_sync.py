@@ -6,7 +6,8 @@ Gebruik:
   python3 robaws_sync.py spec             haalt de API-beschrijving op en toont de velden van klanten en projecten
   python3 robaws_sync.py export [--droog] maakt pakketten in uit/ voor de Werkplaats (--droog: alleen tellen)
 
-Sleutel en geheim komen uit de omgeving: ROBAWS_KEY en ROBAWS_SECRET. Nooit in code, bestanden of chat.
+De sleutel komt uit de omgeving: als netwerkgeheim (de proxy zet hem erbij) of als ROBAWS_KEY en ROBAWS_SECRET.
+Nooit in code, bestanden of chat.
 De pakketten gaan naar de collectie robawsimport van de Werkplaats; de Werkplaats verwerkt ze zelf
 (koppelen op robawsId, anders op naam en postcode; alleen gevulde velden overschrijven, nooit verwijderen).
 """
@@ -22,7 +23,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 BASE = os.environ.get('ROBAWS_BASE', 'https://app.robaws.com').rstrip('/')
-SPEC_URL = BASE + '/public/api-docs/robaws'
+SPEC_URL = BASE + '/api-docs/robaws'  # /public/api-docs/robaws is alleen de leesbare webpagina
 HIER = Path(__file__).resolve().parent
 UIT = HIER / 'uit'
 MAX_PAKKET = 200_000  # een document in de Werkplaats mag maximaal 256 KiB zijn
@@ -45,7 +46,7 @@ def haal(pad, params=None, auth=True, pogingen=5):
     """GET op de Robaws-API met wachten bij de limiet van Robaws (HTTP 429)."""
     url = pad if pad.startswith('http') else BASE + pad
     if params:
-        url += '?' + urllib.parse.urlencode(params)
+        url += '?' + urllib.parse.urlencode(params, doseq=True)
     kop = {'Accept': 'application/json'}
     if auth and _auth():
         kop['Authorization'] = _auth()
@@ -58,12 +59,28 @@ def haal(pad, params=None, auth=True, pogingen=5):
                 wacht = float(e.headers.get('Retry-After') or 2 ** poging)
                 time.sleep(min(wacht, 30))
                 continue
-            if e.code in (401, 403):
-                raise RobawsFout(f'Robaws weigert de sleutel (HTTP {e.code}). Controleer of de sleutel als netwerkgeheim (Basic, app.robaws.com) of als ROBAWS_KEY/ROBAWS_SECRET in de omgeving staat, en of de API-gebruiker in Robaws API-toegang heeft.')
+            if e.code in (401, 403) and auth:
+                raise RobawsFout(waarom_geweigerd(pad, e.code))
             raise RobawsFout(f'Robaws gaf HTTP {e.code} op {pad}')
         except urllib.error.URLError as e:
             raise RobawsFout(f'Robaws niet bereikbaar ({e.reason}). Staat app.robaws.com bij de toegestane domeinen?')
     raise RobawsFout('Robaws bleef te druk (HTTP 429).')
+
+
+def waarom_geweigerd(pad, code):
+    """Leg uit waarom Robaws een verzoek weigert: sleutel onbekend, of sleutel goed maar geen rechten."""
+    try:
+        wie = haal('/api/v2/whoami', auth=True, pogingen=1) if pad != '/api/v2/whoami' else None
+    except RobawsFout:
+        wie = None
+    if wie is None:
+        return (f'Robaws herkent de sleutel niet (HTTP {code}). Controleer of de sleutel als netwerkgeheim '
+                '(Basic, app.robaws.com) of als ROBAWS_KEY/ROBAWS_SECRET in de omgeving staat, en of de '
+                'API-gebruiker in Robaws API-toegang heeft.')
+    rechten = wie.get('permissions') or []
+    return (f'De sleutel werkt, maar de API-gebruiker mag {pad} niet lezen (HTTP {code}). '
+            f'Hij heeft nu {len(rechten)} rechten. Geef hem in Robaws een rol met leesrechten op '
+            'Klanten (met contactpersonen) en Projecten.')
 
 
 def lijst_uit(antwoord):
@@ -95,13 +112,121 @@ def alles(pad, params=None, grootte=100):
 # Werkplaats-project: robawsId, robawsNr, naam, klantRobawsId, status (voorbereiding|actief|afgerond),
 # straat, postcode, plaats, info.
 # Lege of ontbrekende velden laat de Werkplaats staan, dus alleen vullen wat Robaws echt heeft.
+# Veldnamen van Robaws komen uit de API-beschrijving (ClientReadDTO, ContactReadDTO, ProjectReadDTO, AddressDTO).
+
+KLANT_INCLUDE = ['contacts', 'legalForm', 'paymentCondition', 'vatTariff']
+PROJECT_INCLUDE = ['statusDetails']
+BTW_TARIEVEN = (0, 9, 21)  # wat de Werkplaats kent
+
+# Robaws laat elk bedrijf zelf projectstatussen kiezen. Herkend op woorddelen, eerste treffer wint;
+# onbekende status: leeg laten, dan houdt de Werkplaats zijn eigen status.
+STATUS_WOORDEN = [
+    ('afgerond', ('afgerond', 'afgewerkt', 'afgesloten', 'gesloten', 'opgeleverd', 'gefactureerd',
+                  'geannuleerd', 'vervallen', 'verloren', 'closed', 'finished', 'cancel')),
+    ('voorbereiding', ('voorbereid', 'offerte', 'aanvraag', 'nieuw', 'gepland', 'te plannen', 'planning', 'wacht',
+                       'concept', 'prospect', 'new', 'draft', 'pending', 'planned')),
+    ('actief', ('actief', 'lopend', 'loopt', 'uitvoering', 'bezig', 'gestart', 'in opdracht', 'opdracht',
+                'gegund', 'open', 'active', 'progress', 'ongoing', 'started')),
+]
+
+
+def _tekst(v):
+    return v.strip() if isinstance(v, str) else ''
+
+
+def _schoon(d):
+    """Alleen gevulde velden: de Werkplaats overschrijft niets met leeg."""
+    return {k: v for k, v in d.items() if v not in (None, '', [])}
+
+
+def _adres(a):
+    a = a or {}
+    straat = ', '.join(x for x in (_tekst(a.get('addressLine1')), _tekst(a.get('addressLine2'))) if x)
+    return {'straat': straat, 'postcode': _tekst(a.get('postalCode')), 'plaats': _tekst(a.get('city')),
+            'land': _tekst(a.get('country'))}
+
+
+def _weg(r):
+    return bool(r.get('deletedAt'))
+
+
+def map_contact(c):
+    if not c or _weg(c) or c.get('archivedAt'):
+        return None
+    naam = ' '.join(x for x in (_tekst(c.get('name')), _tekst(c.get('surname'))) if x)
+    if not naam:
+        return None
+    return {'naam': naam, 'functie': _tekst(c.get('position')), 'email': _tekst(c.get('email')),
+            'tel': _tekst(c.get('tel')) or _tekst(c.get('gsm'))}
+
 
 def map_klant(c):
-    raise RobawsFout('Vertaling klanten nog niet ingevuld: eerst "spec" draaien en de velden van Robaws overnemen.')
+    if not c or _weg(c) or not c.get('id') or not _tekst(c.get('name')):
+        return None
+    adres = _adres(c.get('address'))
+    btw = (c.get('vatTariff') or {}).get('percentage')
+    btw = int(btw) if isinstance(btw, (int, float)) and btw in BTW_TARIEVEN else None
+    rechtsvorm = _tekst((c.get('legalForm') or {}).get('name'))
+    zakelijk = any(_tekst(c.get(v)) for v in ('vatIdNumber', 'kvk', 'belgianCompanyNumber')) or rechtsvorm
+    contacten = [x for x in (map_contact(k) for k in (c.get('contacts') or [])) if x]
+    return _schoon({
+        'robawsId': str(c['id']),
+        'naam': _tekst(c.get('name')),
+        'titel': _tekst(c.get('title')),
+        'type': 'zakelijk' if zakelijk else None,  # geen bewijs van een bedrijf: laat de Werkplaats beslissen
+        **adres,
+        'tel': _tekst(c.get('tel')),
+        'gsm': _tekst(c.get('gsm')),
+        'email': _tekst(c.get('email')),
+        'factuurEmail': _tekst(c.get('invoiceEmail')),
+        'website': _tekst(c.get('website')),
+        'btwnr': _tekst(c.get('vatIdNumber')),
+        'kvk': _tekst(c.get('kvk')),
+        'rechtsvorm': rechtsvorm,
+        'betaalvoorwaarde': _tekst((c.get('paymentCondition') or {}).get('name')),
+        'btw': btw,
+        'contacten': contacten,
+    })
 
 
-def map_project(p):
-    raise RobawsFout('Vertaling projecten nog niet ingevuld: eerst "spec" draaien en de velden van Robaws overnemen.')
+def project_status(p):
+    if p.get('archivedAt'):
+        return 'afgerond'
+    tekst = ' '.join(_tekst(x) for x in (p.get('status'), (p.get('statusDetails') or {}).get('name'))).lower()
+    for status, woorden in STATUS_WOORDEN:
+        if any(w in tekst for w in woorden):
+            return status
+    return None
+
+
+def project_naam(p, klantnamen):
+    """Robaws-projecten hebben geen naamveld: planningsnaam, anders klantreferentie, anders klant + plaats."""
+    for veld in ('planningName', 'clientReference'):
+        if _tekst(p.get(veld)):
+            return _tekst(p.get(veld))
+    klant = klantnamen.get(str(p.get('clientId') or ''), '')
+    plaats = _tekst((p.get('siteAddress') or {}).get('city'))
+    samen = ' - '.join(x for x in (klant, plaats) if x)
+    return samen or _tekst(p.get('logicId'))
+
+
+def map_project(p, klantnamen=None):
+    if not p or _weg(p) or not p.get('id'):
+        return None
+    adres = _adres(p.get('siteAddress'))
+    naam = project_naam(p, klantnamen or {})
+    if not naam:
+        return None
+    return _schoon({
+        'robawsId': str(p['id']),
+        'robawsNr': _tekst(p.get('logicId')),
+        'naam': naam,
+        'klantRobawsId': str(p['clientId']) if p.get('clientId') else None,
+        'status': project_status(p),
+        'straat': adres['straat'],
+        'postcode': adres['postcode'],
+        'plaats': adres['plaats'],
+    })
 
 
 # ---------- pakketten ----------
@@ -138,8 +263,12 @@ def schrijf(pakket_lijst, map_=UIT):
 # ---------- opdrachten ----------
 
 def cmd_check(_):
-    deel, totaal = lijst_uit(haal('/api/v2/clients', {'page': 0, 'size': 1}))
-    print(f'Verbinding met Robaws in orde. Klanten: {totaal if totaal is not None else "onbekend (eerste pagina " + str(len(deel)) + ")"}.')
+    wie = haal('/api/v2/whoami')
+    print(f"Sleutel werkt. API-gebruiker heeft {len(wie.get('permissions') or [])} rechten.")
+    for soort, pad in (('Klanten', '/api/v2/clients'), ('Projecten', '/api/v2/projects')):
+        deel, totaal = lijst_uit(haal(pad, {'page': 0, 'size': 1}))
+        print(f'{soort}: {totaal if totaal is not None else "onbekend (eerste pagina " + str(len(deel)) + ")"}')
+    print('Verbinding met Robaws in orde.')
 
 
 def cmd_spec(_):
@@ -158,13 +287,38 @@ def cmd_spec(_):
     print(f'\nVolledige beschrijving: {UIT / "spec.json"}')
 
 
+def overzicht(ruwe_projecten, klanten, projecten):
+    """Tellingen zonder persoonsgegevens, om de vertaling te controleren."""
+    from collections import Counter
+    statussen = Counter()
+    for p in ruwe_projecten:
+        if _weg(p):
+            continue
+        robaws = _tekst((p.get('statusDetails') or {}).get('name')) or _tekst(p.get('status')) or '(leeg)'
+        statussen[(robaws, project_status(p) or 'onbekend: Werkplaats houdt eigen status')] += 1
+    print('Projectstatussen (Robaws -> Werkplaats):')
+    for (rb, wp), n in sorted(statussen.items(), key=lambda x: -x[1]):
+        print(f'  {n:5d}  {rb} -> {wp}')
+    namen = Counter('planningName' if _tekst(p.get('planningName')) else 'clientReference' if _tekst(p.get('clientReference'))
+                    else 'klant + plaats' for p in ruwe_projecten if not _weg(p))
+    print('Projectnaam gehaald uit: ' + ', '.join(f'{k} {v}' for k, v in namen.most_common()))
+    print(f"Klanten zakelijk: {sum(k.get('type') == 'zakelijk' for k in klanten)}, "
+          f"met contactpersonen: {sum(bool(k.get('contacten')) for k in klanten)}, "
+          f"met btw-tarief: {sum('btw' in k for k in klanten)}")
+    print(f"Nieuwe afgeronde projecten worden niet toegevoegd: {sum(p.get('status') == 'afgerond' for p in projecten)} afgerond.")
+
+
 def cmd_export(args):
     run = datetime.now(timezone.utc).strftime('%Y%m%d%H%M')
-    klanten = [k for k in (map_klant(c) for c in alles('/api/v2/clients')) if k]
-    projecten = [p for p in (map_project(x) for x in alles('/api/v2/projects')) if p]
+    ruwe_klanten = alles('/api/v2/clients', {'include': ','.join(KLANT_INCLUDE)})
+    klanten = [k for k in (map_klant(c) for c in ruwe_klanten) if k]
+    klantnamen = {k['robawsId']: k['naam'] for k in klanten}
+    ruwe_projecten = alles('/api/v2/projects', {'include': ','.join(PROJECT_INCLUDE)})
+    projecten = [p for p in (map_project(x, klantnamen) for x in ruwe_projecten) if p]
     pak = pakketten('klanten', klanten, run) + pakketten('projecten', projecten, run)
     print(f'Klanten: {len(klanten)}, projecten: {len(projecten)}, pakketten: {len(pak)}')
     if '--droog' in args:
+        overzicht(ruwe_projecten, klanten, projecten)
         return
     for pad in schrijf(pak):
         print(pad)

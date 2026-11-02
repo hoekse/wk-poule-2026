@@ -19,16 +19,18 @@ Haalt klanten en projecten uit Robaws en zet ze in de Werkplaats (claude.ai-arti
 
 ## Benodigd in de omgeving
 
-- `ROBAWS_KEY` en `ROBAWS_SECRET`: access key en secret van een Robaws-gebruiker met "API only" en API access.
-  Als netwerkgeheim of omgevingsvariabele, nooit in code of chat.
+- De sleutel van een Robaws-gebruiker met "API only" en API access: als netwerkgeheim (Basic, host
+  `app.robaws.com`; de omgeving zet hem dan zelf bij elk verzoek) of als `ROBAWS_KEY` en `ROBAWS_SECRET`.
+  Nooit in code of chat.
+- Die gebruiker heeft in Robaws een rol nodig met leesrechten op Klanten (met contactpersonen) en Projecten.
 - `app.robaws.com` bij de toegestane domeinen van de omgeving.
 
 ## Opdrachten
 
 ```
-python3 robaws_sync.py check            # verbinding en sleutel testen
+python3 robaws_sync.py check            # sleutel, rechten en verbinding testen
 python3 robaws_sync.py spec             # velden van klanten en projecten uit de API-beschrijving
-python3 robaws_sync.py export --droog   # alleen tellen
+python3 robaws_sync.py export --droog   # alleen tellen, met overzicht van statussen en namen
 python3 robaws_sync.py export           # pakketten maken in uit/
 python3 -m unittest test_robaws_sync    # tests
 ```
