@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900" width="1200" height="900">
+  <title>Na: fris geschilderde kozijnen en voordeur (voorbeeldillustratie)</title>
+  <defs>
+    <linearGradient id="lucht" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="900"><stop offset="0" stop-color="#9fd3f0"/><stop offset="1" stop-color="#e9f6fd"/></linearGradient>
+    <linearGradient id="glas" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8cc3e0"/><stop offset="1" stop-color="#4f88a8"/></linearGradient>
+    <linearGradient id="vuil" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3b2f25" stop-opacity="0.45"/><stop offset="1" stop-color="#3b2f25" stop-opacity="0"/></linearGradient>
+    <pattern id="steen" width="60" height="26" patternUnits="userSpaceOnUse">
+      <rect width="60" height="26" fill="#a5523a"/>
+      <path d="M0 0.5 H60 M0 13.5 H60 M30 0 V13 M0 13 V26 M60 13 V26" stroke="#d8c9b8" stroke-width="3"/>
+    </pattern>
+    <clipPath id="dakvorm"><polygon points="80,200 600,40 1120,200"/></clipPath>
+    
+  </defs>
+  <g >
+    <rect width="1200" height="900" fill="url(#lucht)"/>
+    <circle cx="1080" cy="80" r="46" fill="#fff6c9" opacity="0.9"/>
+    <polygon points="80,200 600,40 1120,200" fill="#3b3838"/>
+    <g clip-path="url(#dakvorm)"><line x1="0" y1="70" x2="1200" y2="70" stroke="#2a2727" stroke-width="3" opacity="0.5"/><line x1="0" y1="92" x2="1200" y2="92" stroke="#2a2727" stroke-width="3" opacity="0.5"/><line x1="0" y1="114" x2="1200" y2="114" stroke="#2a2727" stroke-width="3" opacity="0.5"/><line x1="0" y1="136" x2="1200" y2="136" stroke="#2a2727" stroke-width="3" opacity="0.5"/><line x1="0" y1="158" x2="1200" y2="158" stroke="#2a2727" stroke-width="3" opacity="0.5"/></g>
+    <rect x="130" y="205" width="940" height="605" fill="url(#steen)"/>
+    <rect x="110" y="178" width="980" height="34" fill="#fbfbf7"/><rect x="110" y="206" width="980" height="6" fill="#d9dcdf"/>
+    <rect x="255" y="265" width="270" height="215" fill="#fbfbf7"/><rect x="255" y="474" width="270" height="6" fill="#d9dcdf"/><rect x="277" y="287" width="105" height="171" fill="url(#glas)"/><path d="M292.75 458 L334.75 287 L352.6 287 L310.6 458 Z" fill="#fff" opacity="0.35"/><rect x="277" y="287" width="105" height="5" fill="#000" opacity="0.12"/><rect x="398" y="287" width="105" height="171" fill="url(#glas)"/><path d="M413.75 458 L455.75 287 L473.6 287 L431.6 458 Z" fill="#fff" opacity="0.35"/><rect x="398" y="287" width="105" height="5" fill="#000" opacity="0.12"/><rect x="241" y="480" width="298" height="16" fill="#fbfbf7"/><rect x="241" y="492" width="298" height="4" fill="#d9dcdf"/>
+    <rect x="675" y="265" width="270" height="215" fill="#fbfbf7"/><rect x="675" y="474" width="270" height="6" fill="#d9dcdf"/><rect x="697" y="287" width="105" height="171" fill="url(#glas)"/><path d="M712.75 458 L754.75 287 L772.6 287 L730.6 458 Z" fill="#fff" opacity="0.35"/><rect x="697" y="287" width="105" height="5" fill="#000" opacity="0.12"/><rect x="818" y="287" width="105" height="171" fill="url(#glas)"/><path d="M833.75 458 L875.75 287 L893.6 287 L851.6 458 Z" fill="#fff" opacity="0.35"/><rect x="818" y="287" width="105" height="5" fill="#000" opacity="0.12"/><rect x="661" y="480" width="298" height="16" fill="#fbfbf7"/><rect x="661" y="492" width="298" height="4" fill="#d9dcdf"/>
+    <rect x="225" y="545" width="400" height="230" fill="#fbfbf7"/><rect x="225" y="769" width="400" height="6" fill="#d9dcdf"/><rect x="247" y="611" width="356" height="16" fill="#fbfbf7"/><rect x="247" y="567" width="356" height="44" fill="url(#glas)"/><path d="M300.4 611 L442.8 567 L503.32 567 L360.92 611 Z" fill="#fff" opacity="0.35"/><rect x="247" y="567" width="356" height="5" fill="#000" opacity="0.12"/><rect x="247" y="627" width="170" height="126" fill="url(#glas)"/><path d="M272.5 753 L340.5 627 L369.4 627 L301.4 753 Z" fill="#fff" opacity="0.35"/><rect x="247" y="627" width="170" height="5" fill="#000" opacity="0.12"/><rect x="433" y="627" width="170" height="126" fill="url(#glas)"/><path d="M458.5 753 L526.5 627 L555.4 627 L487.4 753 Z" fill="#fff" opacity="0.35"/><rect x="433" y="627" width="170" height="5" fill="#000" opacity="0.12"/><rect x="211" y="775" width="428" height="16" fill="#fbfbf7"/><rect x="211" y="787" width="428" height="4" fill="#d9dcdf"/>
+    <rect x="715" y="515" width="200" height="295" fill="#fbfbf7"/><rect x="735" y="535" width="160" height="58" fill="url(#glas)"/><rect x="735" y="593" width="160" height="14" fill="#fbfbf7"/><rect x="735" y="607" width="160" height="203" fill="#1f4d3a"/><rect x="753" y="627" width="124" height="70" fill="#2b6650" rx="3"/><rect x="753" y="715" width="124" height="75" fill="#2b6650" rx="3"/><rect x="767" y="640" width="96" height="44" fill="url(#glas)" opacity="0.9"/><circle cx="873" cy="705" r="7" fill="#d4a93a"/><rect x="795" y="755" width="40" height="10" rx="3" fill="#d4a93a"/><rect x="739" y="611" width="10" height="195" fill="#fff" opacity="0.12"/>
+    
+    <rect x="955" y="735" width="70" height="75" rx="6" fill="#5d6670"/>
+    <circle cx="975" cy="720" r="28" fill="#4f8a3a"/>
+    <circle cx="1005" cy="712" r="30" fill="#5f9c45"/>
+    <circle cx="990" cy="690" r="26" fill="#6aa94e"/>
+    <rect x="0" y="810" width="1200" height="90" fill="#b9b3a8"/>
+    <path d="M0 840 H1200 M0 872 H1200 M150 810 V900 M450 810 V900 M750 810 V900 M1050 810 V900" stroke="#8f897e" stroke-width="3"/>
+    
+  </g>
+</svg>
