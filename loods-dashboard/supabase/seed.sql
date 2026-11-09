@@ -2,15 +2,22 @@
 -- Loods Dashboard Hoeksema – startdata
 -- Draai dit één keer na de migraties (Supabase: SQL-editor of `supabase db reset`).
 --
--- LET OP: e-mailadressen en kentekens zijn nog niet bekend en staan leeg.
+-- LET OP: e-mailadressen zijn nog niet bekend en staan leeg.
 -- Vul daarna in de SQL-editor in (eenmalig, daarna kan het via Beheer):
 --   update public.medewerkers set email = 'dennis@...' where naam = 'Dennis';
 -- =====================================================================
 
--- Voertuigen -----------------------------------------------------------
+-- Voertuigen (kentekens doorgegeven door Dennis, 9 nov 2026) ------------
+-- De ID. Buzz is de bus van Dennis; merken van de andere bussen nog onbekend.
 insert into public.voertuigen (naam, kenteken)
-select 'Volkswagen ID. Buzz Cargo', null
-where not exists (select 1 from public.voertuigen where naam = 'Volkswagen ID. Buzz Cargo');
+select v.naam, v.kenteken
+from (values
+  ('Volkswagen ID. Buzz Cargo', 'V-54-JXL'),
+  ('Bus Bas',                   'VJ-972-V'),
+  ('Bus Lesley',                'V-292-HN'),
+  ('Bus Raymond',               '12-VKH-9')
+) as v (naam, kenteken)
+where not exists (select 1 from public.voertuigen x where x.kenteken = v.kenteken or x.naam = v.naam);
 
 -- Medewerkers (kleur = vaste avatarkleur op de tv) ---------------------
 insert into public.medewerkers (naam, rol, kleur)
@@ -22,6 +29,13 @@ from (values
   ('Lesley',  'medewerker', '#8CB400')
 ) as v (naam, rol, kleur)
 where not exists (select 1 from public.medewerkers m where m.naam = v.naam);
+
+-- Standaardbus per medewerker (alleen invullen als die nog leeg is).
+update public.medewerkers m
+set standaard_voertuig_id = vt.id
+from (values ('Dennis', 'V-54-JXL'), ('Bas', 'VJ-972-V'), ('Lesley', 'V-292-HN'), ('Raymond', '12-VKH-9')) as k (naam, kenteken)
+join public.voertuigen vt on vt.kenteken = k.kenteken
+where m.naam = k.naam and m.standaard_voertuig_id is null;
 
 -- Zones (geometrie uit loods-3d-preview.html) ----------------------------
 -- x/z = beginpunt in meters, breedte langs x, diepte langs z,
