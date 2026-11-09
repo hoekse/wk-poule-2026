@@ -61,9 +61,13 @@
 ## Wat moet nog
 
 ### Nodig om fase 1 te testen (Dennis)
-- [ ] Supabase-project aanmaken en database klaarzetten (`INSTALLATIE.md` stap 1–3). *Ik kan dit ook voor je doen: zeg het maar.*
-- [ ] Inlogmails: code in de mail zetten en een eigen mailserver (SMTP) instellen (stap 4). Zonder eigen SMTP krijgen alleen teamleden van het Supabase-account een mail.
-- [ ] App online zetten op Vercel (stap 5).
+- [x] Supabase-project `hoeksema-loods` aangemaakt (Frankfurt) en database klaargezet: 5 migraties en startdata. Rooktest op de echte database geslaagd.
+- [x] Bussen met kenteken: ID. Buzz V-54-JXL (Dennis), VJ-972-V (Bas), V-292-HN (Lesley), 12-VKH-9 (Raymond); ieder heeft zijn eigen bus als standaardbus.
+- [x] App-code samengevoegd met `main`, klaar voor Vercel.
+- [ ] App importeren in Vercel (`INSTALLATIE.md` stap 5, 3 klikken).
+- [ ] In Supabase: Site URL instellen en de code in de inlogmail zetten (stap 4a en 4c).
+- [ ] Jouw e-mailadres als beheerder (stap 3), daarna de anderen via Beheer → Medewerkers.
+- [ ] Eigen mailserver (SMTP) instellen (stap 4b). Zonder eigen SMTP krijgen alleen teamleden van het Supabase-account een mail.
 - [ ] Testen volgens `TESTPLAN-FASE1.md` en terugmelden.
 
 ### Daarna
@@ -75,8 +79,8 @@
 
 ## Open vragen voor Dennis
 
-1. **Kentekens en namen van alle bussen.** Welke bus is de standaardbus van wie?
-2. **E-mailadressen** van Raymond, Bas en Lesley (vul je zelf in via Beheer).
+1. **Merk/type van de bussen** van Bas, Lesley en Raymond (heten nu "Bus Bas" enz.; kentekens staan erin).
+2. **E-mailadressen** van Dennis, Raymond, Bas en Lesley.
 3. **Mailserver**: via welke dienst mogen de inlogmails verstuurd worden (eigen zakelijke mail, of Brevo/Resend)?
 4. **Steigerinventaris** per onderdeel (staanders, liggers, vloeren, diagonalen, voetplaten, leuningen, koppelingen) en de Instant Span-onderdelen, met aantallen.
 5. **Ladderlijst** (type, lengte, keuringsdatum) en het dure gereedschap dat een eigen nummer krijgt.

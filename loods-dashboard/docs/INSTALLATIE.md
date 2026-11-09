@@ -6,6 +6,11 @@ Reken op ongeveer een uur. Doe de stappen in deze volgorde.
 > Kort samengevat: (1) nieuw Supabase-project, (2) database klaarzetten, (3) jezelf beheerder maken,
 > (4) inlogmails instellen, (5) app online zetten op Vercel, (6) app op de telefoons zetten.
 
+> **Stand 9 november 2026:** stap 1 en 2 zijn al gedaan. Het Supabase-project heet `hoeksema-loods`
+> (Project URL `https://acmmnoqlzsgbqdflfpkg.supabase.co`) en de database staat erin, met de vier bussen en kentekens.
+> De app weet het adres al (`apps/scan/.env.production`), dus in Vercel hoef je niets in te vullen.
+> Nog te doen: stap 3 (jouw e-mailadres), 4 (inlogmails) en 5–6 (Vercel en telefoons).
+
 ---
 
 ## 1. Nieuw Supabase-project
@@ -89,12 +94,14 @@ Daarna kun je onder **Authentication → Rate Limits** het aantal mails per uur 
 
 ## 5. App online zetten (Vercel)
 
-1. Ga naar <https://vercel.com> → **Add New → Project** → kies de GitHub-repository met deze code.
-2. **Root Directory**: `loods-dashboard/apps/scan`. De rest staat al in `apps/scan/vercel.json`, die ook het gedeelde pakket meeneemt.
-3. **Environment Variables** (te vinden in Supabase → Project Settings → API):
-   - `VITE_SUPABASE_URL` = de *Project URL*, bijvoorbeeld `https://abcd1234.supabase.co`
-   - `VITE_SUPABASE_ANON_KEY` = de *publishable key* (`sb_publishable_…`) of de *anon public key*. **Nooit** de *service_role/secret key*.
-4. **Deploy**. Na ongeveer een minuut krijg je een adres. Zet dat adres in stap 4c.
+1. Ga naar <https://vercel.com> → **Add New → Project** → kies de GitHub-repository **wk-poule-2026** → **Import**.
+2. **Project Name**: `loods-hoeksema` (dan wordt het adres `https://loods-hoeksema.vercel.app`).
+3. **Root Directory** → **Edit** → kies `loods-dashboard/apps/scan`. De rest staat al in `apps/scan/vercel.json`, die ook het gedeelde pakket meeneemt.
+4. **Environment Variables**: niets invullen. Het Supabase-adres en de publieke sleutel staan al in `apps/scan/.env.production`.
+   *(Ander Supabase-project? Vul dan hier `VITE_SUPABASE_URL` en `VITE_SUPABASE_ANON_KEY` in; dat gaat voor. Gebruik **nooit** de secret/service_role-sleutel.)*
+5. **Deploy**. Na ongeveer een minuut krijg je een adres. Zet dat adres in stap 4c.
+
+> Let op: de WK-poule staat in dezelfde repository. Die blijft gewoon werken; Vercel bouwt alleen de map `loods-dashboard/apps/scan`.
 
 Wijzig je later iets in de code op GitHub, dan zet Vercel de nieuwe versie automatisch online. De app op de telefoons werkt zichzelf bij.
 
