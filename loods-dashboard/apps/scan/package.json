@@ -1,0 +1,32 @@
+{
+  "name": "@loods/scan",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Telefoon-app (PWA) voor meenemen, terugbrengen, verbruik en restverf.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -p tsconfig.json && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@loods/shared": "*",
+    "@supabase/supabase-js": "^2.119.0",
+    "@zxing/browser": "^0.2.1",
+    "@zxing/library": "^0.23.0",
+    "qrcode": "^1.5.4",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "react-router-dom": "^7.18.5"
+  },
+  "devDependencies": {
+    "@types/qrcode": "^1.5.6",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^5.2.0",
+    "typescript": "~5.9.3",
+    "vite": "^7.3.7",
+    "vite-plugin-pwa": "^1.2.0"
+  }
+}

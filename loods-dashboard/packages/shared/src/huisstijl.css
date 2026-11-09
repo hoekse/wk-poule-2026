@@ -1,0 +1,31 @@
+/* Huisstijl Hoeksema Schilderwerken – gedeeld door scan-app en tv.
+   Lettertype Square 721: zet de bestanden van Dennis in public/fonts/ van de app
+   als Square721-Bold.ttf (SQR721B 2.TTF) en Square721-Roman.ttf (TT0246M_.TTF).
+   Zolang ze er niet zijn, valt de browser terug op Eurostile/Arial. */
+
+@font-face {
+  font-family: 'Square 721';
+  src: local('Square 721 BT Roman'), local('Square721 BT Roman'), url('/fonts/Square721-Roman.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Square 721';
+  src: local('Square 721 BT Bold'), local('Square721 BT Bold'), url('/fonts/Square721-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --hs-donker: #2d2e32;
+  --hs-grijs: #646464;
+  --hs-antraciet: #636466;
+  --hs-rood: #dc0014;
+  --hs-geel: #f0b400;
+  --hs-groen: #8cb400;
+  --hs-blauw: #008cdc;
+  --hs-lettertype: 'Square 721', 'Square 721 BT', 'Square721 BT', 'Eurostile', 'Arial', sans-serif;
+}

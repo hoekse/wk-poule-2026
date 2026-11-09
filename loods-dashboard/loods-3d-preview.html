@@ -1,0 +1,590 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Loods Hoeksema – live overzicht</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Saira:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --base:#EEEDEA; --surface:#FFFFFF; --raised:#F6F5F2; --line:rgba(45,46,50,.10); --line-strong:rgba(45,46,50,.18);
+  --text:#2D2E32; --muted:#646464; --glass:rgba(255,255,255,.78); --scene-a:#F7F6F3; --scene-b:#E2E1DD;
+  --blue:#008CDC; --red:#DC0014; --yellow:#F0B400; --green:#8CB400; --grey:#8A8B90;
+  --shadow:0 10px 30px rgba(20,20,25,.12);
+  color-scheme:light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --base:#202125; --surface:#2D2E32; --raised:#36373C; --line:rgba(255,255,255,.07); --line-strong:rgba(255,255,255,.14);
+    --text:#F2F2F0; --muted:#9D9EA3; --glass:rgba(45,46,50,.78); --scene-a:#34353A; --scene-b:#1C1D20;
+    --shadow:0 12px 34px rgba(0,0,0,.45);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --base:#202125; --surface:#2D2E32; --raised:#36373C; --line:rgba(255,255,255,.07); --line-strong:rgba(255,255,255,.14);
+  --text:#F2F2F0; --muted:#9D9EA3; --glass:rgba(45,46,50,.78); --scene-a:#34353A; --scene-b:#1C1D20;
+  --shadow:0 12px 34px rgba(0,0,0,.45);
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+html,body{height:100%;margin:0}
+body{
+  background:var(--base);color:var(--text);
+  font-family:"Square 721 BT","Square721 BT","Saira","Eurostile","Arial",sans-serif;
+  font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased;
+  display:grid;grid-template-rows:auto 1fr;overflow:hidden
+}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+
+/* Kopregel */
+header{
+  display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:28px;
+  padding:14px 22px;background:var(--surface);border-bottom:1px solid var(--line)
+}
+.id{display:flex;align-items:center;gap:14px;min-width:0}
+.mark{display:grid;grid-template-columns:repeat(2,11px);gap:3px}
+.mark span{width:11px;height:11px;border-radius:2px}
+.id h1{margin:0;font-size:19px;font-weight:700;line-height:1.1;white-space:nowrap}
+.id p{margin:3px 0 0;font-size:13px;color:var(--muted);white-space:nowrap;display:flex;align-items:center;gap:7px}
+.live{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 0 3px rgba(140,180,0,.22)}
+.kpis{display:flex;gap:10px;justify-content:center;min-width:0}
+.kpi{
+  background:var(--raised);border:1px solid var(--line);border-radius:12px;padding:8px 14px 9px;min-width:150px;
+  text-align:left;display:grid;gap:5px
+}
+.kpi .top{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.kpi span{font-size:12.5px;color:var(--muted)}
+.kpi b{font-size:20px;font-weight:700;line-height:1}
+.kpi b small{font-size:13px;color:var(--muted);font-weight:500}
+.rungs{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:3px;height:6px}
+.rungs i{border-radius:2px;background:var(--line-strong)}
+.clock{text-align:right;line-height:1.1}
+.clock b{font-size:26px;font-weight:600;display:block}
+.clock span{font-size:13px;color:var(--muted)}
+
+/* Hoofdindeling */
+main{display:grid;grid-template-columns:1fr 380px;min-height:0}
+#stage{
+  position:relative;min-height:0;overflow:hidden;touch-action:none;
+  background:radial-gradient(120% 90% at 50% 35%,var(--scene-a) 0%,var(--scene-b) 100%)
+}
+#stage canvas{display:block;width:100%;height:100%;outline:none}
+#labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.lbl{
+  position:absolute;transform:translate(-50%,-100%);display:flex;align-items:center;gap:6px;
+  background:var(--surface);color:var(--text);border:1px solid var(--line-strong);
+  font-size:12px;font-weight:600;padding:3px 8px 3px 6px;border-radius:7px;white-space:nowrap;
+  box-shadow:0 2px 6px rgba(0,0,0,.18);transition:opacity .25s
+}
+.lbl i{width:8px;height:8px;border-radius:50%}
+.lbl em{font-style:normal;font-weight:500;color:var(--muted);display:none}
+.lbl.sel{border-color:var(--blue);box-shadow:0 0 0 2px var(--blue)}
+.lbl.sel em{display:inline}
+.tag{
+  position:absolute;transform:translate(-50%,-50%);font-size:12px;color:var(--muted);white-space:nowrap;
+  padding:2px 8px;border-radius:6px;background:var(--glass);transition:opacity .25s
+}
+.tag.dim{color:var(--text);font-weight:600;font-size:13px}
+.tag.door{background:#DC0014;color:#fff;font-weight:600}
+
+.glass{
+  background:var(--glass);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border:1px solid var(--line-strong);box-shadow:var(--shadow)
+}
+#controls{
+  position:absolute;left:50%;bottom:18px;transform:translateX(-50%);display:flex;gap:4px;padding:5px;border-radius:14px
+}
+#controls button{
+  border:0;background:transparent;border-radius:10px;padding:9px 15px;font-size:14px;font-weight:600;min-height:42px;white-space:nowrap
+}
+#controls button[aria-pressed="true"]{background:var(--blue);color:#fff}
+#legend{
+  position:absolute;left:18px;bottom:18px;display:flex;flex-direction:column;gap:7px;padding:12px 14px;border-radius:12px;font-size:13px
+}
+#legend div{display:flex;align-items:center;gap:9px}
+#legend i{width:10px;height:10px;border-radius:3px}
+.demo{position:absolute;right:16px;top:16px;font-size:12px;color:var(--muted);padding:5px 10px;border-radius:999px}
+
+#card{
+  position:absolute;left:18px;top:18px;width:350px;max-height:calc(100% - 110px);overflow:auto;
+  border-radius:16px;padding:18px 20px 20px;display:none
+}
+#card.open{display:block;animation:rise .25s ease-out}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+#card .head{display:flex;gap:12px;align-items:flex-start}
+#card .code{font-weight:700;font-size:14px;color:#fff;border-radius:8px;padding:5px 9px;line-height:1}
+#card h2{margin:0;font-size:21px;line-height:1.2;font-weight:700}
+#card .x{margin-left:auto;border:1px solid var(--line-strong);background:var(--surface);border-radius:9px;width:36px;height:36px;font-size:18px;line-height:1;flex:0 0 auto}
+#card dl{margin:16px 0 0;display:grid;grid-template-columns:auto 1fr;gap:7px 16px;font-size:14px;line-height:1.4}
+#card dt{color:var(--muted)}
+#card dd{margin:0}
+#card .state{margin-top:16px;border-radius:10px;padding:11px 13px;background:var(--raised);font-size:14px;line-height:1.45;border-left:4px solid var(--grey)}
+#card .note{margin-top:10px;font-size:13px;color:var(--muted)}
+
+/* Zijpaneel */
+aside{
+  background:var(--surface);border-left:1px solid var(--line);overflow:auto;padding:20px 18px 24px;display:grid;
+  align-content:start;gap:26px
+}
+.sec h3{margin:0 0 12px;font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px}
+.sec h3 .n{font-size:12px;font-weight:600;color:var(--muted);background:var(--raised);border-radius:999px;padding:2px 8px}
+.list{display:grid;gap:8px}
+.row{
+  display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;text-align:left;width:100%;
+  background:var(--raised);border:1px solid var(--line);border-radius:12px;padding:11px 12px
+}
+.row:hover{border-color:var(--line-strong)}
+.av{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;font-weight:700;color:#fff;font-size:15px}
+.row b{display:block;font-size:14.5px;font-weight:600;line-height:1.25}
+.row small{display:block;font-size:12.5px;color:var(--muted);margin-top:2px;line-height:1.3}
+.row .when{font-size:12.5px;color:var(--muted);text-align:right;white-space:nowrap}
+.row .zc{display:inline-block;font-size:11.5px;font-weight:700;border:1px solid var(--line-strong);border-radius:5px;padding:0 5px;margin-top:4px;color:var(--text)}
+.flag{width:6px;align-self:stretch;border-radius:3px}
+
+@media (max-width:1100px){ .kpi{min-width:0} .kpi:nth-child(n+3){display:none} }
+@media (max-width:900px){
+  body{overflow:auto;display:block}
+  header{grid-template-columns:1fr auto;gap:12px;padding:12px 14px}
+  .kpis{grid-column:1 / -1;grid-row:2;justify-content:flex-start;overflow-x:auto}
+  .kpi:nth-child(n+3){display:grid}
+  .kpi{min-width:140px}
+  .clock b{font-size:20px}
+  main{display:block}
+  #stage{height:62vh;min-height:380px}
+  aside{border-left:0;border-top:1px solid var(--line)}
+  #legend{display:none}
+  #card{left:10px;right:10px;top:auto;bottom:74px;width:auto;max-height:60%}
+  #controls{bottom:12px;max-width:calc(100% - 20px);overflow-x:auto}
+  #controls button{padding:8px 11px;font-size:13px}
+}
+@media (prefers-reduced-motion:reduce){ #card.open{animation:none} .lbl,.tag{transition:none} }
+</style>
+</head>
+<body>
+<header>
+  <div class="id">
+    <div class="mark" aria-hidden="true">
+      <span style="background:#DC0014"></span><span style="background:#F0B400"></span>
+      <span style="background:#008CDC"></span><span style="background:#8CB400"></span>
+    </div>
+    <div>
+      <h1>Loods Industrieweg 3-U</h1>
+      <p><span class="live" aria-hidden="true"></span>Live overzicht materiaal en materieel</p>
+    </div>
+  </div>
+  <div class="kpis" id="kpis"></div>
+  <div class="clock"><b id="time">--:--</b><span id="date"></span></div>
+</header>
+
+<main>
+  <section id="stage" aria-label="3D-weergave van de loods">
+    <div id="labels"></div>
+    <span class="demo glass">Statussen zijn voorbeelddata</span>
+    <div id="card" class="glass" aria-live="polite"></div>
+    <div id="legend" class="glass" aria-label="Legenda">
+      <div><i style="background:#8CB400"></i>Compleet</div>
+      <div><i style="background:#F0B400"></i>Deels onderweg</div>
+      <div><i style="background:#DC0014"></i>Leeg of onder minimum</div>
+      <div><i style="background:#8A8B90"></i>Vast punt</div>
+    </div>
+    <nav id="controls" class="glass" aria-label="Weergave">
+      <button id="bTour" aria-pressed="true">Rondgang</button>
+      <button id="bHome">Overzicht</button>
+      <button id="bTop">Bovenaanzicht</button>
+      <button id="bLabels" aria-pressed="true">Labels</button>
+    </nav>
+  </section>
+
+  <aside>
+    <div class="sec">
+      <h3>Onderweg <span class="n" id="nOnderweg"></span></h3>
+      <div class="list" id="onderweg"></div>
+    </div>
+    <div class="sec">
+      <h3>Aandacht nodig <span class="n" id="nAandacht"></span></h3>
+      <div class="list" id="aandacht"></div>
+    </div>
+  </aside>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+const W = 10.6, D = 9.4, H = 3.6;
+const ST = {
+  groen:{hex:'#8CB400', c:0x8CB400, t:'Compleet aanwezig'},
+  geel: {hex:'#F0B400', c:0xF0B400, t:'Deels onderweg'},
+  rood: {hex:'#DC0014', c:0xDC0014, t:'Leeg of onder minimum'},
+  grijs:{hex:'#8A8B90', c:0x8A8B90, t:'Geen voorraad'}
+};
+
+// ---------- Indeling (x langs wand B vanaf de voorgevel, z langs wand A) ----------
+const zones = [
+  {code:'B1', naam:'Trap- en reformladders', wand:'Wand B, bij de kanteldeur', x:[0.1,1.7], z:[0.05,0.6], h:[0,2.3], status:'groen', geschat:true,
+   inhoud:'Trapladders en reformladders, elk met een eigen nummer en QR-label.', demo:'Alle 4 trapladders aanwezig.'},
+  {code:'B2', naam:'Opgehangen ladders', wand:'Wand B, hoog aan de wand', x:[1.8,6.4], z:[0.05,0.25], h:[1.5,2.6], status:'geel', geschat:true,
+   inhoud:'Enkele en schuifladders aan de wandhaken. Keuring per ladder bijhouden.', demo:'Ladder 03 onderweg: Bas, ID. Buzz, sinds 4 dagen.'},
+  {code:'B3', naam:'Steigerkoppelingen en PBM', wand:'Wand B, vloer', x:[1.8,4.4], z:[0.05,0.65], h:[0,0.55], status:'groen', geschat:true,
+   inhoud:'Kratten met koppelingen, korte buizen en veiligheidshesjes. Telwijze: aantallen.', demo:'Alle koppelingen aanwezig.'},
+  {code:'B4', naam:'Steekwagen en losse delen', wand:'Wand B, vloer', x:[4.5,6.4], z:[0.05,0.55], h:[0,1.6], status:'groen', geschat:true,
+   inhoud:'Steekwagen, Linda-doos, profielen en losse delen.', demo:'Alles aanwezig.'},
+  {code:'B5', naam:'Huishoudtrappen en rolsteigerframes', wand:'Wand B', x:[6.5,7.5], z:[0.05,0.55], h:[0,2.1], status:'geel', geschat:true,
+   inhoud:'Huishoudtrappen en kleine rolsteigerframes.', demo:'2 rolsteigerframes onderweg: Raymond, sinds gisteren.'},
+  {code:'B6', naam:'Stellingkast verf en koffers', wand:'Wand B, onder de entresol', x:[7.8,10.0], z:[0.05,0.6], h:[0,2.0], status:'groen', geschat:true,
+   inhoud:'Stelling met verfbussen en Makita-koffers.', demo:'Alle koffers aanwezig.'},
+  {code:'E1', naam:'Bovenop de entresol', wand:'Hoek wand B en wand C', x:[7.75,10.45], z:[0.15,4.85], h:[2.42,2.85], status:'geel', geschat:true,
+   inhoud:'Instant Span rolsteigeronderdelen en dekzeilen. Telwijze: aantallen per onderdeel.', demo:'Instant Span: 8 van 20 delen onderweg, Raymond, project Emmeloord.'},
+  {code:'E2', naam:'Onder de entresol', wand:'Wand C', x:[10.0,10.55], z:[0.8,4.6], h:[0,2.0], status:'groen', geschat:true,
+   inhoud:'Stellingkasten met verf en gereedschapskoffers, airless verfspuit (Graco).', demo:'Airless spuit aanwezig.'},
+  {code:'C2', naam:'Steigerframes en staanders', wand:'Wand C, naast de entresol', x:[10.15,10.55], z:[5.1,6.4], h:[0,2.3], status:'rood', geschat:true,
+   inhoud:'Steigerframes, staanders en liggers tegen de wand. Telwijze: aantallen.', demo:'Staanders: 4 van 24 aanwezig.'},
+  {code:'C3', naam:'Materieel', wand:'Wand C', x:[9.5,10.55], z:[6.6,8.4], h:[0,1.2], status:'groen', geschat:true,
+   inhoud:'Hogedrukreiniger, palletwagen, bak op pallet.', demo:'Alles aanwezig.'},
+  {code:'OV', naam:'Overig', wand:'Voor wand C', x:[8.4,9.4], z:[5.6,8.0], h:[0,1.1], status:'grijs', geschat:true, voorraad:false,
+   inhoud:'Karts en overige spullen. Niet in het voorraadsysteem.'},
+  {code:'D1', naam:'Riool en water', wand:'Wand D, links naast de trap', x:[5.8,7.8], z:[8.75,9.35], h:[0,0.06], status:'grijs', geschat:true, voorraad:false,
+   inhoud:'Riool en wateraansluiting op de wand, naast het hoge deel van de trap. Mogelijke wasplaats voor kwasten en rollers.'},
+  {code:'D2', naam:'Verfstelling', wand:'Verfwand, Synthetisch en Watergedragen', x:[3.9,5.65], z:[7.4,7.76], h:[0,2.3], status:'groen', geschat:false,
+   inhoud:'Verfrestanten, ingevoerd door de EAN op de bus te scannen. Begin stelling gemeten: 5,65 m van de voorgevel.', demo:'34 verfrestanten aanwezig.'},
+  {code:'D3', naam:'Verbruiksartikelen', wand:'Verfwand', x:[2.2,3.85], z:[7.4,7.76], h:[0.9,2.3], status:'rood', geschat:true,
+   inhoud:'Kit, goldtape, schuurpapier, spuiten en slangen. Hier komt de afgesloten voorraadkast.', demo:'Goldtape onder minimum: 2 van minimaal 6.'},
+  {code:'D4', naam:'Bouwstofzuigers', wand:'Verfwand, vloer', x:[2.2,3.85], z:[7.0,7.76], h:[0,0.7], status:'groen', geschat:true,
+   inhoud:'Bouwstofzuigers en schuurmachines.', demo:'3 van 3 aanwezig.'},
+  {code:'GA', naam:'Gang', wand:'Achter de verfwand', x:[0.05,5.6], z:[7.95,9.35], h:[0,0.03], status:'grijs', geschat:true, voorraad:false,
+   inhoud:'Gang achter de verfwand, ongeveer 150 cm diep, met de trap naar het kantoor.'},
+  {code:'AC', naam:'Afvalcontainer restafval', wand:'Voor wand A', x:[0.25,1.5], z:[4.2,5.9], h:[0,1.25], status:'grijs', geschat:true, voorraad:false,
+   inhoud:'Rolcontainer Milieu Service.'}
+];
+const onderweg = [
+  {wie:'Raymond', kleur:'#008CDC', wat:'8 delen Instant Span', zone:'E1', bus:'Bus 2', project:'Emmeloord', sinds:'Vandaag'},
+  {wie:'Raymond', kleur:'#008CDC', wat:'2 rolsteigerframes', zone:'B5', bus:'Bus 2', project:'Emmeloord', sinds:'1 dag'},
+  {wie:'Lesley', kleur:'#8CB400', wat:'20 staanders, 12 liggers', zone:'C2', bus:'Bus 3', project:'Zwolle', sinds:'2 dagen'},
+  {wie:'Bas', kleur:'#F0B400', wat:'Ladder 03', zone:'B2', bus:'ID. Buzz', project:'Kampen', sinds:'4 dagen'}
+];
+const aandacht = [
+  {lvl:'rood', titel:'Goldtape onder minimum', sub:'2 van minimaal 6 rollen', zone:'D3'},
+  {lvl:'rood', titel:'Staanders bijna op', sub:'4 van 24 aanwezig', zone:'C2'},
+  {lvl:'geel', titel:'Keuring ladder 05', sub:'Verloopt over 12 dagen', zone:'B2'}
+];
+const kpis = [
+  {naam:'Ladders', nu:9, tot:10},
+  {naam:'Steigerdelen', nu:118, tot:164},
+  {naam:'Verfrestanten', nu:34, eenheid:'bussen'},
+  {naam:'Aandacht', nu:aandacht.length, eenheid:'meldingen', rood:true}
+];
+
+// ---------- Kopregel ----------
+const kEl = document.getElementById('kpis');
+kpis.forEach(function(k){
+  const d = document.createElement('div'); d.className='kpi';
+  let meter = '';
+  if(k.tot){
+    const n = 12, f = Math.round(k.nu/k.tot*n), ratio = k.nu/k.tot;
+    const c = ratio>=0.9 ? '#8CB400' : ratio>=0.6 ? '#F0B400' : '#DC0014';
+    meter = '<div class="rungs" aria-hidden="true">'+Array.from({length:n},function(_,i){return '<i'+(i<f?' style="background:'+c+'"':'')+'></i>';}).join('')+'</div>';
+  } else {
+    meter = '<div class="rungs" aria-hidden="true"><i style="background:'+(k.rood?'#DC0014':'#008CDC')+'"></i></div>';
+  }
+  d.innerHTML = '<div class="top"><span>'+k.naam+'</span><b'+(k.rood?' style="color:#DC0014"':'')+'>'+k.nu+(k.tot?'<small> / '+k.tot+'</small>':'')+'</b></div>'+meter;
+  d.setAttribute('aria-label', k.naam+': '+k.nu+(k.tot?' van '+k.tot:' '+k.eenheid));
+  kEl.appendChild(d);
+});
+function tick(){
+  const now = new Date();
+  document.getElementById('time').textContent = now.toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'});
+  const ds = now.toLocaleDateString('nl-NL',{weekday:'long',day:'numeric',month:'long'});
+  document.getElementById('date').textContent = ds.charAt(0).toUpperCase()+ds.slice(1);
+}
+tick(); setInterval(tick, 15000);
+
+// ---------- Zijpaneel ----------
+document.getElementById('nOnderweg').textContent = onderweg.length;
+document.getElementById('nAandacht').textContent = aandacht.length;
+document.getElementById('onderweg').innerHTML = onderweg.map(function(o){
+  return '<button class="row" data-zone="'+o.zone+'"><span class="av" style="background:'+o.kleur+'">'+o.wie[0]+'</span>'+
+    '<span><b>'+o.wie+'</b><small>'+o.wat+'</small><small>'+o.bus+', project '+o.project+'</small></span>'+
+    '<span class="when">'+o.sinds+'<br><span class="zc">'+o.zone+'</span></span></button>';
+}).join('');
+document.getElementById('aandacht').innerHTML = aandacht.map(function(a){
+  return '<button class="row" data-zone="'+a.zone+'"><span class="flag" style="background:'+ST[a.lvl].hex+'"></span>'+
+    '<span><b>'+a.titel+'</b><small>'+a.sub+'</small></span><span class="when"><span class="zc">'+a.zone+'</span></span></button>';
+}).join('');
+document.querySelectorAll('.row[data-zone]').forEach(function(b){ b.addEventListener('click', function(){ selectCode(b.dataset.zone, true); if(window.innerWidth<=900) stage.scrollIntoView({behavior:'smooth', block:'start'}); }); });
+
+// ---------- 3D ----------
+const stage = document.getElementById('stage'), labelsEl = document.getElementById('labels'), card = document.getElementById('card');
+const renderer = new THREE.WebGLRenderer({antialias:true, alpha:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, 1.5));
+renderer.setClearColor(0x000000, 0);
+stage.insertBefore(renderer.domElement, labelsEl);
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
+const hemi = new THREE.HemisphereLight(0xffffff, 0x3a3b40, 0.75); scene.add(hemi);
+const sun = new THREE.DirectionalLight(0xffffff, 0.55); sun.position.set(-5, 12, -6); scene.add(sun);
+const rim = new THREE.DirectionalLight(0xbfdcff, 0.22); rim.position.set(14, 6, 14); scene.add(rim);
+
+const PAL = {
+  dark: {floor:0x3E3F44, grid:0x5A5B61, wall:0x26272B, wallEdge:0x6A6B72, neutral:0x55565C, steps:0xCFCFCB, wood:0xA97C50, fog:0x202125, window:0x5E8FB3},
+  light:{floor:0xD3D2CE, grid:0xB2B1AD, wall:0x3B3C41, wallEdge:0x9A9BA0, neutral:0xA4A5AA, steps:0xF2F2EF, wood:0xC49461, fog:0xE6E5E1, window:0x9CCBEA}
+};
+const mats = {
+  floor:new THREE.MeshLambertMaterial(), grid:new THREE.LineBasicMaterial({transparent:true, opacity:.5}),
+  steps:new THREE.MeshLambertMaterial(), wood:new THREE.MeshLambertMaterial(), window:new THREE.MeshLambertMaterial({transparent:true, opacity:.8}),
+  door:new THREE.MeshLambertMaterial({color:0xDC0014}), light:new THREE.MeshLambertMaterial({color:0xD5D8DB}),
+  shadow:new THREE.MeshBasicMaterial({color:0x000000, transparent:true, opacity:.28, depthWrite:false})
+};
+function mk(x0,x1,y0,y1,z0,z1,mat){
+  const m = new THREE.Mesh(new THREE.BoxGeometry(x1-x0,y1-y0,z1-z0), mat);
+  m.position.set((x0+x1)/2,(y0+y1)/2,(z0+z1)/2); scene.add(m); return m;
+}
+function edges(mesh, color, op){
+  const l = new THREE.LineSegments(new THREE.EdgesGeometry(mesh.geometry), new THREE.LineBasicMaterial({color:color, transparent:true, opacity:op}));
+  mesh.add(l); return l;
+}
+
+// vloer, raster en contour
+mk(-0.15,W+0.15,-0.1,0,-0.15,D+0.15, mats.floor);
+const gp = [];
+for(let x=0;x<=W+1e-3;x+=1){ const xx=Math.min(x,W); gp.push(new THREE.Vector3(xx,.004,0), new THREE.Vector3(xx,.004,D)); }
+for(let z=0;z<=D+1e-3;z+=1){ const zz=Math.min(z,D); gp.push(new THREE.Vector3(0,.004,zz), new THREE.Vector3(W,.004,zz)); }
+scene.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(gp), mats.grid));
+const outline = new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints([
+  new THREE.Vector3(0,.01,0),new THREE.Vector3(W,.01,0),new THREE.Vector3(W,.01,D),new THREE.Vector3(0,.01,D)]),
+  new THREE.LineBasicMaterial({color:0x008CDC, transparent:true, opacity:.7}));
+scene.add(outline);
+
+// wanden
+const T = 0.12;
+const walls = [
+  [-T,0,0,H,0,D, -1,0],
+  [0,W,0,H,-T,0, 0,-1],
+  [W,W+T,0,H,0,D, 1,0],
+  [0,W,0,H,D,D+T, 0,1],
+  [0,5.65,0,H,D-1.62,D-1.5, 0,1]
+].map(function(a){
+  const mat = new THREE.MeshLambertMaterial({transparent:true, opacity:.96});
+  const mesh = mk(a[0],a[1],a[2],a[3],a[4],a[5], mat);
+  const e = edges(mesh, 0x666666, .5);
+  return {mesh:mesh, edge:e, n:new THREE.Vector3(a[6],0,a[7]), attach:[]};
+});
+function onWall(i, mesh){ mesh.material = mesh.material.clone(); mesh.material.transparent = true; walls[i].attach.push(mesh); return mesh; }
+
+onWall(0, mk(0.01,0.05,0,3.0,0.5,3.5, mats.light));          // kanteldeur
+onWall(0, mk(0.01,0.05,1.25,2.55,5.9,7.6, mats.window));     // ramen
+onWall(2, mk(W-0.05,W-0.01,0,2.1,8.65,9.3, mats.light));      // deur trappenhuis
+mk(0.68,1.53,0,2.1,D-1.67,D-1.45, mats.door);                 // deur naar hal
+['#DC0014','#F0B400','#008CDC','#8CB400'].forEach(function(c,i){
+  onWall(4, mk(3.9+i*0.44, 3.9+(i+1)*0.44-0.04, 2.45, 2.6, D-1.66, D-1.63, new THREE.MeshLambertMaterial({color:new THREE.Color(c)})));
+});
+const blusser = new THREE.Mesh(new THREE.CylinderGeometry(0.08,0.08,0.45,14), new THREE.MeshLambertMaterial({color:0xDC0014}));
+blusser.position.set(W-0.12,1.25,5.8); scene.add(blusser);
+
+// entresol
+const deck = mk(7.6,W,2.3,2.42,0,5.0, mats.wood); edges(deck, 0x5a3d22, .7);
+[[7.6,5.0],[7.6,2.5],[7.6,0.08],[W-0.08,5.0]].forEach(function(p){ mk(p[0]-0.07,p[0]+0.07,0,2.3,p[1]-0.07,p[1]+0.07, mats.wood); });
+
+// trap naar kantoor (in de gang)
+for(let i=0;i<12;i++){ const x0=3.5+i*0.19; edges(mk(x0,x0+0.19,0,0.29*(i+1),D-1.05,D-0.1, mats.steps), 0x8a8b90, .35); }
+const tap = new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.05,0.5,10), new THREE.MeshLambertMaterial({color:0x008CDC}));
+tap.position.set(6.8,0.9,D-0.08); scene.add(tap);
+const drain = new THREE.Mesh(new THREE.CylinderGeometry(0.16,0.16,0.02,24), new THREE.MeshLambertMaterial({color:0x1d4f73}));
+drain.position.set(6.8,0.07,9.05); scene.add(drain);
+
+// zones
+const pickables = [];
+zones.forEach(function(z){
+  const s = ST[z.status];
+  const flat = (z.h[1]-z.h[0]) < 0.1;
+  z.center = new THREE.Vector3((z.x[0]+z.x[1])/2, (z.h[0]+z.h[1])/2, (z.z[0]+z.z[1])/2);
+  if(flat){
+    z.bodyMat = new THREE.MeshLambertMaterial({color:s.c, transparent:true, opacity:.32});
+    z.mesh = mk(z.x[0],z.x[1],z.h[0],z.h[1],z.z[0],z.z[1], z.bodyMat);
+    z.edge = edges(z.mesh, s.c, .9);
+  } else {
+    if(z.h[0] < 0.05) mk(z.x[0]-0.08,z.x[1]+0.08,0.002,0.006,z.z[0]-0.08,z.z[1]+0.08, mats.shadow);
+    z.bodyMat = new THREE.MeshLambertMaterial();
+    z.mesh = mk(z.x[0],z.x[1],z.h[0],z.h[1]-0.05,z.z[0],z.z[1], z.bodyMat);
+    z.capMat = new THREE.MeshLambertMaterial({color:s.c, emissive:0x000000});
+    z.cap = mk(z.x[0],z.x[1],z.h[1]-0.05,z.h[1],z.z[0],z.z[1], z.capMat);
+    z.cap.userData.zone = z; pickables.push(z.cap);
+    z.edge = edges(z.mesh, s.c, .85);
+  }
+  z.mesh.userData.zone = z; pickables.push(z.mesh);
+  const el = document.createElement('div'); el.className='lbl';
+  el.innerHTML = '<i style="background:'+s.hex+'"></i>'+z.code+'<em>'+z.naam+'</em>';
+  labelsEl.appendChild(el); z.el = el;
+  z.anchor = new THREE.Vector3(z.center.x, z.h[1]+0.12, z.center.z);
+});
+const tags = [
+  {cls:'tag dim', t:'10,60 m', p:[W/2,0.05,-0.7]},
+  {cls:'tag dim', t:'9,40 m', p:[-0.7,0.05,D/2]},
+  {cls:'tag', t:'Kanteldeur', p:[-0.1,3.2,2.0]},
+  {cls:'tag', t:'Ladderwand', p:[W/2,H+0.25,-0.1]},
+  {cls:'tag', t:'Entresol', p:[9.1,3.25,2.5]},
+  {cls:'tag', t:'Verfwand', p:[2.8,H+0.25,D-1.56]},
+  {cls:'tag', t:'Trap naar kantoor', p:[4.6,3.75,D-0.6]},
+  {cls:'tag door', t:'Deur naar hal', p:[1.1,2.45,D-1.75]}
+].map(function(g){ const el=document.createElement('div'); el.className=g.cls; el.textContent=g.t; labelsEl.appendChild(el); return {el:el, p:new THREE.Vector3(g.p[0],g.p[1],g.p[2])}; });
+
+// thema toepassen
+const mq = window.matchMedia('(prefers-color-scheme: dark)');
+function dark(){ const t=document.documentElement.dataset.theme; return t ? t==='dark' : mq.matches; }
+function applyTheme(){
+  const P = dark() ? PAL.dark : PAL.light;
+  mats.floor.color.setHex(P.floor); mats.grid.color.setHex(P.grid);
+  mats.steps.color.setHex(P.steps); mats.wood.color.setHex(P.wood); mats.window.color.setHex(P.window);
+  walls.forEach(function(w){ w.mesh.material.color.setHex(P.wall); w.edge.material.color.setHex(P.wallEdge); });
+  zones.forEach(function(z){
+    if(z.capMat){ z.bodyMat.color.setHex(ST[z.status].c).lerp(new THREE.Color(P.neutral), z.status==='grijs' ? 0.2 : (dark() ? 0.55 : 0.4)); }
+  });
+  scene.fog = new THREE.Fog(P.fog, 24, 48);
+  dirty = true;
+}
+if(mq.addEventListener) mq.addEventListener('change', applyTheme);
+
+// camera
+const HOME = {theta:-2.35, phi:0.95, r:17, tgt:new THREE.Vector3(W/2,0.8,D/2)};
+const cam = {theta:HOME.theta, phi:HOME.phi, r:HOME.r, tgt:HOME.tgt.clone()};
+let goal = null, dirty = true, tour = true, showLabels = true;
+function placeCam(){
+  cam.phi = Math.max(0.05, Math.min(1.42, cam.phi));
+  cam.r = Math.max(4, Math.min(30, cam.r));
+  camera.position.set(
+    cam.tgt.x + cam.r*Math.sin(cam.phi)*Math.cos(cam.theta),
+    cam.tgt.y + cam.r*Math.cos(cam.phi),
+    cam.tgt.z + cam.r*Math.sin(cam.phi)*Math.sin(cam.theta));
+  camera.lookAt(cam.tgt);
+}
+function resize(){
+  const w = stage.clientWidth, h = stage.clientHeight;
+  renderer.setSize(w, h, false);
+  camera.aspect = w/Math.max(h,1);
+  HOME.r = w < 700 ? 21 : 17;
+  camera.updateProjectionMatrix(); dirty = true;
+}
+new ResizeObserver(resize).observe(stage);
+applyTheme();
+
+// besturing
+const cv = renderer.domElement, ptr = new Map();
+let down = null, pinch = 0;
+const bTour = document.getElementById('bTour');
+function setTour(on){ tour = on; bTour.setAttribute('aria-pressed', String(on)); }
+cv.addEventListener('pointerdown', function(e){
+  cv.setPointerCapture(e.pointerId); ptr.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  down = {x:e.clientX,y:e.clientY,t:performance.now()};
+  if(ptr.size===2){ const p=[...ptr.values()]; pinch=Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y); }
+  setTour(false);
+});
+cv.addEventListener('pointermove', function(e){
+  if(!ptr.has(e.pointerId)) return;
+  const a = ptr.get(e.pointerId), b = {x:e.clientX,y:e.clientY}; ptr.set(e.pointerId,b);
+  if(ptr.size===1){ cam.theta += (b.x-a.x)*0.008; cam.phi -= (b.y-a.y)*0.006; }
+  else if(ptr.size===2){ const p=[...ptr.values()], d=Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y); if(pinch>0){ cam.r *= pinch/d; pinch=d; } }
+  goal = null; dirty = true;
+});
+cv.addEventListener('pointerup', function(e){
+  if(ptr.size===1 && down && Math.hypot(e.clientX-down.x,e.clientY-down.y)<7 && performance.now()-down.t<400) pick(e.clientX,e.clientY);
+  ptr.delete(e.pointerId); if(ptr.size<2) pinch=0;
+});
+cv.addEventListener('pointercancel', function(e){ ptr.delete(e.pointerId); });
+cv.addEventListener('wheel', function(e){ e.preventDefault(); cam.r *= 1+Math.sign(e.deltaY)*0.08; goal=null; dirty=true; setTour(false); }, {passive:false});
+
+const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+function pick(cx, cy){
+  const r = cv.getBoundingClientRect();
+  ndc.set(((cx-r.left)/r.width)*2-1, -((cy-r.top)/r.height)*2+1);
+  ray.setFromCamera(ndc, camera);
+  const hit = ray.intersectObjects(pickables, false)[0];
+  select(hit ? hit.object.userData.zone : null, false);
+}
+let sel = null;
+function selectCode(code, fly){ select(zones.find(function(z){return z.code===code;}), fly); }
+function select(z, fly){
+  if(sel){ sel.bodyMat.emissive && sel.bodyMat.emissive.setHex(0); sel.el.classList.remove('sel'); sel.edge.material.opacity = sel.capMat ? .85 : .9; }
+  sel = z;
+  if(!z){ card.classList.remove('open'); dirty = true; return; }
+  z.bodyMat.emissive.setHex(0x2a2a2a); z.el.classList.add('sel'); z.edge.material.opacity = 1;
+  setTour(false);
+  if(fly) goal = {theta:cam.theta, phi:0.9, r:10.5, tgt:new THREE.Vector3(z.center.x, 0.8, z.center.z)};
+  const s = ST[z.status];
+  const alongX = Math.abs((z.x[1]-z.x[0])) >= Math.abs((z.z[1]-z.z[0])) || z.wand.indexOf('Wand B')===0;
+  const a = Math.round((alongX ? z.x[1]-z.x[0] : z.z[1]-z.z[0])*100), b = Math.round((alongX ? z.z[1]-z.z[0] : z.x[1]-z.x[0])*100);
+  const hgt = Math.round((z.h[1]-z.h[0])*100);
+  card.innerHTML =
+    '<div class="head"><span class="code" style="background:'+s.hex+'">'+z.code+'</span><h2>'+z.naam+'</h2>'+
+    '<button class="x" type="button" aria-label="Sluiten">×</button></div>'+
+    '<dl><dt>Plek</dt><dd>'+z.wand+'</dd><dt>Maat</dt><dd>'+a+' × '+b+' cm'+(hgt>10?', '+hgt+' cm hoog':'')+'</dd>'+
+    '<dt>Inhoud</dt><dd>'+z.inhoud+'</dd></dl>'+
+    (z.voorraad===false ? '<div class="state">Vast punt, geen voorraad.</div>'
+      : '<div class="state" style="border-left-color:'+s.hex+'"><b>'+s.t+'</b><br>'+z.demo+'</div>')+
+    (z.geschat ? '<div class="note">Maat geschat uit foto’s, graag nameten.</div>' : '');
+  card.querySelector('.x').onclick = function(){ select(null); };
+  card.classList.add('open'); dirty = true;
+}
+bTour.onclick = function(){ setTour(!tour); goal = null; };
+document.getElementById('bHome').onclick = function(){ setTour(false); select(null); goal = {theta:HOME.theta, phi:HOME.phi, r:HOME.r, tgt:HOME.tgt.clone()}; };
+document.getElementById('bTop').onclick = function(){ setTour(false); goal = {theta:-Math.PI/2, phi:0.06, r:HOME.r-1, tgt:HOME.tgt.clone()}; };
+const bLabels = document.getElementById('bLabels');
+bLabels.onclick = function(){ showLabels = !showLabels; bLabels.setAttribute('aria-pressed', String(showLabels)); dirty = true; };
+
+const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+if(reduced) setTour(false);
+const redZones = zones.filter(function(z){ return z.status==='rood' && z.capMat; });
+
+// render-lus, max ~30 fps
+const v = new THREE.Vector3(), mid = new THREE.Vector3(W/2,0,D/2), dir = new THREE.Vector3();
+function place(el, p, w, h){
+  v.copy(p).project(camera);
+  if(!showLabels || v.z>1){ el.style.opacity='0'; return; }
+  el.style.opacity='1'; el.style.left=((v.x+1)/2*w)+'px'; el.style.top=((1-v.y)/2*h)+'px';
+}
+let last = 0;
+function frame(t){
+  requestAnimationFrame(frame);
+  if(t-last < 33) return; last = t;
+  if(tour){ cam.theta += 0.003; dirty = true; }
+  if(goal){
+    let dt = Math.atan2(Math.sin(goal.theta-cam.theta), Math.cos(goal.theta-cam.theta));
+    cam.theta += dt*0.1; cam.phi += (goal.phi-cam.phi)*0.1; cam.r += (goal.r-cam.r)*0.1; cam.tgt.lerp(goal.tgt, 0.1);
+    if(Math.abs(dt)<0.002 && Math.abs(goal.phi-cam.phi)<0.002 && Math.abs(goal.r-cam.r)<0.02 && cam.tgt.distanceTo(goal.tgt)<0.01) goal = null;
+    dirty = true;
+  }
+  if(!reduced && redZones.length){
+    const k = 0.18 + 0.18*Math.sin(t/420);
+    redZones.forEach(function(z){ z.capMat.emissive.setRGB(k, 0, 0); });
+    dirty = true;
+  }
+  dir.set(camera.position.x-mid.x, 0, camera.position.z-mid.z).normalize();
+  const top = cam.phi < 0.35;
+  walls.forEach(function(w){
+    const want = (top ? 1 : w.n.dot(dir)) > 0.25 ? 0.06 : 0.96;
+    const o = w.mesh.material.opacity;
+    if(Math.abs(want-o) > 0.01){
+      const n = o + (want-o)*0.2;
+      w.mesh.material.opacity = n; w.edge.material.opacity = n*0.5;
+      w.attach.forEach(function(m){ m.material.opacity = Math.min(1, n*1.05); });
+      dirty = true;
+    }
+  });
+  if(!dirty) return;
+  placeCam(); renderer.render(scene, camera);
+  const w = stage.clientWidth, h = stage.clientHeight;
+  zones.forEach(function(z){ place(z.el, z.anchor, w, h); });
+  tags.forEach(function(g){ place(g.el, g.p, w, h); });
+  dirty = false;
+}
+placeCam();
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

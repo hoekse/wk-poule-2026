@@ -1,0 +1,7 @@
+Zet hier de lettertypebestanden van Dennis neer, met deze namen:
+
+  Square721-Bold.ttf    (origineel: SQR721B 2.TTF)
+  Square721-Roman.ttf   (origineel: TT0246M_.TTF)
+
+Zolang ze er niet zijn, gebruikt de app Eurostile of Arial.
+Let op: controleer of de licentie gebruik op een website/app toestaat.
