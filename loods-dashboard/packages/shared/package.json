@@ -1,0 +1,20 @@
+{
+  "name": "@loods/shared",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Gedeeld: types, Supabase-client, huisstijl en loodsmaten.",
+  "exports": {
+    ".": "./src/index.ts",
+    "./huisstijl.css": "./src/huisstijl.css"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.119.0"
+  },
+  "devDependencies": {
+    "typescript": "~5.9.3"
+  }
+}

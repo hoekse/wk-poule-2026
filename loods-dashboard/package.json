@@ -1,0 +1,20 @@
+{
+  "name": "loods-dashboard",
+  "private": true,
+  "description": "Loods Dashboard Hoeksema Schilderwerken: scan-app (PWA) en later het 3D-tv-dashboard.",
+  "workspaces": [
+    "packages/shared",
+    "apps/scan"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w @loods/scan",
+    "build": "npm run build -w @loods/scan",
+    "preview": "npm run preview -w @loods/scan",
+    "typecheck": "npm run typecheck -w @loods/shared && npm run typecheck -w @loods/scan",
+    "test:db": "bash scripts/test-db.sh",
+    "iconen": "node scripts/maak-iconen.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
