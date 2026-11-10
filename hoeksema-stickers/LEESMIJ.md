@@ -2,7 +2,7 @@
 
 36 eigen stickers in de huisstijl, verdeeld over twee pakketten:
 
-- **Pakket 1 — De Meester (22):** onze mascotte met baret en krullen, in alle emoties.
+- **Pakket 1 — De Meester (22):** onze mascotte in 3D, precies zoals de 3D-tekening, in alle emoties.
 - **Pakket 2 — Het Gereedschap (14):** lachende kwast, roller, kitkoker, verfblik en meer, elk met een schildersgrap.
 
 ![Overzicht](overzicht.png)
@@ -11,10 +11,14 @@
 
 | Map | Wat | Waarvoor |
 |---|---|---|
-| `png/` | 512 × 512 px, transparante achtergrond | iPhone-stickers, Telegram, Signal, e-mail, website |
+| `png/` | 512 × 512 px, transparante achtergrond (3D-Meester + gereedschap) | iPhone-stickers, Telegram, Signal, e-mail, website |
+| `png-1024/` | 3D-Meester op 1024 × 1024 px (alleen in het zip-bestand) | Drukwerk van de 3D-stickers |
 | `whatsapp/meester/`, `whatsapp/gereedschap/` | 512 × 512 WebP (< 100 KB) + `tray.png` (96 × 96) | WhatsApp-stickerpakket |
-| `svg/` | Vectorbestanden | Drukwerk: echte stickers, bus, visitekaartjes |
+| `svg/` | Vectorbestanden van het gereedschap | Drukwerk: echte stickers, bus, visitekaartjes |
+| `vlak/` | De eerste, getekende (vlakke) versie van de Meester, PNG en SVG | Reserve, of als je ooit een vlakke stijl wilt |
 | `src/` | Bronbestanden | Stickers aanpassen of nieuwe maken |
+
+De 3D-Meester is gemaakt met Magnific (Nano Banana 2.1), met de 3D-tekening van de mascotte als referentie. De achtergrond is er met Magnific afgeknipt; de witte stickerrand, de tekstbanners, de denkwolk en de confetti zijn er daarna in de huisstijl bij gezet.
 
 ## Op je toetsenbord zetten
 
@@ -86,13 +90,14 @@ Elke sticker die je in WhatsApp stuurt, kan de klant aantikken en aan zijn favor
 
 ## Stickers aanpassen of toevoegen
 
-De stickers worden getekend met code, dus een nieuwe tekst of emotie is snel gemaakt.
+Alles wordt met code opgebouwd, dus een nieuwe tekst is snel gemaakt.
 
 ```bash
-cd hoeksema-stickers/src
-node render.js ..     # maakt png/, svg/, overzicht.png en stickers.json opnieuw
+hoeksema-stickers/src/build.sh   # bouwt png/, png-1024/, svg/, vlak/, whatsapp/ en overzicht.png opnieuw
 ```
 
-- `src/art.js`: huisstijlkleuren, de Meester (ogen, wenkbrauwen, monden, krullen, baret) en de kwaststreek-banner.
-- `src/stickers.js`: de lijst met stickers. Een tekst op twee regels schrijf je met `\n`, bijvoorbeeld `'Laat even\ndrogen…'`.
+- `src/stickers.js`: de lijst met stickers, met tekst en kleur van de banner. Een tekst op twee regels schrijf je met `\n`, bijvoorbeeld `'Laat even\ndrogen…'`.
+- `src/meester-3d/`: de uitgeknipte 3D-renders van de Meester (één per emotie). Een nieuwe emotie: maak een render in Magnific met de 3D-tekening als referentie, knip de achtergrond weg, zet hem hier neer met de naam van de sticker en voeg hem toe aan `stickers.js`.
+- `src/render3d.js`: zet de 3D-renders om naar stickers (witte rand, banner, extra's).
+- `src/art.js`: huisstijlkleuren, de kwaststreek-banner, het gereedschap en de vlakke Meester.
 - Lettertype: Saira ExtraBold (Google Fonts, vrije licentie), gekozen omdat het dicht bij Square 721 uit de huisstijl ligt. Als de echte Square 721-bestanden er zijn, kan `src/fonts/` daarop worden omgezet.
