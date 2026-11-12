@@ -141,6 +141,14 @@
     'Zijn lijf zit in een stevig ‘doosje’ van benen plaatjes. Bij gevaar kan hij een gifstof afscheiden.',
     { t: 'fish', shape: 'box', h: 0.5, c: '#f0ece2', c2: '#ffffff', fin: '#e2ddd0', tail: 'round', dorsal: 'small',
       pat: [{ k: 'spots', n: 45, c: '#1a1a1a', r: 0.016 }] });
+  sp('geelstaart_snapper', 'Geelstaartsnapper', 'Ocyurus chrysurus', 0.4, 1,
+    'Nieuwsgierig: geelstaartsnappers zwemmen in losse groepjes achter duikers aan, op zoek naar een makkelijk hapje.',
+    { t: 'fish', shape: 'torpedo', h: 0.3, c: '#b9c9da', c2: '#eef3f7', fin: '#f2d23a', tail: 'fork', tailC: '#f7d21e', dorsal: 'normal',
+      pat: [{ k: 'hstripes', n: 1, c: '#f2c81a', w: 0.1 }, { k: 'spots', n: 12, c: '#f2d23a', r: 0.012 }] });
+  sp('gele_geitenvis', 'Gele geitenvis', 'Mulloidichthys martinicus', 0.35, 1,
+    'Met twee baarddraden onder zijn kin woelt hij door het zand naar wormpjes en kreeftjes. Andere vissen volgen hem voor de restjes.',
+    { t: 'fish', shape: 'torpedo', h: 0.24, c: '#e8e2d4', c2: '#f8f5ee', fin: '#f2d23a', tail: 'fork', tailC: '#f2c81a', dorsal: 'normal',
+      pat: [{ k: 'hstripes', n: 1, c: '#f2c81a', w: 0.09 }] });
   sp('stoplicht_papegaai', 'Stoplichtpapegaaivis', 'Sparisoma viride', 0.45, 1,
     'Papegaaivissen schrapen algen van koraal en poepen fijn wit zand uit. Een groot deel van het witte strand komt van hen!',
     { t: 'fish', shape: 'parrot', h: 0.38, c: '#1f9a6a', c2: '#86d6a8', fin: '#178a5c', tail: 'lunate', tailC: '#e2c040', snout: 'beak', beak: '#d8e8d0',
@@ -409,6 +417,8 @@
         { sp: 'trompetvis', n: 2, b: 'hover', d: [3, 9], x: [35, 130] },
         { sp: 'koffervis', n: 2, b: 'wander', d: [6, 12], x: [40, 165] },
         { sp: 'stoplicht_papegaai', n: 3, b: 'wander', d: [4, 12], x: [30, 160] },
+        { sp: 'geelstaart_snapper', n: 8, b: 'school', d: [2, 9], x: [20, 140], spread: 3 },
+        { sp: 'gele_geitenvis', n: 8, b: 'school', d: [4, 12], x: [30, 140], spread: 2.5 },
         { sp: 'kikvorsvis_geel', n: 1, b: 'pillar', d: [5, 8], x: [50, 120] },
         { sp: 'gevlekte_murene', n: 1, b: 'hidden', x: [60, 140] },
         { sp: 'rifoctopus', n: 1, b: 'crawl', x: [90, 160], p: 0.7 },

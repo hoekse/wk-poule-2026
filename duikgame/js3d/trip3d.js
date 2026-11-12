@@ -7,9 +7,14 @@ import * as THREE from 'three';
 import { GLTFLoader } from '../vendor/three/addons.min.js';
 
 const LANE = 3.5;
-const RIGHT_X = 0.6 + LANE * 2.5; // rechterrijstrook (rechts houden)
-const SPEED = 31; // m/s in beeld (± 110 km/h, de rit zelf gaat in sneltreinvaart)
+const laneX = (l) => 0.6 + LANE * (l + 0.5);
+// De bus rijdt in de middelste strook en haalt de vrachtwagens rechts in; auto's links halen de bus in.
+// Elke strook heeft één snelheid, zodat voertuigen elkaar en de bus nooit kunnen raken.
+const BUS_X = laneX(1);
+const SPEED = 28; // m/s (± 100 km/h)
+const LANE_V = [SPEED + 4, SPEED, SPEED - 6]; // links, midden, rechts (vrachtwagens ± 80 km/h)
 const FAR = -900, NEAR = 60; // objecten vóór de bus (z < 0) schuiven naar +z en komen dan weer vooraan
+const VFAR = -900, VNEAR = 160; // voertuigen: ruimer, zodat ze nooit vlak achter de bus verschijnen
 
 function canvasTex(w, h, draw, repeat) {
   const c = document.createElement('canvas'); c.width = w; c.height = h;
@@ -142,8 +147,9 @@ export class Drive {
     this.resize();
     this.onResize = () => this.resize();
     window.addEventListener('resize', this.onResize);
-    this.loadBus();
     this.alive = true;
+    this.loadBus();
+    this.loadVehicles();
     this.loop = this.loop.bind(this);
     this.raf = requestAnimationFrame(this.loop);
   }
@@ -258,27 +264,67 @@ export class Drive {
       add(g, z, 'gantry');
       this.signs.push({ b1, b2 });
     }
-    // ander verkeer
+    // ander verkeer: per strook gelijke snelheid en vaste onderlinge afstand
     this.traffic = [];
     const colors = [0x1d2a44, 0xbfc3c8, 0x8a1d1d, 0x2b2b2e, 0xe9e9e6, 0x3d5e7a, 0x6b6f72];
-    for (let i = 0; i < 9; i++) {
-      const truck = i % 4 === 0;
-      const car = truck ? this.makeTruck() : this.makeCar(colors[i % colors.length]);
-      const lane = truck ? 2 : (i % 3 === 0 ? 1 : (i % 2 ? 0 : 1));
-      car.position.x = 0.6 + LANE * (lane + 0.5);
-      // eigen snelheid t.o.v. de bus: vrachtwagens langzamer (komen naar je toe), links sneller (halen in)
-      const rel = truck ? 6 : lane === 0 ? -7 - (i % 3) * 2 : -2 + (i % 2) * 4;
-      add(car, FAR + (i / 9) * (NEAR - FAR) * 0.8, 'car', { rel });
-      this.traffic.push(car);
-    }
-    // tegenliggers
-    for (let i = 0; i < 7; i++) {
-      const car = i % 3 === 0 ? this.makeTruck() : this.makeCar(colors[(i + 3) % colors.length]);
-      car.rotation.y = Math.PI;
-      car.position.x = -(0.6 + LANE * ((i % 3) + 0.5));
-      add(car, FAR + (i / 7) * (NEAR - FAR), 'oncoming', { rel: SPEED * 2 });
+    const span = VNEAR - VFAR;
+    const lane = (l, n, kindOf, offset) => {
+      for (let i = 0; i < n; i++) {
+        const kind = kindOf(i);
+        const v = this.vehicle(kind, colors[(i * 3 + l) % colors.length]);
+        v.position.x = laneX(l);
+        add(v, VFAR + ((i + offset) / n) * span, 'car', { v: LANE_V[l], kind, wrap: [VFAR, VNEAR] });
+        this.traffic.push(v);
+      }
+    };
+    lane(0, 7, (i) => (i % 3 === 2 ? 'car2' : 'car1'), 0.3); // links: personenauto's die de bus inhalen
+    lane(2, 6, (i) => (i % 2 ? 'car1' : 'truck'), 0.6); // rechts: vrachtwagens en een enkele auto
+    // in de eigen strook alleen een auto ver vóór de bus, met dezelfde snelheid
+    { const v = this.vehicle('car2', 0x2b2b2e); v.position.x = laneX(1); add(v, -85, 'car', { v: SPEED, kind: 'car2', wrap: [VFAR, VNEAR] }); this.traffic.push(v); }
+    // tegenliggers (rijden de andere kant op)
+    for (let i = 0; i < 8; i++) {
+      const kind = i % 3 === 0 ? 'truck' : i % 2 ? 'car2' : 'car1';
+      const v = this.vehicle(kind, colors[(i + 3) % colors.length]);
+      v.rotation.y = Math.PI;
+      const l = kind === 'truck' ? 2 : i % 2;
+      v.position.x = -laneX(l);
+      add(v, VFAR + (i / 8) * span, 'oncoming', { v: -(l === 2 ? SPEED - 6 : SPEED + 2), kind, wrap: [VFAR, VNEAR] });
     }
     this.setSigns(0);
+  }
+
+  vehicle(kind, color) {
+    const g = new THREE.Group();
+    g.userData.kind = kind;
+    const tpl = this.vehicleModels && this.vehicleModels[kind];
+    g.add(tpl ? tpl.clone(true) : kind === 'truck' ? this.makeTruck() : this.makeCar(color));
+    return g;
+  }
+  // 3D-modellen van auto's en een vrachtwagen (Magnific); vervangen de eenvoudige vormen zodra ze geladen zijn
+  loadVehicles() {
+    const loader = new GLTFLoader();
+    const LEN = { car1: 4.3, car2: 4.8, truck: 16.5 };
+    this.vehicleModels = {};
+    Promise.all(Object.keys(LEN).map((k) => loader.loadAsync('models/verkeer/' + k + '.glb').then((g) => {
+      const o = g.scene;
+      o.traverse((m) => { if (m.isMesh && m.material.map) m.material.map.anisotropy = 4; });
+      const box = new THREE.Box3().setFromObject(o), s = new THREE.Vector3(), c = new THREE.Vector3();
+      box.getSize(s); box.getCenter(c);
+      const alongX = s.x > s.z, L = Math.max(s.x, s.z), sc = LEN[k] / L;
+      o.position.set(-c.x * sc, -box.min.y * sc, -c.z * sc); o.scale.setScalar(sc);
+      const wrap = new THREE.Group(); wrap.add(o);
+      wrap.rotation.y = (alongX ? Math.PI / 2 : 0) + Math.PI;
+      this.vehicleModels[k] = wrap;
+    }).catch(() => null))).then(() => {
+      if (!this.alive) return;
+      // bestaande voertuigen omwisselen
+      this.movers.forEach((m) => {
+        if (!m.kind || !this.vehicleModels[m.kind]) return;
+        const g = m.obj;
+        g.children.slice().forEach((ch) => { g.remove(ch); ch.traverse((o) => { if (o.geometry) o.geometry.dispose(); }); });
+        g.add(this.vehicleModels[m.kind].clone(true));
+      });
+    });
   }
 
   makeCar(color) {
@@ -330,12 +376,12 @@ export class Drive {
       // neus naar -z (de rijrichting); het model uit Magnific kijkt de andere kant op
       wrap.rotation.y = (alongX ? Math.PI / 2 : 0) + Math.PI;
       const holder = new THREE.Group(); holder.add(wrap);
-      holder.position.set(RIGHT_X, 0.02, 0);
+      holder.position.set(BUS_X, 0.02, 0);
       this.scene.add(holder);
       this.bus = holder; this.busInner = wrap;
       // schaduw onder de bus
       const sh = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 5.6), new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.26, depthWrite: false }));
-      sh.rotation.x = -Math.PI / 2; sh.position.set(RIGHT_X, 0.04, 0); this.scene.add(sh);
+      sh.rotation.x = -Math.PI / 2; sh.position.set(BUS_X, 0.04, 0); this.scene.add(sh);
     }).catch((e) => console.warn('bus niet geladen', e));
   }
 
@@ -360,19 +406,23 @@ export class Drive {
     this.polder.offset.y += move / 400;
     this.movers.forEach((m) => {
       const o = m.obj;
-      o.position.z += move + (m.rel || 0) * dt;
-      if (o.position.z > NEAR) o.position.z -= NEAR - FAR;
-      if (o.position.z < FAR) o.position.z += NEAR - FAR;
+      // stilstaande dingen schuiven met de snelheid van de bus; voertuigen met het verschil in snelheid
+      o.position.z += m.v != null ? (SPEED - m.v) * dt : move;
+      const [lo, hi] = m.wrap || [FAR, NEAR];
+      if (o.position.z > hi) o.position.z -= hi - lo;
+      if (o.position.z < lo) o.position.z += hi - lo;
       if (m.hub) m.hub.rotation.z += m.spin * dt;
     });
     // de bus: klein beetje veren
     if (this.bus) { this.bus.position.y = 0.02 + Math.sin(this.t * 9) * 0.012; this.bus.rotation.z = Math.sin(this.t * 1.3) * 0.004; }
     this.setSigns(p);
-    // camera: van schuin achter naar opzij naar schuin voor, rustig
-    const a = -0.55 + p * 1.9 + Math.sin(this.t * 0.25) * 0.08;
-    const dist = 11 + Math.sin(p * Math.PI) * 3;
-    const tx = RIGHT_X, ty = 1.4, tz = 0;
-    this.camera.position.set(tx - Math.sin(a) * dist, 3.2 + Math.sin(p * Math.PI) * 1.4, tz + Math.cos(a) * dist);
+    // camera: van achter (boven het verkeer) via de rechterberm naar schuin voor; nooit boven de middenberm
+    // met de lantaarnpalen en nooit laag in een rijstrook waar auto's of vrachtwagens rijden
+    const a = -0.25 + p * 2.15 + Math.sin(this.t * 0.25) * 0.06;
+    const dist = 11 + Math.sin(p * Math.PI) * 2.5;
+    const tx = BUS_X, ty = 1.4, tz = 0;
+    const side = Math.max(0, Math.sin(a));
+    this.camera.position.set(tx + Math.sin(a) * dist, 5.4 - side * 2.2, tz + Math.cos(a) * dist);
     this.camera.lookAt(tx, ty, tz - 2);
     this.sky.position.copy(this.camera.position);
     this.renderer.render(this.scene, this.camera);

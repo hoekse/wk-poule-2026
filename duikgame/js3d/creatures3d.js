@@ -31,7 +31,7 @@ function spriteCanvas(spc) {
 }
 
 // realistische foto's (Magnific) met transparante achtergrond, kijkend naar rechts
-export const PHOTO_FISH = ['franse_knorvis', 'kleinbek_knorvis', 'sergeant', 'blauwe_dokter', 'chromis_blauw', 'tarpon', 'barracuda', 'franse_keizer', 'koningin_keizer', 'stoplicht_papegaai', 'koffervis', 'trompetvis'];
+export const PHOTO_FISH = ['franse_knorvis', 'kleinbek_knorvis', 'sergeant', 'blauwe_dokter', 'chromis_blauw', 'tarpon', 'barracuda', 'franse_keizer', 'koningin_keizer', 'stoplicht_papegaai', 'koffervis', 'trompetvis', 'geelstaart_snapper', 'gele_geitenvis'];
 const photoCanvas = {};
 export function preloadFishPhotos() {
   return Promise.all(PHOTO_FISH.map((id) => new Promise((res) => {
@@ -449,10 +449,25 @@ export class Fauna {
       this.addSchool(S.franse_knorvis, Math.round(60 * k), { spread: 1.5, speed: 0.25, roam: 0.15 });
       this.addSchool(S.kleinbek_knorvis, Math.round(120 * k), { spread: 1.9, speed: 0.28, roam: 0.2 });
       this.addSchool(S.kleinbek_knorvis, Math.round(80 * k), { spread: 1.6, speed: 0.26, roam: 0.2 });
+      this.addSchool(S.kleinbek_knorvis, Math.round(70 * k), { spread: 1.5, speed: 0.26, roam: 0.2 });
       this.addSchool(S.sergeant, Math.round(26 * k), { spread: 2.0, speed: 0.3, home: { x: -30, z: 2, d: 4 }, roam: 0.3 });
+      this.addSchool(S.sergeant, Math.round(20 * k), { spread: 1.8, speed: 0.3, home: HANG[1], roam: 0.25 });
+      this.addSchool(S.sergeant, Math.round(18 * k), { spread: 1.8, speed: 0.3, home: HANG[2], roam: 0.25 });
       this.addSchool(S.blauwe_dokter, Math.round(22 * k), { spread: 2.6, speed: 0.45, roam: 0.6 });
+      this.addSchool(S.blauwe_dokter, Math.round(18 * k), { spread: 2.4, speed: 0.45, roam: 0.6 });
       this.addSchool(S.chromis_blauw, Math.round(60 * k), { spread: 1.6, speed: 0.15, home: HANG[0], roam: 0.05 });
       this.addSchool(S.chromis_blauw, Math.round(40 * k), { spread: 1.4, speed: 0.15, home: HANG[3], roam: 0.05 });
+      this.addSchool(S.chromis_blauw, Math.round(36 * k), { spread: 1.4, speed: 0.15, home: HANG[1], roam: 0.05 });
+      this.addSchool(S.chromis_blauw, Math.round(36 * k), { spread: 1.4, speed: 0.15, home: HANG[2], roam: 0.05 });
+      // geelstaartsnappers in losse groepjes (komen graag kijken) en gele geitenvissen die over het zand woelen
+      if (hasModel('geelstaart_snapper')) {
+        this.addSchool(S.geelstaart_snapper, Math.round(16 * k), { spread: 2.8, speed: 0.4, roam: 0.5 });
+        this.addSchool(S.geelstaart_snapper, Math.round(12 * k), { spread: 2.6, speed: 0.4, roam: 0.5 });
+      }
+      if (hasModel('gele_geitenvis')) {
+        this.addSchool(S.gele_geitenvis, Math.round(12 * k), { spread: 2.2, speed: 0.18, roam: 0.35, low: true });
+        this.addSchool(S.gele_geitenvis, Math.round(10 * k), { spread: 2.0, speed: 0.18, roam: 0.35, low: true });
+      }
       if (hasModel('zilvervisje')) {
         this.addSchool(ZILVER, Math.round(320 * k), { spread: 1.2, speed: 0.3, home: HANG[0], roam: 0.05 });
         this.addSchool(ZILVER, Math.round(200 * k), { spread: 1.0, speed: 0.3, home: HANG[2], roam: 0.08 });
@@ -460,8 +475,11 @@ export class Fauna {
       // solo's
       for (let i = 0; i < 6; i++) this.addSolo(S.tarpon, { kind: 'tarpon', home: { x: CENTER.x + rand(-3, 3), z: rand(-4, 4), d: 8 }, radius: 7, speed: 0.22, depth: [3.5, 9] });
       this.addSolo(S.barracuda, { kind: 'curious', home: HANG[1], radius: 14, speed: 0.4, depth: [2, 7] });
-      [S.franse_keizer, S.franse_keizer, S.koningin_keizer, S.koningin_keizer, S.stoplicht_papegaai, S.stoplicht_papegaai, S.stoplicht_papegaai, S.koffervis, S.koffervis].forEach((s) => this.addSolo(s, { radius: 8, speed: 0.3 }));
-      for (let i = 0; i < 3; i++) this.addSolo(S.trompetvis, { kind: 'hover', radius: 3, speed: 0.12, vertical: true });
+      this.addSolo(S.barracuda, { kind: 'curious', home: HANG[3], radius: 14, speed: 0.4, depth: [2, 7] });
+      [S.franse_keizer, S.franse_keizer, S.franse_keizer, S.koningin_keizer, S.koningin_keizer, S.koningin_keizer,
+        S.stoplicht_papegaai, S.stoplicht_papegaai, S.stoplicht_papegaai, S.stoplicht_papegaai, S.stoplicht_papegaai,
+        S.koffervis, S.koffervis, S.koffervis].forEach((s) => this.addSolo(s, { radius: 8, speed: 0.3 }));
+      for (let i = 0; i < 5; i++) this.addSolo(S.trompetvis, { kind: 'hover', radius: 3, speed: 0.12, vertical: true });
     } else {
       // 's nachts: knorvissen verspreid op het zand, rifvisjes slapen in spleten,
       // zilvervisjes komen op het licht af en de tarpons jagen erop

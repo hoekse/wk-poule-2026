@@ -23,9 +23,12 @@ export const FILES = {
   hersenkoraal: 'models/rif/hersenkoraal.glb', sterkoraal: 'models/rif/sterkoraal.glb', buisspons: 'models/rif/buisspons.glb',
   vaasspons: 'models/rif/vaasspons.glb', tonspons: 'models/rif/tonspons.glb',
   bekerkoraal: 'models/rif/bekerkoraal.glb', korstspons: 'models/rif/korstspons.glb', zilvervisje: 'models/vis/zilvervisje.glb',
+  zeepluim: 'models/rif/zeepluim.glb',
+  // meer leven: geelstaartsnappers en gele geitenvissen
+  geelstaart_snapper: 'models/vis/geelstaart_snapper.glb', gele_geitenvis: 'models/vis/gele_geitenvis.glb',
 };
 // eenvoudigere versies van de vissen voor op afstand (LOD)
-['franse_knorvis', 'kleinbek_knorvis', 'sergeant', 'blauwe_dokter', 'chromis_blauw', 'tarpon', 'barracuda', 'franse_keizer', 'koningin_keizer', 'stoplicht_papegaai', 'koffervis', 'trompetvis']
+['franse_knorvis', 'kleinbek_knorvis', 'sergeant', 'blauwe_dokter', 'chromis_blauw', 'tarpon', 'barracuda', 'franse_keizer', 'koningin_keizer', 'stoplicht_papegaai', 'koffervis', 'trompetvis', 'geelstaart_snapper', 'gele_geitenvis']
   .forEach((id) => { FILES[id + '-ver'] = 'models/vis/' + id + '-ver.glb'; });
 
 const cache = {};

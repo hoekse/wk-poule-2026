@@ -95,7 +95,7 @@ export async function runZoutpier(site) {
   glows.visible = night;
 
   await loading('Bodem en rif…');
-  const [sandTex] = await Promise.all([loadSandTextures(), loadModels(['hersenkoraal', 'sterkoraal', 'buisspons', 'vaasspons', 'tonspons', 'bekerkoraal', 'korstspons'])]);
+  const [sandTex] = await Promise.all([loadSandTextures(), loadModels(['hersenkoraal', 'sterkoraal', 'buisspons', 'vaasspons', 'tonspons', 'bekerkoraal', 'korstspons', 'zeepluim'])]);
   scene.add(makeSeabed(q, sandTex));
   await loading('De pijlers van de Zoutpier…');
   const pier = makePier(scene, q);

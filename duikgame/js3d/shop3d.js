@@ -28,7 +28,12 @@ export const STATIONS = {
 };
 
 const TEX = 'img/winkel3d/';
-const MODELS = { pop: 'models/winkel/paspop.glb', torso: 'models/winkel/torso.glb', tas: 'models/winkel/tas.glb', fles: 'models/winkel/fles.glb' };
+const MODELS = {
+  pop: 'models/winkel/paspop.glb', torso: 'models/winkel/torso.glb', tas: 'models/winkel/tas.glb', fles: 'models/winkel/fles.glb',
+  // tweede ronde (Magnific, Tripo H3.1): shorty-paspop, rekken, vinnenstandaard en balie
+  shorty: 'models/winkel/shorty.glb', rekpak: 'models/winkel/rek-pakken.glb', rektrim: 'models/winkel/rek-trimvesten.glb',
+  vinstand: 'models/winkel/vinnenstandaard.glb', balie: 'models/winkel/balie.glb',
+};
 
 /* ---------------- canvas-texturen ---------------- */
 function canvasTex(w, h, draw, opts = {}) {
@@ -119,6 +124,16 @@ function fillPanelTex() {
   });
 }
 
+/* ---------------- donkere randen waar vloer, wand en plafond samenkomen (nep-AO) ---------------- */
+let aoTex = null;
+function aoStrip(w, h) {
+  if (!aoTex) aoTex = canvasTex(4, 128, (c, w2, h2) => {
+    const g = c.createLinearGradient(0, 0, 0, h2); g.addColorStop(0, 'rgba(0,0,0,0.55)'); g.addColorStop(0.5, 'rgba(0,0,0,0.16)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+    c.fillStyle = g; c.fillRect(0, 0, w2, h2);
+  });
+  return new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: aoTex, transparent: true, depthWrite: false }));
+}
+
 /* ---------------- schaduwvlekjes onder objecten ---------------- */
 let blobTex = null;
 function blob(w, d, o = 0.5) {
@@ -150,6 +165,10 @@ export class Shop3D {
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.05;
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
+    // echte schaduwen van paspoppen, rekken en meubels (niet op de laagste kwaliteit)
+    this.shadows = this.quality !== 'laag';
+    this.renderer.shadowMap.enabled = this.shadows;
+    this.renderer.shadowMap.type = THREE.PCFShadowMap;
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0x2b2d31);
     this.camera = new THREE.PerspectiveCamera(58, 1, 0.05, 60);
@@ -158,6 +177,8 @@ export class Shop3D {
     this.setLook(new THREE.Vector3(...st.look));
     this.fly = null;
     this.station = 'overzicht';
+    // draaiing per model zodat de voorkant naar het middenpad kijkt (Magnific-modellen kijken niet allemaal dezelfde kant op)
+    this.yawFix = { shorty: 0, rekpak: 0, rektrim: 0, vinstand: 0, balie: 0 };
     this.loader = new THREE.TextureLoader();
     this.build();
     this.labels = [];
@@ -191,7 +212,17 @@ export class Shop3D {
   build() {
     const S = this.scene;
     // licht: plafondpanelen + omgevingslicht; een kleine kamer als omgevingskaart voor glans
-    S.add(new THREE.HemisphereLight(0xffffff, 0x6c736f, 1.25));
+    S.add(new THREE.HemisphereLight(0xfffaf2, 0x5f6662, 1.05));
+    // hooflicht van boven (de ledpanelen samen) dat zachte schaduwen werpt
+    const key = new THREE.DirectionalLight(0xfff4e8, 1.15);
+    key.position.set(1.5, 9, -5.5); key.target.position.set(0, 0, -8);
+    if (this.shadows) {
+      key.castShadow = true;
+      key.shadow.mapSize.set(1024, 1024);
+      const sc = key.shadow.camera; sc.left = -9; sc.right = 9; sc.top = 6; sc.bottom = -6; sc.near = 1; sc.far = 20;
+      key.shadow.bias = -0.0008; key.shadow.normalBias = 0.02; key.shadow.radius = 4;
+    }
+    S.add(key); S.add(key.target);
     const pmrem = new THREE.PMREMGenerator(this.renderer);
     const env = new THREE.Scene();
     env.add(new THREE.Mesh(new THREE.BoxGeometry(8, 3, 16), new THREE.MeshBasicMaterial({ color: 0x55585e, side: THREE.BackSide })));
@@ -209,7 +240,19 @@ export class Shop3D {
     // vloer, plafond, wanden
     const carpet = carpetTex(); carpet.repeat.set((XR - XL), (ZF - ZB));
     const floor = new THREE.Mesh(new THREE.PlaneGeometry(XR - XL, ZF - ZB), new THREE.MeshStandardMaterial({ map: carpet, roughness: 1, envMapIntensity: 0.2 }));
-    floor.rotation.x = -Math.PI / 2; floor.position.set(0, 0, (ZF + ZB) / 2); S.add(floor);
+    floor.rotation.x = -Math.PI / 2; floor.position.set(0, 0, (ZF + ZB) / 2); floor.receiveShadow = true; S.add(floor);
+    // donkere randen langs alle wanden (op de vloer, onderaan de wand en bij het plafond)
+    const D = ZF - ZB, Wd = XR - XL;
+    const ao = (w, h, x, y, z, rx, ry) => { const m = aoStrip(w, h); m.position.set(x, y, z); m.rotation.set(rx, ry, 0, 'YXZ'); m.renderOrder = 1; S.add(m); };
+    ao(D, 0.55, XL + 0.27, 0.006, (ZF + ZB) / 2, -Math.PI / 2, Math.PI / 2);
+    ao(D, 0.55, XR - 0.27, 0.006, (ZF + ZB) / 2, -Math.PI / 2, -Math.PI / 2);
+    ao(Wd, 0.55, 0, 0.006, ZB + 0.27, -Math.PI / 2, 0);
+    ao(D, 0.35, XL + 0.02, 0.17, (ZF + ZB) / 2, Math.PI, Math.PI / 2);
+    ao(D, 0.35, XR - 0.02, 0.17, (ZF + ZB) / 2, Math.PI, -Math.PI / 2);
+    ao(Wd, 0.35, 0, 0.17, ZB + 0.02, Math.PI, 0);
+    ao(D, 0.3, XL + 0.025, H - 0.15, (ZF + ZB) / 2, 0, Math.PI / 2);
+    ao(D, 0.3, XR - 0.025, H - 0.15, (ZF + ZB) / 2, 0, -Math.PI / 2);
+    ao(Wd, 0.3, 0, H - 0.15, ZB + 0.025, 0, 0);
     const ceil = ceilingTex(); ceil.repeat.set((XR - XL) / 0.6, (ZF - ZB) / 0.6);
     const ceiling = new THREE.Mesh(new THREE.PlaneGeometry(XR - XL, ZF - ZB), new THREE.MeshBasicMaterial({ map: ceil, color: 0xc9cbca }));
     ceiling.rotation.x = Math.PI / 2; ceiling.position.set(0, H, (ZF + ZB) / 2); S.add(ceiling);
@@ -309,7 +352,7 @@ export class Shop3D {
     this.buildVitrine(0.65, ZB + 0.55, 'camera');
     // display-zuil met duikcomputers (zie foto)
     const zuil = new THREE.Mesh(new THREE.BoxGeometry(0.42, 1.85, 0.32), new THREE.MeshStandardMaterial({ color: 0x141518, roughness: 0.4 }));
-    zuil.position.set(1.35, 0.925, ZB + 0.6); S.add(zuil);
+    zuil.position.set(1.35, 0.925, ZB + 0.6); zuil.castShadow = this.shadows; S.add(zuil);
     const scr = new THREE.Mesh(new THREE.PlaneGeometry(0.32, 0.5), new THREE.MeshBasicMaterial({ map: textTex(['DUIK', 'computers'], { w: 256, h: 400, size: 70, fg: '#2ee6d6', bg: '#0b1218' }), toneMapped: false }));
     scr.position.set(1.35, 1.35, ZB + 0.765); S.add(scr);
     S.add(blobAt(0.9, 0.7, 0.45, 1.35, 0.004, ZB + 0.62));
@@ -324,6 +367,7 @@ export class Shop3D {
     const kscr = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.2), new THREE.MeshBasicMaterial({ color: 0x9fd0f0 })); kscr.position.set(0.55, 1.18, 0.08); kscr.rotation.x = -0.25; balie.add(kscr);
     balie.position.set(2.55, 0, ZB + 1.45);
     S.add(balie);
+    this.balie = balie;
     S.add(blobAt(2.4, 1.0, 0.5, 2.55, 0.004, ZB + 1.45));
 
     // vulstation linksachter: paneel aan de wand, flessen worden geladen als model
@@ -338,6 +382,8 @@ export class Shop3D {
     S.add(tafel);
     S.add(blobAt(1.9, 1.4, 0.5, -0.85, 0.004, -6.8));
     this.table = tafel;
+    // meubels werpen schaduw
+    [tafel, balie].forEach((g) => g.traverse((m) => { if (m.isMesh) m.castShadow = this.shadows; }));
 
   }
 
@@ -387,12 +433,15 @@ export class Shop3D {
   async loadModels() {
     const loader = new GLTFLoader();
     const load = (k) => loader.loadAsync(MODELS[k]).then((g) => g.scene).catch((e) => { console.warn('winkelmodel ontbreekt', k, e); return null; });
-    const [pop, torso, tas, fles] = await Promise.all(['pop', 'torso', 'tas', 'fles'].map(load));
+    const keys = Object.keys(MODELS);
+    const got = await Promise.all(keys.map(load));
     if (!this.alive) return;
+    const M = {}; keys.forEach((k, i) => { M[k] = got[i]; });
+    const { pop, torso, tas, fles } = M;
     // genormaliseerd: onderkant op 0, gewenste hoogte
     const norm = (src, height) => {
       const o = src.clone(true);
-      o.traverse((m) => { if (m.isMesh) { m.material = m.material.clone(); m.material.envMapIntensity = 0.5; if (m.material.map) m.material.map.anisotropy = 4; } });
+      o.traverse((m) => { if (m.isMesh) { m.material = m.material.clone(); m.material.envMapIntensity = 0.5; if (m.material.map) m.material.map.anisotropy = 4; m.castShadow = this.shadows; m.receiveShadow = this.shadows; } });
       const box = new THREE.Box3().setFromObject(o), s = new THREE.Vector3(), c = new THREE.Vector3();
       box.getSize(s); box.getCenter(c);
       const k = height / s.y;
@@ -406,12 +455,22 @@ export class Shop3D {
       if (!src) return null;
       const o = norm(src, h); o.position.set(x, 0, z); o.rotation.y = ry; S.add(o);
       if (tint) o.traverse((m) => { if (m.isMesh) m.material.color.multiplyScalar(tint); });
-      if (sh) S.add(blobAt(sh[0], sh[1], 0.5, x, 0.004, z));
+      if (sh) S.add(blobAt(sh[0], sh[1], this.shadows ? 0.3 : 0.5, x, 0.004, z));
       return o;
     };
     // paspoppen rechts, kijkend naar de etalage (zoals op de foto)
+    // afwisselend een volledig natpak en een shorty (zoals op de foto)
     [[1.65, -5.7, 0.55, 1.8], [2.05, -6.85, 0.45, 1.76], [2.4, -8.0, 0.6, 1.82], [2.75, -9.15, 0.4, 1.78]]
-      .forEach(([x, z, ry, h]) => place(pop, h, x, z, ry + Math.PI, [0.8, 0.8]));
+      .forEach(([x, z, ry, h], i) => place(i % 2 && M.shorty ? M.shorty : pop, h, x, z, ry + Math.PI + (i % 2 && M.shorty ? this.yawFix.shorty : 0), [0.8, 0.8]));
+    // rek met natpakken en rek met trimvesten langs het middenpad, vinnenstandaard bij de vinnenwand
+    place(M.rekpak, 1.75, -2.35, -10.2, 0.35 + this.yawFix.rekpak, [1.8, 0.8]);
+    place(M.rektrim, 1.7, -2.45, -4.9, 0.25 + this.yawFix.rektrim, [1.8, 0.8]);
+    place(M.vinstand, 1.05, 2.75, -4.35, -Math.PI / 2 + this.yawFix.vinstand, [1.4, 0.7]);
+    // balie als 3D-model (de getekende balie verdwijnt dan)
+    if (M.balie) {
+      place(M.balie, 1.05, 2.55, ZB + 1.45, this.yawFix.balie, null);
+      this.balie.visible = false;
+    }
     // torso met trimvest op de tafel
     if (torso) { const t = norm(torso, 0.95); t.position.set(0.1, 0.92, 0); t.rotation.y = 0.55 + 1.35 * Math.PI; this.table.add(t); }
     // reistassen vóór de tafel

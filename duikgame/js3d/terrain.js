@@ -309,15 +309,27 @@ export function makeReef(scene, quality, pillarList) {
   const rodCols = ['#7a4f86', '#8a6a52', '#6f5d8e', '#9b6b7a', '#a07a58'];
   rodGeos.forEach((g, gi) => {
     const list = [];
-    const n = Math.round(110 * dense);
+    const n = Math.round(140 * dense);
     for (let i = 0; i < n; i++) {
       const q = R();
-      const [x, z] = q < 0.4 ? nearPillar() : q < 0.85 ? reefSpot() : flatSpot();
+      const [x, z] = q < 0.5 ? nearPillar() : q < 0.88 ? reefSpot() : flatSpot();
       list.push({ x, z, y: seabed(x, z) - 0.02, s: 1.1 + R() * 1.4, ry: R() * 6.3, c: new THREE.Color(rodCols[Math.floor(R() * rodCols.length)]) });
     }
     const m = new THREE.InstancedMesh(g, swayMat({ color: 0xffffff, roughness: 0.9, key: 'rod' }), list.length);
     place(m, list);
   });
+
+  // zeepluimen: zachte koraal (Magnific 3D) die meewiegt, bij de pijlers en op het rif
+  if (hasModel('zeepluim')) {
+    const list = [];
+    for (let i = 0; i < Math.round(85 * dense); i++) {
+      const q = R();
+      const [x, z] = q < 0.6 ? nearPillar() : q < 0.92 ? reefSpot() : flatSpot();
+      const sc = 0.45 + R() * 0.75;
+      list.push({ x, z, y: seabed(x, z) - 0.03, s: sc, sy: sc * (0.9 + R() * 0.4), ry: R() * 6.3, c: tint(['#ffffff', '#f0d0ff', '#ffe0c8', '#e0c8f0', '#d8b8e8'][i % 5], 0.35) });
+    }
+    place(new THREE.InstancedMesh(modelGeo('zeepluim', 'reef'), swayMat({ color: 0xffffff, map: modelMap('zeepluim'), roughness: 0.9, side: THREE.DoubleSide, key: 'pluim' }), list.length), list);
+  }
 
   // waaierkoralen bij de rifrand
   {
@@ -328,8 +340,8 @@ export function makeReef(scene, quality, pillarList) {
     g.translate(0, 0.63, 0);
     const mat = swayMat({ color: 0xffffff, map: photo, alphaTest: 0.4, side: THREE.DoubleSide, roughness: 0.9, key: 'fanP' });
     const list = [];
-    for (let i = 0; i < Math.round(110 * dense); i++) {
-      const [x, z] = R() < 0.85 ? reefSpot() : nearPillar();
+    for (let i = 0; i < Math.round(140 * dense); i++) {
+      const [x, z] = R() < 0.7 ? reefSpot() : nearPillar();
       list.push({ x, z, y: seabed(x, z) - 0.05, s: 0.6 + R() * 1.0, ry: R() * 6.3, c: new THREE.Color(1, 1, 1).lerp(new THREE.Color(['#c89ae0', '#e0a0c0', '#f0c090', '#b0a0f0'][i % 4]), 0.45) });
     }
     place(new THREE.InstancedMesh(g, mat, list.length), list);
@@ -338,8 +350,9 @@ export function makeReef(scene, quality, pillarList) {
   // hersenkoralen
   if (hasModel('hersenkoraal')) {
     const list = [];
-    for (let i = 0; i < Math.round(95 * dense); i++) {
-      const [x, z] = R() < 0.8 ? reefSpot() : nearPillar();
+    for (let i = 0; i < Math.round(150 * dense); i++) {
+      const q = R();
+      const [x, z] = q < 0.55 ? reefSpot() : q < 0.9 ? nearPillar() : flatSpot();
       const sc = 0.45 + R() * 1.0;
       list.push({ x, z, y: seabed(x, z) - 0.06 * sc, s: sc, sy: sc * (0.75 + R() * 0.4), ry: R() * 6.3, c: tint(['#e8d8a0', '#c8d890', '#e0b890', '#b8c8a0', '#d8c0c8'][i % 5], 0.35) });
     }
@@ -358,8 +371,8 @@ export function makeReef(scene, quality, pillarList) {
   // buisponzen (clusters)
   if (hasModel('buisspons')) {
     const list = [];
-    for (let i = 0; i < Math.round(110 * dense); i++) {
-      const [x, z] = R() < 0.45 ? nearPillar() : reefSpot();
+    for (let i = 0; i < Math.round(170 * dense); i++) {
+      const [x, z] = R() < 0.55 ? nearPillar() : reefSpot();
       const sc = 0.3 + R() * 0.45;
       list.push({ x, z, y: seabed(x, z) - 0.03, s: sc, ry: R() * 6.3, rz: (R() - 0.5) * 0.25, c: tint(['#ffffff', '#ffd890', '#ffb080', '#f0f0ff'][i % 4], 0.5) });
     }
@@ -390,8 +403,8 @@ export function makeReef(scene, quality, pillarList) {
       const sc = 0.3 + R() * 0.35;
       lv.push({ x, z, y: seabed(x, z) - 0.04, s: sc, ry: R() * 6.3, c: tint(['#ffffff', '#e0d8ff', '#ffe0f0'][i % 3], 0.4) });
     }
-    for (let i = 0; i < Math.round(34 * dense); i++) {
-      const [x, z] = R() < 0.85 ? reefSpot() : nearPillar();
+    for (let i = 0; i < Math.round(44 * dense); i++) {
+      const [x, z] = R() < 0.7 ? reefSpot() : nearPillar();
       const sc = 0.55 + R() * 0.9;
       lb.push({ x, z, y: seabed(x, z) - 0.06 * sc, s: sc, sy: sc * (0.8 + R() * 0.5), ry: R() * 6.3, c: tint(['#ffffff', '#ffd0b8', '#e8c0a8'][i % 3], 0.4) });
     }
@@ -431,6 +444,12 @@ export function makeReef(scene, quality, pillarList) {
       const sc = 0.8 + Math.pow(R(), 1.5) * 2.6;
       list.push({ x, z, y: seabed(x, z) - sc * 0.08, s: sc, sy: sc * (0.6 + R() * 0.6), ry: R() * 6.3, c: tint(['#ffffff', '#e8f0c8', '#f0d8b0', '#d8e0d0', '#f0d0e0'][i % 5], 0.35) });
     }
+    // kleinere koraalkoppen tussen de pijlers
+    for (let i = 0; i < Math.round(45 * dense); i++) {
+      const [x, z] = nearPillar();
+      const sc = 0.4 + R() * 0.8;
+      list.push({ x, z, y: seabed(x, z) - sc * 0.08, s: sc, sy: sc * (0.6 + R() * 0.5), ry: R() * 6.3, c: tint(['#ffffff', '#e8f0c8', '#f0d8b0'][i % 3], 0.35) });
+    }
     place(modelMesh('sterkoraal', list.length, 0.9), list);
   }
   {
@@ -465,7 +484,7 @@ export function makeReef(scene, quality, pillarList) {
 
 /* ---------------- aangroei op de pijlers: korstsponzen en oranje bekerkoralen (Magnific 3D) ---------------- */
 export function makePillarGrowth(scene, quality, pillars, pillarAt) {
-  if (!hasModel('korstspons') && !hasModel('bekerkoraal')) return;
+  if (!hasModel('korstspons') && !hasModel('bekerkoraal') && !hasModel('buisspons')) return;
   const R = rng(7331);
   const dense = quality === 'laag' ? 0.5 : quality === 'midden' ? 0.8 : 1;
   const up = new THREE.Vector3(0, 1, 0), n = new THREE.Vector3(), tw = new THREE.Quaternion(), q = new THREE.Quaternion();
@@ -497,6 +516,7 @@ export function makePillarGrowth(scene, quality, pillars, pillarAt) {
     mesh.instanceMatrix.needsUpdate = true;
     scene.add(mesh);
   };
-  build('korstspons', 1.2, [0.3, 0.55], 0.45, 0.9);
-  build('bekerkoraal', 1.0, [0.16, 0.26], 0.8, 0.7);
+  build('korstspons', 2.8, [0.3, 0.6], 0.45, 0.9);
+  build('bekerkoraal', 2.4, [0.15, 0.28], 0.8, 0.7);
+  build('buisspons', 0.8, [0.12, 0.22], 1.0, 0.8);
 }
