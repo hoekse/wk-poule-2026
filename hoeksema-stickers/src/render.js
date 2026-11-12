@@ -1,4 +1,4 @@
-// Rendert de vlakke stickers (gereedschap + vlakke Meester) naar SVG + PNG (512x512, transparant).
+// Rendert de vlakke (getekende) versie van alle stickers naar vlak/png en vlak/svg (512x512, transparant).
 // Gebruik: node render.js [uitvoermap]
 const fs = require('fs');
 const path = require('path');
@@ -70,9 +70,9 @@ const page0 = (body) => `<!doctype html><html><head><meta charset="utf-8"><style
   }
 
   const only = process.env.ONLY ? process.env.ONLY.split(',') : null;
-  // Gereedschap -> png/ en svg/; de vlakke Meester -> vlak/ (de 3D-Meester komt uit render3d.js)
-  const dirOf = (s, kind) => (s.pack === 'meester' ? path.join('vlak', kind) : kind);
-  for (const d of ['png', 'svg', 'vlak/png', 'vlak/svg']) fs.mkdirSync(path.join(OUT, d), { recursive: true });
+  // De vlakke versie gaat naar vlak/ (de 3D-stickers in png/ komen uit render3d.js)
+  const dirOf = (s, kind) => path.join('vlak', kind);
+  for (const d of ['vlak/png', 'vlak/svg']) fs.mkdirSync(path.join(OUT, d), { recursive: true });
   for (const s of all) {
     if (only && !only.some((o) => s.id.includes(o))) continue;
     await page.setContent(page0(wrap(s.inner, false)));

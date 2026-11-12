@@ -1,4 +1,4 @@
-// Rendert de 3D-Meester-stickers: uitgeknipte 3D-renders (src/meester-3d/*.webp)
+// Rendert alle 3D-stickers: uitgeknipte 3D-renders (src/meester-3d/ en src/gereedschap-3d/)
 // met witte stickerrand, tekstbanner en merkkleur-extra's.
 // Gebruik: node render3d.js [uitvoermap]
 // Uitvoer: png/ (512), png-1024/ (voor drukwerk)
@@ -6,10 +6,12 @@ const fs = require('fs');
 const path = require('path');
 const { chromium } = require('playwright');
 const A = require('./art.js');
-const { M } = require('./stickers.js');
+const { M, T } = require('./stickers.js');
 
 const OUT = path.resolve(process.argv[2] || path.join(__dirname, '..'));
-const SRC = path.join(__dirname, 'meester-3d');
+// 3D-bronnen per pakket
+const SRC = { meester: path.join(__dirname, 'meester-3d'), gereedschap: path.join(__dirname, 'gereedschap-3d') };
+const ALL = [...M.map((s) => ({ ...s, pack: 'meester' })), ...T.map((s) => ({ ...s, pack: 'gereedschap' }))];
 const fontB64 = fs.readFileSync(path.join(__dirname, 'fonts/saira-latin.woff2')).toString('base64');
 const FONT_CSS = `@font-face{font-family:'Saira';src:url(data:font/woff2;base64,${fontB64}) format('woff2');font-weight:800;font-style:normal;}`;
 const DIE = `<filter id="die" filterUnits="userSpaceOnUse" x="0" y="0" width="512" height="512" color-interpolation-filters="sRGB">
@@ -33,7 +35,7 @@ const BOX = { none: [40, 34, 472, 478], one: [52, 28, 460, 400], two: [64, 26, 4
 (async () => {
   const browser = await chromium.launch();
   const meas = await browser.newPage();
-  const lines = [...new Set(M.filter((s) => s.cap).flatMap((s) => s.cap.split('\n')))];
+  const lines = [...new Set(ALL.filter((s) => s.cap).flatMap((s) => s.cap.split('\n')))];
   await meas.setContent(`<html><head><style>${FONT_CSS}</style></head><body><svg width="900" height="100">${lines.map((c, i) => `<text id="t${i}" x="0" y="60" font-family="Saira" font-weight="800" font-size="54">${c.replace(/&/g, '&amp;')}</text>`).join('')}</svg></body></html>`);
   await meas.evaluate(() => document.fonts.ready);
   const widths = await meas.evaluate((n) => [...Array(n)].map((_, i) => document.getElementById('t' + i).getComputedTextLength()), lines.length);
@@ -53,8 +55,8 @@ const BOX = { none: [40, 34, 472, 478], one: [52, 28, 460, 400], two: [64, 26, 4
   };
   for (const d of ['png', 'png-1024']) fs.mkdirSync(path.join(OUT, d), { recursive: true });
 
-  for (const s of M) {
-    const file = path.join(SRC, `${s.id}.webp`);
+  for (const s of ALL) {
+    const file = path.join(SRC[s.pack], `${s.id}.webp`);
     if (!fs.existsSync(file)) { console.log('ontbreekt:', s.id); continue; }
     const dim = await pages[1].evaluate(async (src) => { const i = new Image(); i.src = src; await i.decode(); return [i.naturalWidth, i.naturalHeight]; }, `data:image/webp;base64,${fs.readFileSync(file).toString('base64')}`);
     const kind = !s.cap ? 'none' : s.cap.includes('\n') ? 'two' : 'one';
@@ -75,5 +77,5 @@ const BOX = { none: [40, 34, 472, 478], one: [52, 28, 460, 400], two: [64, 26, 4
     }
   }
   await browser.close();
-  console.log('klaar: 3D-Meester ->', OUT);
+  console.log(`klaar: ${ALL.length} 3D-stickers ->`, OUT);
 })();
