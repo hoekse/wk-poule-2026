@@ -1,10 +1,11 @@
 /* Diepblauw 3D — de duik bij de Zoutpier (Bonaire): vrij zwemmen in 3D met echte duikregels */
 import * as THREE from 'three';
 import { UW, makeCausticTexture, makeDome, makeSurface, makeRays, updateRays, makeParticles, makeBubbles, spawnBubbles, updateBubbles } from './water.js';
-import { makeSeabed, makeReef, seabed } from './terrain.js';
+import { makeSeabed, makeReef, seabed, loadSandTextures } from './terrain.js';
+import { loadModels } from './models.js';
 import { makePier, pillarAt } from './pier.js';
-import { Fauna, preloadFishPhotos } from './creatures3d.js';
-import { buildDiver, animateDiver } from './diver3d.js';
+import { Fauna, preloadFishPhotos, preloadFaunaModels } from './creatures3d.js';
+import { buildDiver, animateDiver, preloadDivers } from './diver3d.js';
 import { Deco, noFlyHours } from './deco.js';
 import { Controls } from './controls.js';
 import { Hud } from './hud.js';
@@ -71,7 +72,8 @@ export async function runZoutpier(site) {
   bubbles.material.uniforms.uPx.value = pr;
 
   await loading('Bodem en rif…');
-  scene.add(makeSeabed(q));
+  const [sandTex] = await Promise.all([loadSandTextures(), loadModels(['hersenkoraal', 'sterkoraal', 'buisspons', 'vaasspons', 'tonspons'])]);
+  scene.add(makeSeabed(q, sandTex));
   await loading('De pijlers van de Zoutpier…');
   const pier = makePier(scene, q);
   const pTex = new THREE.TextureLoader().load(q === 'laag' ? 'img/tex-pijler-laag.jpg' : 'img/tex-pijler.jpg', (t) => {
@@ -81,15 +83,16 @@ export async function runZoutpier(site) {
   void pTex;
   makeReef(scene, q, pier.pillars);
   await loading('Vissen, tarpons en schildpadden…');
-  await preloadFishPhotos();
+  await Promise.all([preloadFishPhotos(), preloadFaunaModels()]);
   const fauna = new Fauna(scene, q);
   fauna.placeFrogs(pier.pillars);
 
   await loading('Duikers…');
+  await preloadDivers();
   const lo = DG.Save.loadout();
   const look = Object.assign({}, lo.look);
-  const me = buildDiver({ suit: 0x16171a, bcd: 0x141518, accent: 0xf2c21a, fin: hex(look.fin, 0xf2c21a), tank: 0xc8cdd2, lamp: lo.lamp ? look.lamp || 'compact' : null, cam: lo.camera ? look.cam : null, reg: look.reg ? hex(look.reg) : null });
-  const buddyM = buildDiver({ suit: 0x1b1d22, bcd: 0x1f2026, accent: 0xd8402a, fin: 0xe86aa0, tank: 0xc8cdd2, hair: 0x6a4a2a });
+  const me = buildDiver({ model: 'duiker', suit: 0x16171a, bcd: 0x141518, accent: 0xf2c21a, fin: hex(look.fin, 0xf2c21a), tank: 0xc8cdd2, lamp: lo.lamp ? look.lamp || 'compact' : null, cam: lo.camera ? look.cam : null, reg: look.reg ? hex(look.reg) : null });
+  const buddyM = buildDiver({ model: 'buddy', suit: 0x1b1d22, bcd: 0x1f2026, accent: 0xd8402a, fin: 0xe86aa0, tank: 0xc8cdd2, hair: 0x6a4a2a });
   scene.add(me); scene.add(buddyM);
 
   await loading('Klaar om te water te gaan');
@@ -508,7 +511,7 @@ export async function runZoutpier(site) {
       camera.rotation.set(D.lookPitch, D.lookYaw, 0);
       camPos.copy(camera.position);
     } else {
-      const want = D.p.clone().addScaledVector(lf, -3.8).add(new THREE.Vector3(0, 1.05, 0));
+      const want = D.p.clone().addScaledVector(lf, -3.6).add(new THREE.Vector3(0, 1.5, 0));
       const fl = seabed(want.x, want.z) + 0.35;
       if (want.y < fl) want.y = fl;
       camPos.lerp(want, Math.min(1, dt * 6));
@@ -586,7 +589,7 @@ export async function runZoutpier(site) {
   requestAnimationFrame((t) => { last = t; loop(t); });
   // testhaakje: simulatie vooruitspoelen zonder beeld
   window.__d3 = {
-    D, deco, camera, scene, renderer, action, fauna,
+    D, deco, camera, scene, renderer, action, fauna, camPos,
     sim(sec, inp) {
       D.forceInp = Object.assign({ fwd: 0, side: 0, turn: 0, lookX: 0, lookY: 0, bcdIn: false, bcdOut: false, breath: false, exhale: false, hard: false }, inp || {});
       for (let t = 0; t < sec && !D.ended; t += 0.05) step(0.05);

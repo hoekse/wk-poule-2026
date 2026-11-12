@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { uw } from './water.js';
 import { seabed } from './terrain.js';
 import { CENTER, GROUPS, pillarAt } from './pier.js';
+import { loadModels, hasModel, modelGeo, modelMap } from './models.js';
 
 const DG = window.DG;
 const TAU = Math.PI * 2;
@@ -53,9 +54,23 @@ function photoSprite(spc) {
   return { c, x0: -L / 2, x1: L / 2, y0: -H / 2, y1: H / 2, pxm: c.width / L, L, tailX: -L / 2, headX: L / 2, photo: true };
 }
 
+// echte 3D-modellen (Magnific: foto → 3D) voor vissen en andere dieren
+export const MODEL_ANIMALS = ['groene_schildpad', 'karet', 'adelaarsrog', 'kikvorsvis_geel', 'gevlekte_murene', 'rifoctopus'];
+export function preloadFaunaModels() { return loadModels(PHOTO_FISH.concat(MODEL_ANIMALS)); }
+
+function modelFishAsset(spc) {
+  const L = spc.size * Math.min(spc.ds || 1, 1.3);
+  const geo = modelGeo(spc.id, 'fish');
+  geo.scale(L, L, L);
+  geo.computeBoundingBox();
+  const shiny = /tarpon|barracuda|trevally|jacks|fuselier|zeebrasem/.test(spc.id);
+  return { geo, tex: modelMap(spc.id), headX: geo.boundingBox.max.x, tailX: geo.boundingBox.min.x, L, shiny, model: true };
+}
+
 const fishCache = {};
 export function fishAsset(spc) {
   if (fishCache[spc.id]) return fishCache[spc.id];
+  if (hasModel(spc.id)) return (fishCache[spc.id] = modelFishAsset(spc));
   const s = photoCanvas[spc.id] ? photoSprite(spc) : spriteCanvas(spc);
   const { c, x0, x1, y0, y1 } = s;
   const g = c.getContext('2d');
@@ -114,7 +129,10 @@ export function fishAsset(spc) {
 
 function fishMaterial(spc, a) {
   const amp = spc.art.t === 'shark' ? 0.09 : spc.art.shape === 'disc' ? 0.06 : 0.1;
-  return uw(new THREE.MeshStandardMaterial({ map: a.tex, alphaTest: 0.45, side: THREE.DoubleSide, roughness: a.shiny ? 0.35 : 0.6, metalness: a.shiny ? 0.35 : 0.04 }), {
+  const m = a.model
+    ? new THREE.MeshStandardMaterial({ map: a.tex, roughness: a.shiny ? 0.38 : 0.62, metalness: a.shiny ? 0.3 : 0.03 })
+    : new THREE.MeshStandardMaterial({ map: a.tex, alphaTest: 0.45, side: THREE.DoubleSide, roughness: a.shiny ? 0.35 : 0.6, metalness: a.shiny ? 0.35 : 0.04 });
+  return uw(m, {
     caus: true,
     key: 'fish-' + spc.id,
     uniforms: { uHead: { value: a.headX }, uTail: { value: a.tailX }, uAmp: { value: amp }, uLen: { value: a.L } },
@@ -130,7 +148,34 @@ function fishMaterial(spc, a) {
 /* ================================================================
  * Speciale modellen
  * ================================================================ */
+// materiaal voor een los 3D-model met eigen beweging in de vertex shader
+function animalMat(id, key, vertexBegin, uniforms) {
+  return uw(new THREE.MeshStandardMaterial({ map: modelMap(id), roughness: 0.7, metalness: 0.02 }), {
+    caus: true, key, uniforms,
+    vertexPars: 'uniform float uTime;\n' + (uniforms ? Object.keys(uniforms).map((k) => 'uniform float ' + k + ';\n').join('') : ''),
+    vertexBegin,
+  });
+}
+// genormaliseerd: kop naar -Z, breedte langs X, langste maat 1 (de spanwijdte van de voorpoten)
+function turtleFromModel(kind) {
+  const geo = modelGeo(kind, 'center', { rot: [0, kind === 'karet' ? Math.PI : Math.PI / 2, 0] });
+  const uPh = { value: 0 };
+  const mat = animalMat(kind, 'turtleM', `{
+    float ax = abs(position.x);
+    // voorpoten: grote vleugelslag, achterpoten sturen
+    float fr = smoothstep(0.0, -0.12, position.z) * smoothstep(0.17, 0.3, ax);
+    float rr = smoothstep(0.08, 0.22, position.z) * smoothstep(0.1, 0.2, ax);
+    transformed.y += sin(uPh) * (ax - 0.17) * 0.9 * fr + sin(uPh + 1.2) * (ax - 0.1) * 0.35 * rr;
+    transformed.z += cos(uPh) * (ax - 0.17) * 0.25 * fr;
+  }`, { uPh });
+  const g = new THREE.Group();
+  g.add(new THREE.Mesh(geo, mat));
+  g.userData.uPh = uPh;
+  g.userData.flippers = [];
+  return g;
+}
 function turtleModel(kind) {
+  if (hasModel(kind)) return turtleFromModel(kind);
   const hawk = kind === 'karet';
   const g = new THREE.Group();
   const c = document.createElement('canvas'); c.width = c.height = 256;
@@ -164,6 +209,15 @@ function turtleModel(kind) {
 }
 
 function frogfishModel() {
+  if (hasModel('kikvorsvis_geel')) {
+    // voorkant naar +X, onderkant op y = -0.5 (langste maat 1)
+    const geo = modelGeo('kikvorsvis_geel', 'center', { rot: [0, Math.PI / 2, 0] });
+    const g = new THREE.Group();
+    const m = new THREE.Mesh(geo, uw(new THREE.MeshStandardMaterial({ map: modelMap('kikvorsvis_geel'), roughness: 0.92 }), { caus: true, key: 'frogM' }));
+    m.scale.setScalar(0.24);
+    g.add(m);
+    return g;
+  }
   const geo = new THREE.IcosahedronGeometry(0.12, 3);
   const p = geo.attributes.position;
   for (let i = 0; i < p.count; i++) {
@@ -182,6 +236,15 @@ function frogfishModel() {
 }
 
 function eagleRayModel() {
+  if (hasModel('adelaarsrog')) {
+    // neus naar +X, vleugels langs Z
+    const geo = modelGeo('adelaarsrog', 'center', { rot: [0, Math.PI / 2, 0] });
+    const m = new THREE.Mesh(geo, animalMat('adelaarsrog', 'eagleM', 'transformed.y += sin(uTime * 1.5 - abs(position.z) * 4.0) * pow(abs(position.z) * 2.2, 1.5) * 0.06;'));
+    m.scale.setScalar(2.5);
+    const g = new THREE.Group();
+    g.add(m);
+    return g;
+  }
   const c = document.createElement('canvas'); c.width = 256; c.height = 256;
   const x = c.getContext('2d');
   x.fillStyle = '#27313b';
@@ -362,7 +425,7 @@ export class Fauna {
       const m = turtleModel(id);
       const x = rand(-36, -10), z = rand(12, 40);
       m.position.set(x, seabed(x, z) + 0.25, z);
-      m.scale.setScalar(sc * DG.SPECIES[id].size);
+      m.scale.setScalar(sc * DG.SPECIES[id].size * (m.userData.uPh ? 1.45 : 1));
       scene.add(m);
       this.turtles.push({ m, spc: DG.SPECIES[id], state: 'graze', timer: rand(20, 80), t: m.position.clone(), v: new THREE.Vector3(), ph: Math.random() * 6, L: DG.SPECIES[id].size });
     });
@@ -389,6 +452,41 @@ export class Fauna {
       m.scale.setScalar(DG.SPECIES.kikvorsvis_geel.ds * 0.6);
       this.scene.add(m);
       this.frogs.push({ m, spc: DG.SPECIES.kikvorsvis_geel, hidden: true, L: 0.12 });
+    }
+    // murenen aan de voet van de pijlers en een octopus tussen het puin (niet altijd)
+    this.lurkers = [];
+    const onFloor = (m, x, z) => { m.updateMatrixWorld(true); const b = new THREE.Box3().setFromObject(m); m.position.set(x, seabed(x, z) - (b.min.y - m.position.y) - 0.03, z); };
+    if (hasModel('gevlekte_murene')) {
+      for (let i = 0; i < 2; i++) {
+        const p = cand[Math.floor(Math.random() * cand.length)];
+        const a = Math.random() * TAU;
+        const at = pillarAt(p, p.y0 + 0.3);
+        const x = at.x + Math.cos(a) * 0.95, z = at.z + Math.sin(a) * 0.95;
+        // kop naar +X, golft zachtjes en kijkt van de pijler weg
+        const m = new THREE.Mesh(modelGeo('gevlekte_murene', 'center', { rot: [0, Math.PI / 2, 0] }), animalMat('gevlekte_murene', 'morayM', 'transformed.z += sin(uTime * 1.2 - position.x * 7.0) * 0.016 * (0.7 - position.x);'));
+        m.scale.setScalar(DG.SPECIES.gevlekte_murene.size * 0.95);
+        m.rotation.y = -a;
+        onFloor(m, x, z);
+        this.scene.add(m);
+        this.lurkers.push({ m, spc: DG.SPECIES.gevlekte_murene, L: 1, hidden: true });
+      }
+    }
+    if (hasModel('rifoctopus') && Math.random() < 0.75) {
+      const p = cand[Math.floor(Math.random() * cand.length)];
+      const a = Math.random() * TAU;
+      const at = pillarAt(p, p.y0 + 0.3);
+      const x = at.x + Math.cos(a) * 1.8, z = at.z + Math.sin(a) * 1.8;
+      const m = new THREE.Mesh(modelGeo('rifoctopus', 'center'), animalMat('rifoctopus', 'octoM', `{
+        float r = length(position.xz);
+        float k = smoothstep(0.12, 0.45, r);
+        transformed.y += sin(uTime * 1.1 + atan(position.z, position.x) * 2.0 + r * 9.0) * 0.025 * k;
+        transformed.xz *= 1.0 + sin(uTime * 0.7 + r * 5.0) * 0.03 * k;
+      }`));
+      m.scale.setScalar(0.65);
+      m.rotation.y = Math.random() * TAU;
+      onFloor(m, x, z);
+      this.scene.add(m);
+      this.lurkers.push({ m, spc: DG.SPECIES.rifoctopus, L: 0.5, hidden: true });
     }
   }
   addSchool(spc, n, opts) { if (spc) this.schools.push(new School(spc, n, opts)); }
@@ -465,6 +563,7 @@ export class Fauna {
       if (tu.v.lengthSq() > 0.0004) tu.m.rotation.y = Math.atan2(-tu.v.x, -tu.v.z);
       tu.m.rotation.x = Math.max(-0.5, Math.min(0.5, tu.v.y * 1.5));
       tu.ph += dt * (0.8 + tu.v.length() * 3);
+      if (tu.m.userData.uPh) tu.m.userData.uPh.value = tu.ph;
       tu.m.userData.flippers.forEach((f) => {
         f.piv.rotation.z = f.s * (Math.sin(tu.ph + (f.front ? 0 : 1)) * (f.front ? 0.5 : 0.25));
         f.piv.rotation.y = f.s * (f.front ? 0.5 + Math.sin(tu.ph) * 0.3 : -0.4);
@@ -489,6 +588,7 @@ export class Fauna {
     this.solos.forEach((s) => { if (s.spc.log) out.push({ spc: s.spc, p: s.p, L: s.spc.size }); });
     this.turtles.forEach((t) => out.push({ spc: t.spc, p: t.m.position, L: t.L }));
     this.frogs.forEach((f) => out.push({ spc: f.spc, p: f.m.position, L: f.L, hidden: true }));
+    (this.lurkers || []).forEach((f) => { if (f.spc) out.push({ spc: f.spc, p: f.m.position, L: f.L, hidden: true }); });
     if (this.ray) out.push({ spc: this.ray.spc, p: this.ray.m.position, L: 2.2 });
     return out;
   }

@@ -1,4 +1,4 @@
-/* Diepblauw 3D — duiker (speler en buddy), procedureel opgebouwd, kijkt naar -Z */
+/* Diepblauw 3D — duiker (speler en buddy). Fallback: procedureel opgebouwd, kijkt naar -Z */
 import * as THREE from 'three';
 import { uw } from './water.js';
 
@@ -10,7 +10,7 @@ function capsule(r, len, m) {
   return new THREE.Mesh(g, m);
 }
 
-export function buildDiver(look = {}) {
+export function buildProcedural(look = {}) {
   const suit = mat(look.suit || 0x17181b, { roughness: 0.85 });
   const skin = mat(0xd9a57e, { roughness: 0.7 });
   const bcd = mat(look.bcd || 0x151619, { roughness: 0.8 });
@@ -107,7 +107,7 @@ export function buildDiver(look = {}) {
 }
 
 // beenslag en houding animeren; kick 0..1 = hoe hard er gezwommen wordt
-export function animateDiver(d, dt, kick, hideHead) {
+export function animateProcedural(d, dt, kick, hideHead) {
   const u = d.userData;
   u.phase += dt * (1.2 + kick * 3.2);
   const a = 0.12 + kick * 0.3;
@@ -118,4 +118,191 @@ export function animateDiver(d, dt, kick, hideHead) {
     l.ankle.rotation.x = 0.42 + Math.sin(ph - 1.7) * a * 0.8;
   });
   u.head.visible = !hideHead;
+}
+
+/* ------------------------------------------------------------------
+   Fotorealistische duikers (Magnific: beeld → 3D-model met skelet).
+   Het model staat rechtop in A-houding: +Y omhoog, +X = voorkant,
+   +Z = rechterkant van de duiker. Voor het zwemmen draaien we het hele
+   model horizontaal (hoofd naar -Z, rug naar boven) en zetten we de
+   gewrichten via het skelet: benen gestrekt naar achteren, enkels
+   gestrekt zodat de vinnen in het verlengde staan, armen voor de borst
+   en het hoofd omhoog zodat de duiker vooruit kijkt.
+------------------------------------------------------------------- */
+import { GLTFLoader, SkeletonUtils } from '../vendor/three/addons.min.js';
+
+const MODELS = { duiker: 'models/duiker.glb', buddy: 'models/buddy.glb' };
+const gltfCache = {};
+const HEIGHT = 1.76; // lengte van kruin tot voetzool in meters
+
+export function preloadDivers() {
+  const loader = new GLTFLoader();
+  return Promise.all(Object.keys(MODELS).map((k) => loader.loadAsync(new URL('../' + MODELS[k], import.meta.url).href)
+    .then((g) => { gltfCache[k] = g; })
+    .catch((e) => { console.warn('duikermodel niet geladen', k, e); })));
+}
+
+export function buildDiver(look = {}) {
+  const g = look.model && gltfCache[look.model];
+  if (!g) return buildProcedural(look);
+  try { return buildFromGltf(g, look); } catch (e) { console.warn('duikermodel', e); return buildProcedural(look); }
+}
+
+export function animateDiver(d, dt, kick, hideHead) {
+  if (d.userData.kind === 'gltf') animateGltf(d, dt, kick);
+  else animateProcedural(d, dt, kick, hideHead);
+}
+
+const _v = new THREE.Vector3(), _q = new THREE.Quaternion(), _q2 = new THREE.Quaternion();
+const AX = { x: new THREE.Vector3(1, 0, 0), y: new THREE.Vector3(0, 1, 0), z: new THREE.Vector3(0, 0, 1) };
+
+function buildFromGltf(gltf, look) {
+  const model = SkeletonUtils.clone(gltf.scene);
+  model.traverse((o) => {
+    if (o.isMesh) {
+      const old = o.material;
+      const m = new THREE.MeshStandardMaterial({ map: old.map, roughness: 0.72, metalness: 0.0 });
+      if (m.map) { m.map.colorSpace = THREE.SRGBColorSpace; m.map.anisotropy = 4; }
+      o.material = uw(m, { caus: true, key: 'diverSk' });
+      o.frustumCulled = false;
+    }
+  });
+  // in rusthouding: posities van alle botten in modelruimte
+  model.updateMatrixWorld(true);
+  const bones = [];
+  model.traverse((o) => { if (o.isBone) bones.push(o); });
+  const P = new Map(), W = new Map();
+  const mInv = new THREE.Matrix4().copy(model.matrixWorld).invert();
+  const mQ = new THREE.Quaternion(); model.getWorldQuaternion(mQ); mQ.invert();
+  bones.forEach((b) => {
+    P.set(b, new THREE.Vector3().setFromMatrixPosition(b.matrixWorld).applyMatrix4(mInv));
+    W.set(b, b.getWorldQuaternion(new THREE.Quaternion()).premultiply(mQ));
+  });
+  const isLeaf = (b) => !b.children.some((c) => c.isBone);
+  const joint = (b) => ({ b, rest: b.quaternion.clone(), W: W.get(b), Wi: W.get(b).clone().invert(), p: P.get(b) });
+
+  // benen: bladbotten laag bij de grond, omhoog lopen zolang de botten hoger komen
+  const legs = [];
+  const seenLeg = new Set();
+  bones.filter((b) => isLeaf(b) && P.get(b).y < 0.16).forEach((leaf) => {
+    const chain = [leaf];
+    let c = leaf;
+    while (c.parent && c.parent.isBone && P.get(c.parent).y > P.get(c).y - 0.01 && P.get(c.parent).y < 0.62) { c = c.parent; chain.unshift(c); }
+    if (chain.length < 3 || seenLeg.has(chain[0])) return;
+    seenLeg.add(chain[0]);
+    legs.push({ s: Math.sign(P.get(leaf).z) || 1, hip: joint(chain[0]), knee: joint(chain[1]), ankle: joint(chain[2]), toe: chain[3] ? joint(chain[3]) : null });
+  });
+  // armen: bladbotten ver opzij en hoog; omhoog lopen tot vlak bij de romp
+  const arms = [];
+  const seenArm = new Set();
+  bones.filter((b) => isLeaf(b) && Math.abs(P.get(b).z) > 0.2 && P.get(b).y > 0.4).forEach((leaf) => {
+    const chain = [leaf];
+    let c = leaf;
+    while (c.parent && c.parent.isBone && Math.abs(P.get(c.parent).z) > 0.07) { c = c.parent; chain.unshift(c); }
+    if (chain.length < 3 || seenArm.has(chain[0])) return;
+    seenArm.add(chain[0]);
+    // schouder = begin van de bovenarm; elleboog = eerste bot dat duidelijk verder ligt
+    const sh = chain[0];
+    let el = chain.find((b) => b !== sh && P.get(b).distanceTo(P.get(sh)) > 0.1) || chain[1];
+    const wr = chain.find((b) => P.get(b).distanceTo(P.get(el)) > 0.09 && chain.indexOf(b) > chain.indexOf(el)) || chain[chain.indexOf(el) + 1] || chain[chain.length - 1];
+    arms.push({ s: Math.sign(P.get(leaf).z) || 1, sh: joint(sh), el: joint(el), wr: joint(wr) });
+  });
+  // hoofd: bot met 'Head' in de naam (laagste), anders het hoogste bot op de middenlijn
+  let head = bones.filter((b) => /head/i.test(b.name)).sort((a, b) => P.get(a).y - P.get(b).y)[0];
+  if (!head) head = bones.filter((b) => Math.abs(P.get(b).z) < 0.06).sort((a, b) => P.get(b).y - P.get(a).y)[0];
+  const neck = head && head.parent && head.parent.isBone && P.get(head.parent).y > 0.7 ? head.parent : null;
+
+  // rustrichtingen voor de armen (bovenarm en onderarm)
+  arms.forEach((a) => {
+    a.upDir = P.get(a.el.b).clone().sub(P.get(a.sh.b)).normalize();
+    a.foreDir = P.get(a.wr.b).clone().sub(P.get(a.el.b)).normalize();
+  });
+
+  // opbouw: root (fysicapositie) → pivot (horizontaal) → model
+  const root = new THREE.Group();
+  const pivot = new THREE.Group();
+  pivot.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(new THREE.Vector3(0, -1, 0), new THREE.Vector3(0, 0, -1), new THREE.Vector3(1, 0, 0)));
+  pivot.scale.setScalar(HEIGHT);
+  model.position.set(0.02, -0.56, 0);
+  pivot.add(model);
+  root.add(pivot);
+
+  // ankerpunten: mond (bellen), hoofd (duikbrilcamera), hand (lamp)
+  const anchor = (bone, posModel) => {
+    // lokale positie = W^-1 · (p - P_bot)  (botten hebben schaal 1 t.o.v. het model)
+    const o = new THREE.Object3D();
+    if (bone) { o.position.copy(posModel).sub(P.get(bone)).applyQuaternion(W.get(bone).clone().invert()); bone.add(o); } else { o.position.copy(posModel); model.add(o); }
+    return o;
+  };
+  model.updateMatrixWorld(true);
+  const headTop = head ? P.get(head).y : 0.85;
+  const mouth = anchor(head, new THREE.Vector3(0.11, Math.min(0.93, headTop + 0.02), 0));
+  const headA = anchor(head, new THREE.Vector3(0.06, Math.min(0.95, headTop + 0.06), 0));
+  const rightArm = arms.find((a) => a.s > 0) || arms[0];
+  const leftArm = arms.find((a) => a.s < 0) || arms[1] || arms[0];
+  const black = mat(0x0d0d0f, { roughness: 0.5 });
+  const glass = mat(0x14324a, { roughness: 0.05, metalness: 0.9 });
+  let lampTip = null;
+  // camera in de rechterhand, lamp in de linkerhand (schaal: modelruimte, 1 = 1,76 m)
+  if (look.cam && rightArm) {
+    const h = new THREE.Group();
+    const box = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.07, 0.08), black); h.add(box);
+    const port = new THREE.Mesh(new THREE.SphereGeometry(0.03, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2), glass); port.rotation.z = -Math.PI / 2; port.position.x = 0.055; h.add(port);
+    if (look.cam === 'pro') [-1, 1].forEach((s) => { const st = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.05, 10), black); st.rotation.z = Math.PI / 2; st.position.set(0.05, 0.07, s * 0.13); h.add(st); });
+    const a = anchor(rightArm.wr.b, P.get(rightArm.wr.b).clone().add(new THREE.Vector3(0.05, -0.02, 0)));
+    a.add(h);
+  }
+  if (look.lamp && leftArm) {
+    const lamp = new THREE.Mesh(new THREE.CylinderGeometry(0.017, 0.02, look.lamp === 'primair' ? 0.11 : 0.08, 10), black);
+    lamp.rotation.z = Math.PI / 2;
+    const a = anchor(leftArm.wr.b, P.get(leftArm.wr.b).clone().add(new THREE.Vector3(0.025, 0, 0)));
+    a.add(lamp);
+    lampTip = new THREE.Object3D(); lampTip.position.set(0.06, 0, 0); a.add(lampTip);
+  }
+
+  root.userData = { kind: 'gltf', model, pivot, legs, arms, head: headA, headBone: head ? joint(head) : null, neck: neck ? joint(neck) : null, mouth, lampTip: lampTip || mouth, phase: Math.random() * 6, look };
+  poseGltf(root.userData, 0, 0.1);
+  return root;
+}
+
+// gewricht draaien om een as in modelruimte (rustframe), bovenop de rusthouding
+function setJoint(j, qModel) {
+  // lokaal = rust * (W^-1 * q * W)
+  _q2.copy(j.Wi).multiply(qModel).multiply(j.W);
+  j.b.quaternion.copy(j.rest).multiply(_q2);
+}
+const _qa = new THREE.Quaternion(), _qb = new THREE.Quaternion(), _t1 = new THREE.Vector3(), _t2 = new THREE.Vector3();
+
+function poseGltf(u, ph, a) {
+  // benen: flutter kick vanuit de heup, knie licht gebogen, enkel gestrekt
+  u.legs.forEach((l, i) => {
+    const p = ph + (i ? Math.PI : 0);
+    _qa.setFromAxisAngle(AX.z, Math.sin(p) * a * 0.8 + 0.06);
+    _qb.setFromAxisAngle(AX.x, l.s * 0.07);
+    setJoint(l.hip, _q.copy(_qb).multiply(_qa));
+    setJoint(l.knee, _q.setFromAxisAngle(AX.z, -0.32 - Math.max(0, Math.sin(p - 0.9)) * a * 1.1));
+    // enkel: eerst de voet naar binnen draaien (geen 'eendenvoeten'), dan strekken
+    _qb.setFromAxisAngle(AX.y, l.s * 0.38);
+    _qa.setFromAxisAngle(AX.z, -1.22 + Math.sin(p - 1.7) * a * 0.45);
+    setJoint(l.ankle, _q.copy(_qa).multiply(_qb));
+  });
+  // armen: bovenarm schuin naar beneden-voren, onderarmen gekruist voor de borst
+  u.arms.forEach((ar) => {
+    _t1.set(0.42, -0.86, ar.s * 0.28).normalize();
+    _qa.setFromUnitVectors(ar.upDir, _t1);
+    setJoint(ar.sh, _qa);
+    _t2.set(0.62, 0.38, -ar.s * 0.68).normalize();
+    _qb.copy(_qa).invert();
+    _t2.applyQuaternion(_qb);
+    setJoint(ar.el, _q.setFromUnitVectors(ar.foreDir, _t2));
+  });
+  // hoofd achterover zodat de duiker vooruit kijkt
+  if (u.neck) setJoint(u.neck, _q.setFromAxisAngle(AX.z, 0.45));
+  if (u.headBone) setJoint(u.headBone, _q.setFromAxisAngle(AX.z, u.neck ? 0.5 : 0.95));
+}
+
+function animateGltf(d, dt, kick) {
+  const u = d.userData;
+  u.phase += dt * (1.3 + kick * 3.0);
+  poseGltf(u, u.phase, 0.1 + kick * 0.32);
 }

@@ -8,7 +8,9 @@ De Zoutpier is de eerste duikstek in 3D: vrij rondzwemmen volgens de echte duikr
 
 - **Water:** helder Bonaire-water (±50 m zicht), kleurverlies met diepte en afstand, lichtvlekken op het zand, de schaduw van de pier en het oppervlak van onderen.
 - **Indeling:** ronde begroeide pijlers volgens het duikkaartje: hoofdpier, laadkop ("Tarpons") en drie pijlergroepen aan elke kant. Achter de pier ligt het rif, dat afloopt tot 40 m.
-- **Dieren:** fotorealistische vissen (gemaakt in Magnific): knorvisscholen, sergeant-majoors, blauwe doktersvissen, chromissen, tarpons, barracuda, keizersvissen, papegaaivissen, koffervissen en trompetvissen. Verder schildpadden in het zeegras aan de noordkant, kikvorsvissen op de pijlers en soms een adelaarsrog.
+- **Duikers:** jij en je buddy zijn echte 3D-modellen met een skelet (gemaakt in Magnific van foto naar 3D). Ze liggen horizontaal in trim, doen een flutter kick met de benen, houden de handen voor de borst en kijken vooruit. Met camera en lamp als je die gehuurd hebt.
+- **Dieren:** alle dieren zijn echte 3D-modellen (Magnific): knorvisscholen, sergeant-majoors, blauwe doktersvissen, chromissen, tarpons, barracuda, keizersvissen, papegaaivissen, koffervissen en trompetvissen. Verder groene en karetschildpadden in het zeegras aan de noordkant, kikvorsvissen op de pijlers, murenen aan de voet van de pijlers, soms een octopus tussen het puin en soms een adelaarsrog.
+- **Rif en bodem:** fotorealistisch zand met ribbels en schelpgruis (naadloze textuur met reliëf), 3D-hersenkoralen, sterkoralen, gele buisponzen, vaasponzen, tonsponzen en echte zeewaaiers.
 - **Duikregels:**
   - trimmen met trimvest, ademhaling, 3 mm-pak, 10 kg lood en een aluminium fles;
   - decompressie volgens Bühlmann ZHL-16C met GF 40/85;
@@ -51,8 +53,9 @@ Op GitHub Pages of Vercel werkt het direct.
 ## Bestanden
 
 - `js/`: menu's, winkel, wereldkaart, logboek en de 2D-duikstekken
-- `js3d/`: de 3D-duik (Three.js): water, bodem, pier, dieren, duiker, fysica, decompressie, besturing en HUD
+- `js3d/`: de 3D-duik (Three.js): water, bodem, pier, dieren, duiker, 3D-modellen laden, fysica, decompressie, besturing en HUD
 - `vendor/three/`: Three.js 0.186.1 (MIT-licentie)
-- `img/`: winkelfoto's en logo van De Tuimelaar, foto's van Bonaire, pijlertextuur, `vis/` met de fotorealistische vissen
+- `models/`: 3D-modellen (glTF) uit Magnific: `duiker.glb` en `buddy.glb` met skelet, `vis/`, `dier/` en `rif/`
+- `img/`: winkelfoto's en logo van De Tuimelaar, foto's van Bonaire, pijler- en zandtextuur, zeewaaier, `vis/` met de vissenfoto's (reserve als een 3D-model niet laadt)
 
 Fan-project in samenwerking met Duikcentrum De Tuimelaar Zwolle. Sommige referentiefoto's van internet zijn alleen als voorbeeld gebruikt en zitten niet in het spel.

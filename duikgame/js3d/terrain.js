@@ -1,6 +1,7 @@
 /* Diepblauw 3D — bodem van de Zoutpier: zandplaat, puin, rifrand en drop-off tot 40 m, koralen en sponzen */
 import * as THREE from 'three';
 import { uw, UW } from './water.js';
+import { hasModel, modelGeo, modelMap } from './models.js';
 
 // diepteprofiel van kust (x=0) naar zee (x negatief), in meters (y omhoog)
 const PROFILE = [
@@ -98,7 +99,18 @@ function sandNormal() {
 }
 
 /* ---------------- bodem-mesh ---------------- */
-export function makeSeabed(quality) {
+// fotorealistische zandtextuur en reliëf (Magnific, naadloos gemaakt)
+export function loadSandTextures() {
+  const L = new THREE.TextureLoader();
+  const one = (f, srgb) => new Promise((res) => L.load(f, (t) => {
+    t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 8;
+    if (srgb) t.colorSpace = THREE.SRGBColorSpace;
+    res(t);
+  }, undefined, () => res(null)));
+  return Promise.all([one('img/tex-zand.webp', true), one('img/tex-zand-n.webp', false)]).then(([map, normal]) => (map ? { map, normal } : null));
+}
+
+export function makeSeabed(quality, sandTex) {
   const W = 340, D = 300;
   const segX = quality === 'laag' ? 110 : 170, segZ = quality === 'laag' ? 96 : 150;
   const geo = new THREE.PlaneGeometry(W, D, segX, segZ);
@@ -113,7 +125,7 @@ export function makeSeabed(quality) {
     const x = pos.getX(i), z = pos.getZ(i);
     const y = seabed(x, z);
     pos.setY(i, y);
-    uv.setXY(i, x / 6, z / 6);
+    uv.setXY(i, x / (sandTex ? 2.2 : 6), z / (sandTex ? 2.2 : 6));
     // kleur
     const n = fbm(x * 0.08 + 7, z * 0.08);
     c.copy(sand);
@@ -132,7 +144,9 @@ export function makeSeabed(quality) {
   }
   geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
   geo.computeVertexNormals();
-  const mat = uw(new THREE.MeshStandardMaterial({ vertexColors: true, map: sandTexture(), normalMap: sandNormal(), normalScale: new THREE.Vector2(0.6, 0.6), roughness: 0.95, metalness: 0 }), { caus: true, key: 'sand' });
+  const mat = sandTex
+    ? uw(new THREE.MeshStandardMaterial({ vertexColors: true, map: sandTex.map, normalMap: sandTex.normal, normalScale: new THREE.Vector2(0.9, 0.9), roughness: 0.95, metalness: 0 }), { caus: true, key: 'sandM' })
+    : uw(new THREE.MeshStandardMaterial({ vertexColors: true, map: sandTexture(), normalMap: sandNormal(), normalScale: new THREE.Vector2(0.6, 0.6), roughness: 0.95, metalness: 0 }), { caus: true, key: 'sand' });
   const m = new THREE.Mesh(geo, mat);
   m.receiveShadow = false;
   return m;
@@ -285,6 +299,9 @@ export function makeReef(scene, quality, pillarList) {
     return [p.x + Math.cos(a) * d, p.z + Math.sin(a) * d];
   };
   const reefSpot = () => [-140 - R() * 50, (R() - 0.5) * 220];
+  // fotorealistisch model (Magnific) met lichte kleurvariatie per exemplaar
+  const tint = (hex, k) => new THREE.Color(1, 1, 1).lerp(new THREE.Color(hex), k);
+  const modelMesh = (id, n, rough) => new THREE.InstancedMesh(modelGeo(id, 'reef'), uw(new THREE.MeshStandardMaterial({ color: 0xffffff, map: modelMap(id), roughness: rough || 0.85 }), { caus: true, key: 'reefM' }), n);
   const flatSpot = () => [-10 - R() * 125, (R() - 0.5) * 120];
 
   // zeezwepen / zeeveren
@@ -304,19 +321,30 @@ export function makeReef(scene, quality, pillarList) {
 
   // waaierkoralen bij de rifrand
   {
-    const g = new THREE.PlaneGeometry(1.4, 1.3, 6, 6);
-    g.translate(0, 0.65, 0);
-    const mat = swayMat({ color: 0xffffff, map: fanTex(), alphaTest: 0.35, side: THREE.DoubleSide, roughness: 0.9, key: 'fan' });
+    // foto van een echte zeewaaier (Magnific, achtergrond verwijderd); valt terug op de getekende versie
+    const photo = new THREE.TextureLoader().load('img/waaier.webp');
+    photo.colorSpace = THREE.SRGBColorSpace; photo.anisotropy = 4;
+    const g = new THREE.PlaneGeometry(1.3, 1.3 * 0.98, 6, 6);
+    g.translate(0, 0.63, 0);
+    const mat = swayMat({ color: 0xffffff, map: photo, alphaTest: 0.4, side: THREE.DoubleSide, roughness: 0.9, key: 'fanP' });
     const list = [];
     for (let i = 0; i < Math.round(110 * dense); i++) {
       const [x, z] = R() < 0.85 ? reefSpot() : nearPillar();
-      list.push({ x, z, y: seabed(x, z) - 0.05, s: 0.8 + R() * 1.2, ry: R() * 6.3, c: new THREE.Color(['#8e4fb4', '#b2508a', '#c86a3a', '#9a63c8'][i % 4]) });
+      list.push({ x, z, y: seabed(x, z) - 0.05, s: 0.6 + R() * 1.0, ry: R() * 6.3, c: new THREE.Color(1, 1, 1).lerp(new THREE.Color(['#c89ae0', '#e0a0c0', '#f0c090', '#b0a0f0'][i % 4]), 0.45) });
     }
     place(new THREE.InstancedMesh(g, mat, list.length), list);
   }
 
-  // hersenkoralen en sterkoralen
-  {
+  // hersenkoralen
+  if (hasModel('hersenkoraal')) {
+    const list = [];
+    for (let i = 0; i < Math.round(95 * dense); i++) {
+      const [x, z] = R() < 0.8 ? reefSpot() : nearPillar();
+      const sc = 0.45 + R() * 1.0;
+      list.push({ x, z, y: seabed(x, z) - 0.06 * sc, s: sc, sy: sc * (0.75 + R() * 0.4), ry: R() * 6.3, c: tint(['#e8d8a0', '#c8d890', '#e0b890', '#b8c8a0', '#d8c0c8'][i % 5], 0.35) });
+    }
+    place(modelMesh('hersenkoraal', list.length), list);
+  } else {
     const g = lumpy(new THREE.SphereGeometry(0.5, 20, 12, 0, Math.PI * 2, 0, Math.PI / 2), 0.08, 6, 4);
     const mat = uw(new THREE.MeshStandardMaterial({ color: 0xffffff, map: brainTex(), roughness: 0.85 }), { caus: true, key: 'brain' });
     const list = [];
@@ -328,7 +356,15 @@ export function makeReef(scene, quality, pillarList) {
   }
 
   // buisponzen (clusters)
-  {
+  if (hasModel('buisspons')) {
+    const list = [];
+    for (let i = 0; i < Math.round(110 * dense); i++) {
+      const [x, z] = R() < 0.45 ? nearPillar() : reefSpot();
+      const sc = 0.3 + R() * 0.45;
+      list.push({ x, z, y: seabed(x, z) - 0.03, s: sc, ry: R() * 6.3, rz: (R() - 0.5) * 0.25, c: tint(['#ffffff', '#ffd890', '#ffb080', '#f0f0ff'][i % 4], 0.5) });
+    }
+    place(modelMesh('buisspons', list.length, 0.8), list);
+  } else {
     const parts = [];
     for (let i = 0; i < 4; i++) {
       const h = 0.35 + i * 0.12;
@@ -347,7 +383,21 @@ export function makeReef(scene, quality, pillarList) {
   }
 
   // vaasponzen en tonsponzen (rifrand)
-  {
+  if (hasModel('vaasspons') && hasModel('tonspons')) {
+    const lv = [], lb = [];
+    for (let i = 0; i < Math.round(36 * dense); i++) {
+      const [x, z] = reefSpot();
+      const sc = 0.3 + R() * 0.35;
+      lv.push({ x, z, y: seabed(x, z) - 0.04, s: sc, ry: R() * 6.3, c: tint(['#ffffff', '#e0d8ff', '#ffe0f0'][i % 3], 0.4) });
+    }
+    for (let i = 0; i < Math.round(34 * dense); i++) {
+      const [x, z] = R() < 0.85 ? reefSpot() : nearPillar();
+      const sc = 0.55 + R() * 0.9;
+      lb.push({ x, z, y: seabed(x, z) - 0.06 * sc, s: sc, sy: sc * (0.8 + R() * 0.5), ry: R() * 6.3, c: tint(['#ffffff', '#ffd0b8', '#e8c0a8'][i % 3], 0.4) });
+    }
+    place(modelMesh('vaasspons', lv.length, 0.8), lv);
+    place(modelMesh('tonspons', lb.length, 0.9), lb);
+  } else {
     const pts = [];
     for (let i = 0; i <= 10; i++) { const t = i / 10; pts.push(new THREE.Vector2(0.12 + Math.pow(t, 0.8) * 0.28, t * 0.9)); }
     const g = new THREE.LatheGeometry(pts, 16);
@@ -374,13 +424,22 @@ export function makeReef(scene, quality, pillarList) {
   }
 
   // koraalkoppen (berg- en sterkoraal) die het rif vormen
+  if (hasModel('sterkoraal')) {
+    const list = [];
+    for (let i = 0; i < Math.round(170 * dense); i++) {
+      const x = -138 - Math.pow(R(), 0.8) * 46, z = (R() - 0.5) * 230;
+      const sc = 0.8 + Math.pow(R(), 1.5) * 2.6;
+      list.push({ x, z, y: seabed(x, z) - sc * 0.08, s: sc, sy: sc * (0.6 + R() * 0.6), ry: R() * 6.3, c: tint(['#ffffff', '#e8f0c8', '#f0d8b0', '#d8e0d0', '#f0d0e0'][i % 5], 0.35) });
+    }
+    place(modelMesh('sterkoraal', list.length, 0.9), list);
+  }
   {
     const g = lumpy(new THREE.IcosahedronGeometry(0.6, 2), 0.16, 4.1, 21);
     g.scale(1, 0.55, 1);
     const mat = uw(new THREE.MeshStandardMaterial({ color: 0xffffff, map: brainTex(), roughness: 0.9 }), { caus: true, key: 'head' });
     const cols = ['#a08a5a', '#8a7a4a', '#b49a62', '#7a8a5a', '#8a6a7a', '#c0a070', '#9a8070', '#6f7f6a'];
     const list = [];
-    for (let i = 0; i < Math.round(340 * dense); i++) {
+    for (let i = 0; i < Math.round((hasModel('sterkoraal') ? 150 : 340) * dense); i++) {
       const x = -138 - Math.pow(R(), 0.8) * 46, z = (R() - 0.5) * 230;
       const s = 0.6 + Math.pow(R(), 1.5) * 2.4;
       list.push({ x, z, y: seabed(x, z) - s * 0.15, s, sy: s * (0.6 + R() * 0.5), ry: R() * 6.3, c: new THREE.Color(cols[i % cols.length]) });
