@@ -38,7 +38,15 @@ export const FILES = {
   schroef: 'models/tul/schroef.glb', kanon: 'models/tul/kanon.glb', ketel: 'models/tul/ketel.glb',
   // dezelfde modellen voor verwante soorten
   glasvisje: 'models/vis/zilvervisje.glb', reuzenmurene: 'models/dier/murene.glb',
+  chromis_groen: 'models/vis/chromis_blauw.glb', 'chromis_groen-ver': 'models/vis/chromis_blauw-ver.glb',
+  chevron_barracuda: 'models/vis/barracuda.glb', 'chevron_barracuda-ver': 'models/vis/barracuda-ver.glb',
+  // Raja Ampat (Dampier Strait)
+  rifmanta: 'models/raja/rifmanta.glb', wobbegong: 'models/raja/wobbegong.glb', epaulette: 'models/raja/epaulette.glb',
+  dwergzeepaardje: 'models/raja/dwergzeepaardje.glb', anemoon: 'models/raja/anemoon.glb', hertshoornkoraal: 'models/raja/hertshoornkoraal.glb',
+  duikboot: 'models/raja/duikboot.glb',
 };
+['zwartpunt', 'napoleon', 'clownvis', 'moorse_afgod', 'fuselier', 'juweelbaarsje']
+  .forEach((id) => { FILES[id] = 'models/raja/' + id + '.glb'; FILES[id + '-ver'] = 'models/raja/' + id + '-ver.glb'; });
 ['bultkop', 'grootoog_trevally', 'wimpelvis', 'batvis', 'kogelvis', 'koraalduivel']
   .forEach((id) => { FILES[id] = 'models/tul/' + id + '.glb'; FILES[id + '-ver'] = 'models/tul/' + id + '-ver.glb'; });
 // eenvoudigere versies van de vissen voor op afstand (LOD)

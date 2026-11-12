@@ -10,6 +10,7 @@ import { makePier, pillarAt } from './pier.js';
 import { Fauna, preloadFishPhotos, preloadFaunaModels } from './creatures3d.js';
 import { oosterschelde } from './site-oosterschelde.js';
 import { tulamben } from './site-tulamben.js';
+import { raja } from './site-raja.js';
 
 const esc = (s) => window.DG.U.esc(s);
 
@@ -29,7 +30,7 @@ export const saltpier = {
     UW.uDown.value.set(0.072, 0.02, 0.0095);
     return {
       top: night ? 0x0a1824 : 0x6fe0f6, deep: night ? 0x010409 : 0x0d5596, exposure: night ? 1.5 : 1.28,
-      hemi: night ? [0x5b7bb0, 0x1a1a22, 0.1] : [0xd6f2ff, 0xa8977a, 1.9], sun: night ? [0x9fb4e0, 0.18] : [0xfff2dc, 2.8], caus: 1, rays: !night,
+      hemi: night ? [0x5b7bb0, 0x1a1a22, 0.1] : [0xd6f2ff, 0xa8977a, 1.9], sun: night ? [0x9fb4e0, 0.18] : [0xfff2dc, 2.8], caus: 1, rays: !night, pierShade: true,
     };
   },
   inShadow: (x, z) => (x > -122 && x < -3 && Math.abs(z) < 2.6) || (Math.abs(x + 120) < 9 && Math.abs(z) < 7),
@@ -88,6 +89,6 @@ export const saltpier = {
   },
 };
 
-export const PROFILES = { saltpier, oosterschelde, tulamben };
+export const PROFILES = { saltpier, oosterschelde, tulamben, raja };
 export function profileFor(site) { return PROFILES[site.id] || saltpier; }
 export { esc };

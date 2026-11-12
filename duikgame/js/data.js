@@ -437,7 +437,7 @@
       ],
     },
     {
-      id: 'raja', name: 'Dampier Strait', area: 'Raja Ampat', country: 'Indonesië', lat: -0.56, lon: 130.68,
+      id: 'raja', name: 'Dampier Strait', area: 'Raja Ampat', country: 'Indonesië', lat: -0.56, lon: 130.68, three: true,
       temp: 29, vis: 20, depth: 32, level: 'Advanced aanbevolen', current: 0.12, entry: 'Bootduik',
       travel: { mode: 'vlieg', time: '± 24 uur reizen via Jakarta en Sorong' },
       desc: 'Het hart van de Koraaldriehoek: nergens ter wereld leven meer soorten koraal en rifvis. Op de zandbodem ligt een poetsstation waar rifmanta’s rondjes draaien om zich te laten schoonmaken.',
@@ -649,6 +649,14 @@
       { id: 'os_vlokslak', title: 'Vlokslak (macro)', sp: ['vlokslak'], min: 3, tip: 'Klein! Op de stenen van de dijk. Ga heel dichtbij met flitsers.' },
       { id: 'os_zeekat', title: 'Zeekat', sp: ['zeekat'], min: 3, tip: 'Soms bij de pijlers. Benader hem heel rustig.' },
     ],
+    raja: [
+      { id: 'rj_manta', title: 'Rifmanta bij het poetsstation', sp: ['rifmanta'], min: 3, tip: 'Op de zandvlakte (16 m) laag achter het koraalblok liggen en wachten tot een manta over je heen komt.' },
+      { id: 'rj_pygmy', title: 'Dwergzeepaardje (macro)', sp: ['dwergzeepaardje'], min: 3, tip: 'Piepklein, op een waaierkoraal dieper dan 12 m. Zoek met je lamp en ga heel dichtbij.' },
+      { id: 'rj_wobbegong', title: 'Wobbegong onder het koraal', sp: ['wobbegong'], min: 3, tip: 'Hij ligt bewegingloos op het rif tussen 10 en 15 m. Let op de franjes rond zijn kop.' },
+      { id: 'rj_clown', title: 'Clownvis in zijn anemoon', sp: ['clownvis'], min: 3, tip: 'In het ondiepe deel van het rif, vlak bij de boot.' },
+      { id: 'rj_barracuda', title: 'Barracuda-tornado', sp: ['chevron_barracuda'], min: 3, tip: 'Voorbij de zandvlakte, aan het diepe rif op ± 18 m.' },
+      { id: 'rj_napoleon', title: 'Napoleonvis', sp: ['napoleon'], min: 3, tip: 'Nieuwsgierig: hij komt vaak zelf kijken. Blijf rustig liggen.' },
+    ],
     tulamben: [
       { id: 'tu_bultkop', title: 'Bultkoppen bij het wrak', sp: ['bultkop'], min: 3, tip: 'Een groep bultkoppapegaaivissen trekt langs het wrak. Zwem rustig mee en kom van opzij.' },
       { id: 'tu_trevally', title: 'Trevally-tornado', sp: ['grootoog_trevally'], min: 3, tip: 'Boven het diepe deel van het wrak, rond 15–20 m, draait een school grootoogtrevally’s.' },
@@ -667,7 +675,7 @@
       { id: 'zn_inktvis', title: 'Rifinktvissen', sp: ['rifinktvis'], min: 3, tip: 'Vlak onder het oppervlak, 1–3 m, vooral bij de ingang en onder de pier.' },
     ],
   };
-  DG.CHALLENGE_SITE = { saltpier: 'saltpier', saltpier_nacht: 'saltpier', oosterschelde: 'oosterschelde', tulamben: 'tulamben' };
+  DG.CHALLENGE_SITE = { saltpier: 'saltpier', saltpier_nacht: 'saltpier', oosterschelde: 'oosterschelde', tulamben: 'tulamben', raja: 'raja' };
   DG.siteById = (id) => DG.SITES.find((s) => s.id === id);
   DG.gearById = (id) => DG.GEAR.find((g) => g.id === id);
   DG.courseById = (id) => DG.COURSES.find((c) => c.id === id);

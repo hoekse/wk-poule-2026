@@ -75,6 +75,7 @@ export async function runDive3D(site) {
   UW.uWaterDeep.value.set(W.deep);
   UW.uSea.value.setRGB(...(W.sea || [0.12, 0.62, 0.72]));
   UW.uOvercast.value = W.overcast || 0;
+  UW.uShade.value = W.pierShade ? 1 : 0; // schaduw van het pierdek (alleen bij de Zoutpier)
   UW.uCaus.value *= W.caus;
   UW.uLampPower.value = night ? 2.3 : 1.6;
   UW.uLampOn.value = 0; UW.uLamp2On.value = 0;

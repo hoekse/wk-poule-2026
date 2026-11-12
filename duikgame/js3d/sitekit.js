@@ -77,3 +77,94 @@ export function makeRayGround(baseFn, meshes, top = 8) {
     return y;
   };
 }
+
+/* ---------------- koraal en sponzen over de bodem verspreiden ---------------- */
+import { uw } from './water.js';
+import { hasModel, modelGeo, modelMap } from './models.js';
+import { swayMat } from './terrain.js';
+// sets: [{ id, n, size: [min, max], cols: ['#..'], tint, where(x, z) → bool, sink, flat }]
+// spot(R) → [x, z]; ground(x, z) → y. Per vak van 'chunk' meter een eigen mesh, zodat wat
+// buiten beeld valt wordt overgeslagen.
+export function scatterModels(scene, sets, { R, spot, ground, chunk = 25, dense = 1, key = 'sc' }) {
+  const up = new THREE.Vector3(0, 1, 0), qq = new THREE.Quaternion(), tw = new THREE.Quaternion(), m4 = new THREE.Matrix4(), sc = new THREE.Vector3(), pos = new THREE.Vector3(), nrm = new THREE.Vector3();
+  const placed = [];
+  placed.meshes = [];
+  for (const set of sets) {
+    if (!hasModel(set.id)) continue;
+    const groups = new Map();
+    const n = Math.round(set.n * dense);
+    let guard = 0;
+    for (let i = 0; i < n && guard++ < n * 20;) {
+      const [x, z] = spot(R);
+      if (set.where && !set.where(x, z)) continue;
+      const s = set.size[0] + R() * (set.size[1] - set.size[0]);
+      // licht scheef op een helling
+      const e = 0.6, hx = ground(x + e, z) - ground(x - e, z), hz = ground(x, z + e) - ground(x, z - e);
+      nrm.set(-hx / (2 * e), 1, -hz / (2 * e)).normalize().lerp(up, set.flat ? 0.8 : 0.4).normalize();
+      qq.setFromUnitVectors(up, nrm); tw.setFromAxisAngle(up, R() * Math.PI * 2); qq.multiply(tw);
+      pos.set(x, ground(x, z) - (set.sink || 0.06) * s, z);
+      sc.set(s, s * (0.8 + R() * 0.4), s);
+      const k = Math.floor(x / chunk) + ',' + Math.floor(z / chunk);
+      if (!groups.has(k)) groups.set(k, []);
+      const col = new THREE.Color(1, 1, 1).lerp(new THREE.Color(set.cols[i % set.cols.length]), set.tint === undefined ? 0.35 : set.tint);
+      groups.get(k).push({ m: m4.compose(pos, qq, sc).clone(), c: col });
+      placed.push({ id: set.id, x, z, y: pos.y, s });
+      i++;
+    }
+    const mat = set.sway ? swayMat({ color: 0xffffff, map: modelMap(set.id), roughness: 0.85, side: THREE.DoubleSide, key: key + set.id })
+      : uw(new THREE.MeshStandardMaterial({ map: modelMap(set.id), roughness: 0.85, side: set.double ? THREE.DoubleSide : THREE.FrontSide }), { caus: true, key: key + set.id });
+    const geo = modelGeo(set.id, 'reef');
+    groups.forEach((list) => {
+      const mesh = new THREE.InstancedMesh(geo, mat, list.length);
+      list.forEach((it, i) => { mesh.setMatrixAt(i, it.m); mesh.setColorAt(i, it.c); });
+      mesh.instanceMatrix.needsUpdate = true; mesh.instanceColor.needsUpdate = true;
+      mesh.computeBoundingSphere();
+      scene.add(mesh);
+      placed.meshes.push(mesh);
+    });
+  }
+  return placed;
+}
+// verbergt meshes die verder weg liggen dan je in het water kunt zien (scheelt veel rekenwerk)
+export function makeCuller(meshes, dist) {
+  const c = new THREE.Vector3();
+  let t = 0;
+  return (dt, env) => {
+    t -= dt;
+    if (t > 0 || !env.cam) return;
+    t = 0.25;
+    for (const m of meshes) {
+      if (!m.boundingSphere) continue;
+      c.copy(m.boundingSphere.center).applyMatrix4(m.matrixWorld);
+      m.visible = c.distanceTo(env.cam) - m.boundingSphere.radius < dist;
+    }
+  };
+}
+// waaierkoralen (foto met transparantie, wiegend); geeft de plekken terug
+export function scatterFans(scene, n, { R, spot, ground, cols, size = [0.8, 2.0], where, key = 'fan' }) {
+  const photo = new THREE.TextureLoader().load('img/waaier.webp');
+  photo.colorSpace = THREE.SRGBColorSpace; photo.anisotropy = 4;
+  const g = new THREE.PlaneGeometry(1.3, 1.3 * 0.98, 6, 6);
+  g.translate(0, 0.63, 0);
+  const mat = swayMat({ color: 0xffffff, map: photo, alphaTest: 0.4, side: THREE.DoubleSide, roughness: 0.9, key });
+  const list = [];
+  let guard = 0;
+  while (list.length < n && guard++ < n * 20) {
+    const [x, z] = spot(R);
+    if (where && !where(x, z)) continue;
+    list.push({ x, z, y: ground(x, z) - 0.05, s: size[0] + R() * (size[1] - size[0]), ry: R() * 6.3, c: new THREE.Color(cols[list.length % cols.length]).lerp(new THREE.Color(1, 1, 1), 0.25) });
+  }
+  const groups = new Map();
+  list.forEach((f) => { const k = Math.floor(f.x / 25) + ',' + Math.floor(f.z / 25); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(f); });
+  const d = new THREE.Object3D();
+  list.meshes = [];
+  groups.forEach((fl) => {
+    const mesh = new THREE.InstancedMesh(g, mat, fl.length);
+    fl.forEach((f, i) => { d.position.set(f.x, f.y, f.z); d.rotation.set(0, f.ry, 0); d.scale.setScalar(f.s); d.updateMatrix(); mesh.setMatrixAt(i, d.matrix); mesh.setColorAt(i, f.c); });
+    mesh.instanceMatrix.needsUpdate = true; mesh.instanceColor.needsUpdate = true;
+    mesh.computeBoundingSphere();
+    scene.add(mesh);
+    list.meshes.push(mesh);
+  });
+  return list;
+}
