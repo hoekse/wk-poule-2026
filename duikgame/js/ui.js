@@ -33,7 +33,7 @@
     if (name === 'map') UI.renderMap();
     if (name === 'log') UI.renderLog('dives');
     UI.updateTop();
-    if (name !== 'shop') UI.stopPreview();
+    if (name !== 'shop') { UI.stopPreview(); UI.closeShop3d(); }
   };
 
   UI.updateTop = function () {
@@ -165,12 +165,29 @@
     img.alt = cat ? 'Foto uit de winkel: ' + cat.name : 'Overzicht van de winkel van Duikcentrum De Tuimelaar';
     img.style.animation = cat ? '' : 'none';
     // bij een afdeling is de foto sfeer: lager, zodat de producten meteen in beeld zijn
-    $('shop-hero').classList.toggle('cat', !!cat);
+    const hero = $('shop-hero'), use3d = UI.shop3dOn();
+    hero.classList.toggle('cat', !!cat);
+    hero.classList.toggle('mode3d', use3d);
+    $('hero-toggle').innerHTML = use3d ? '📷 Foto’s' : '🧊 3D-winkel';
+    $('hero-toggle').setAttribute('aria-label', use3d ? 'Toon de foto’s van de winkel' : 'Toon de winkel in 3D');
     $('hero-title').textContent = cat ? cat.name : 'Welkom in de winkel';
-    $('hero-intro').textContent = cat ? cat.intro : 'Klik op een afdeling in de winkel, of kies hierboven. Alles met een ★ heb je nodig om te kunnen duiken.';
+    $('hero-intro').textContent = cat ? cat.intro : use3d
+      ? (TOUCH ? 'Veeg om rond te kijken en tik op een afdeling.' : 'Sleep om rond te kijken en klik op een afdeling.') + ' Alles met een ★ heb je nodig om te kunnen duiken.'
+      : 'Klik op een afdeling in de winkel, of kies hierboven. Alles met een ★ heb je nodig om te kunnen duiken.';
     const hs = $('hotspots');
     hs.innerHTML = '';
-    if (!cat) {
+    if (use3d) {
+      // 3D: labels bij elke afdeling; de 3D-winkel zet ze op hun plek en vliegt erheen
+      const labels = SPOTS3D.map((h) => {
+        const b = U.el('button', 'hotspot', '<i></i><span><b class="lg">' + esc(h.label) + '</b><b class="sh">' + esc(h.short) + '</b></span>');
+        b.setAttribute('aria-label', h.label); b.dataset.cat = h.cat; b.hidden = true;
+        b.onclick = () => { UI.cat = h.cat; DG.Audio.click(); UI.renderShop(); };
+        hs.appendChild(b);
+        return b;
+      });
+      UI.ensureShop3d().then((s3) => { if (s3) { s3.setLabels(labels); s3.go(cat ? cat.id : 'overzicht'); } });
+    } else if (!cat) {
+      UI.closeShop3d();
       HOTSPOTS.forEach((h) => {
         const b = U.el('button', 'hotspot' + (h.side === 'l' ? ' left' : ''), '<i></i><span><b class="lg">' + esc(h.label) + '</b><b class="sh">' + esc(h.short) + '</b></span>');
         b.setAttribute('aria-label', h.label);
@@ -185,6 +202,56 @@
     UI.renderKit();
     UI.startPreview();
     UI.updateTop();
+  };
+
+  // De 3D-winkel (js3d/shop3d.js): alleen geladen als WebGL werkt en de speler hem niet uitzet
+  const SPOTS3D = [
+    { cat: 'masker', label: 'Duikbrillen', short: 'Brillen' },
+    { cat: 'vinnen', label: 'Vinnen', short: 'Vinnen' },
+    { cat: 'pak', label: 'Duikpakken', short: 'Pakken' },
+    { cat: 'trimvest', label: 'Trimvesten', short: 'Trimvesten' },
+    { cat: 'automaat', label: 'Ademautomaten', short: 'Automaten' },
+    { cat: 'fles', label: 'Vulstation & flessen', short: 'Flessen' },
+    { cat: 'computer', label: 'Vitrine: duikcomputers', short: 'Computers' },
+    { cat: 'lamp', label: 'Lampen & accessoires', short: 'Lampen' },
+    { cat: 'camera', label: 'Vitrine: camera’s', short: 'Camera’s' },
+    { cat: 'cursus', label: 'Balie & cursussen', short: 'Cursussen' },
+  ];
+  UI.webgl = function () {
+    if (UI._gl == null) {
+      try { const c = document.createElement('canvas'); UI._gl = !!(window.WebGLRenderingContext && (c.getContext('webgl2') || c.getContext('webgl'))); } catch (e) { UI._gl = false; }
+    }
+    return UI._gl;
+  };
+  UI.shop3dOn = () => DG.Save.data.settings.shop3d !== false && UI.webgl();
+  UI.ensureShop3d = function () {
+    if (UI.shop3d) return Promise.resolve(UI.shop3d);
+    if (UI._shop3dP) return UI._shop3dP;
+    UI._shop3dP = import(new URL('js3d/shop3d.js', document.baseURI).href)
+      .then((m) => {
+        UI._shop3dP = null;
+        if (UI.screen !== 'shop' || !UI.shop3dOn() || UI.shop3d) return UI.shop3d || null;
+        UI.shop3d = new m.Shop3D($('shop-hero'), { quality: (DG.Save.data.set3d || {}).quality });
+        return UI.shop3d;
+      })
+      .catch((e) => {
+        if (window.console) console.warn('3D-winkel niet beschikbaar', e);
+        UI._shop3dP = null; UI._gl = false;
+        if (UI.screen === 'shop') UI.renderShop();
+        return null;
+      });
+    return UI._shop3dP;
+  };
+  UI.closeShop3d = function () {
+    if (UI.shop3d) { UI.shop3d.dispose(); UI.shop3d = null; }
+  };
+  UI.toggleShop3d = function () {
+    const st = DG.Save.data.settings;
+    st.shop3d = !UI.shop3dOn();
+    if (st.shop3d && !UI.webgl()) { UI.toast('Je browser kan geen 3D tonen. Je ziet de foto’s van de winkel.', 'warn'); st.shop3d = false; }
+    DG.Save.save();
+    if (!st.shop3d) UI.closeShop3d();
+    UI.renderShop();
   };
 
   UI.placeHotspots = function () {
@@ -1000,6 +1067,7 @@
       else UI.go('map');
     };
     $('shop-front').onclick = UI.storefront;
+    $('hero-toggle').onclick = UI.toggleShop3d;
     $('btn-sound').onclick = UI.toggleSound;
     $('btn-pause').onclick = UI.togglePause;
     $('btn-end').onclick = () => { if (DG.Dive.canEnd) DG.Dive.finish(false); };
