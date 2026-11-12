@@ -18,6 +18,7 @@
       introSeen: false,
       gas: 'air',
       earned: 0,
+      seenUnlocks: [],
     };
   };
 
@@ -29,6 +30,8 @@
     } catch (e) { d = null; }
     S.data = Object.assign(S.defaults(), d || {});
     S.data.settings = Object.assign(S.defaults().settings, S.data.settings || {});
+    // bestaande spelers: wat al vrij was niet opnieuw melden
+    if (!S.data.seenUnlocks && DG.GEAR) S.data.seenUnlocks = S.unlockedIds();
     return S.data;
   };
 
@@ -62,6 +65,40 @@
     return c.k_deep ? 'Advanced + Diep' : c.k_aow ? 'Advanced Open Water' : 'Open Water';
   };
   S.hasNitrox = () => !!S.data.courses.k_nitrox;
+
+  // Voortgang waarmee je spullen en cursussen vrijspeelt
+  S.progress = function () {
+    const d = S.data;
+    return {
+      dives: d.dives.length,
+      species: Object.keys(d.species || {}).length,
+      challenges: Object.keys(d.challenges || {}).length,
+    };
+  };
+  // eisen die nog niet gehaald zijn, als tekst ([] = vrijgespeeld)
+  S.missingFor = function (item) {
+    const u = item.unlock, d = S.data;
+    if (!u || (d.owned && d.owned[item.id])) return [];
+    const p = S.progress(), out = [];
+    if (u.course && !d.courses[u.course]) out.push(DG.courseById(u.course).name);
+    if (u.dives && p.dives < u.dives) out.push(u.dives + ' gelogde duiken (nog ' + (u.dives - p.dives) + ')');
+    if (u.species && p.species < u.species) out.push(u.species + ' soorten ontdekt (nog ' + (u.species - p.species) + ')');
+    if (u.challenges && p.challenges < u.challenges) out.push(u.challenges + ' fotochallenges (nog ' + (u.challenges - p.challenges) + ')');
+    return out;
+  };
+  S.isUnlocked = (item) => S.missingFor(item).length === 0;
+  // alles wat vrijgespeeld moet worden en inmiddels vrij is
+  S.unlockedIds = function () {
+    return DG.GEAR.concat(DG.COURSES).filter((g) => g.unlock && S.isUnlocked(g)).map((g) => g.id);
+  };
+  // nieuw vrijgespeeld sinds de vorige keer (en meteen als gezien markeren)
+  S.takeNewUnlocks = function () {
+    const seen = S.data.seenUnlocks || (S.data.seenUnlocks = []);
+    const fresh = S.unlockedIds().filter((id) => seen.indexOf(id) < 0);
+    fresh.forEach((id) => seen.push(id));
+    if (fresh.length) S.save();
+    return fresh.map((id) => DG.gearById(id) || DG.courseById(id));
+  };
 
   S.equipped = function (cat) {
     const id = S.data.equip[cat];

@@ -39,7 +39,7 @@
   UI.updateTop = function () {
     const sv = DG.Save.data;
     const b = $('budget');
-    const txt = U.euro(sv.budget);
+    const n = sv.dives.length, txt = n + (n === 1 ? ' duik' : ' duiken');
     if (b.textContent !== txt && b.textContent !== '€ 0') { const p = b.parentElement; p.classList.remove('bump'); void p.offsetWidth; p.classList.add('bump'); }
     b.textContent = txt;
     $('brevet-pill').textContent = DG.Save.brevet() + ' · ' + DG.Save.maxDepth() + ' m';
@@ -160,7 +160,7 @@
     // hero
     const cat = DG.CATEGORIES.find((c) => c.id === UI.cat);
     const img = $('hero-img');
-    const src = cat ? (cat.photo2 && Object.keys(sv.owned).length % 2 ? cat.photo2 : cat.photo) : 'img/winkel-overzicht.jpg';
+    const src = cat ? (cat.photo2 && Object.keys(sv.equip).length % 2 ? cat.photo2 : cat.photo) : 'img/winkel-overzicht.jpg';
     if (img.getAttribute('src') !== src) img.setAttribute('src', src);
     img.alt = cat ? 'Foto uit de winkel: ' + cat.name : 'Overzicht van de winkel van Duikcentrum De Tuimelaar';
     img.style.animation = cat ? '' : 'none';
@@ -297,35 +297,36 @@
         if (k.maxDepth) tags.push('Tot ' + k.maxDepth + ' m');
         if (k.nitrox) tags.push('Nitrox EAN32');
         if (k.requires) tags.push('Vereist: ' + DG.courseById(k.requires).name);
-        const card = U.el('div', 'product' + (has ? ' equipped' : ''),
+        const miss = has ? [] : DG.Save.missingFor(k);
+        const card = U.el('div', 'product' + (has ? ' equipped' : '') + (miss.length && !lock ? ' locked' : ''),
           '<span class="tag-hole"></span><h4>🎓 ' + esc(k.name) + '</h4><p>' + esc(k.desc) + '</p><div class="stats">' + tags.map((t) => '<span>' + esc(t) + '</span>').join('') +
-          '</div><div class="foot"><span class="price">' + U.euro(k.price) + '</span><button class="btn small"></button></div>');
+          '</div>' + (miss.length && !lock ? '<p class="unlock">🔒 Vrij na ' + esc(miss.join(' en ')) + '</p>' : '') +
+          '<div class="foot"><span class="price">' + (has ? '<small class="tag-own">Brevet behaald</small>' : '<small class="tag-own">Bij De Tuimelaar</small>') + '</span><button class="btn small"></button></div>');
         const b = card.querySelector('button');
         if (has) { b.textContent = '✓ Behaald'; b.className = 'btn small on'; b.disabled = true; }
         else if (lock) { b.textContent = 'Eerst ' + DG.courseById(k.requires).name.split(' ')[0]; b.disabled = true; }
-        else if (sv.budget < k.price) { b.textContent = 'Te duur'; b.disabled = true; }
+        else if (miss.length) { b.textContent = '🔒 Op slot'; b.disabled = true; }
         else { b.textContent = 'Inschrijven'; b.onclick = () => UI.buyCourse(k); }
         box.appendChild(card);
       });
       return;
     }
     DG.GEAR.filter((g) => g.cat === UI.cat).forEach((g) => {
-      const own = !!sv.owned[g.id], on = sv.equip[g.cat] === g.id;
-      const card = U.el('div', 'product' + (on ? ' equipped' : ''),
+      const on = sv.equip[g.cat] === g.id, miss = DG.Save.missingFor(g);
+      const tag = miss.length ? '' : g.unlock ? '<small class="tag-own">🔓 Vrijgespeeld</small>' : '<small class="tag-own">Huurset</small>';
+      const card = U.el('div', 'product' + (on ? ' equipped' : '') + (miss.length ? ' locked' : ''),
         '<span class="tag-hole"></span><h4>' + esc(g.name) + '</h4><p>' + esc(g.desc) + '</p><div class="stats">' + statTags(g).map((t) => '<span>' + esc(t) + '</span>').join('') +
-        '</div><div class="foot"><span class="price">' + (own ? '<small style="font-size:.8rem;color:#0c6d78">In bezit</small>' : U.euro(g.price)) + '</span><button class="btn small"></button></div>');
+        '</div>' + (miss.length ? '<p class="unlock">🔒 Vrij na ' + esc(miss.join(' en ')) + '</p>' : '') +
+        '<div class="foot"><span class="price">' + tag + '</span><button class="btn small"></button></div>');
       const b = card.querySelector('button');
       const cat = DG.CATEGORIES.find((c) => c.id === g.cat);
       if (on) {
         if (!cat.required) { b.textContent = '✓ Mee · uitzetten'; b.className = 'btn small on'; b.onclick = () => { delete sv.equip[g.cat]; DG.Save.save(); UI.renderShop(); }; }
         else { b.textContent = '✓ In gebruik'; b.className = 'btn small on'; b.disabled = true; }
-      } else if (own) {
-        b.textContent = 'Gebruiken'; b.className = 'btn small owned';
-        b.onclick = () => { sv.equip[g.cat] = g.id; DG.Save.save(); DG.Audio.click(); UI.renderShop(); };
-      } else if (sv.budget < g.price) {
-        b.textContent = 'Te duur'; b.disabled = true;
+      } else if (miss.length) {
+        b.textContent = '🔒 Op slot'; b.disabled = true;
       } else {
-        b.textContent = 'Kopen';
+        b.textContent = 'Huren';
         b.onclick = () => UI.buy(g);
       }
       box.appendChild(card);
@@ -346,21 +347,19 @@
     return out;
   }
 
+  // huren bij De Tuimelaar: geen spelgeld, alleen wat vrijgespeeld is
   UI.buy = function (g) {
     const sv = DG.Save.data;
-    if (sv.budget < g.price) return;
-    sv.budget -= g.price;
-    sv.owned[g.id] = true;
+    if (!DG.Save.isUnlocked(g)) return;
     sv.equip[g.cat] = g.id;
     DG.Save.save();
     DG.Audio.kaching();
-    UI.toast('Gekocht bij De Tuimelaar: <b>' + esc(g.name) + '</b>', 'good', 2600);
+    UI.toast('Gehuurd bij De Tuimelaar: <b>' + esc(g.name) + '</b>', 'good', 2600);
     UI.renderShop();
   };
   UI.buyCourse = function (k) {
     const sv = DG.Save.data;
-    if (sv.budget < k.price) return;
-    sv.budget -= k.price;
+    if (!DG.Save.isUnlocked(k) || (k.requires && !sv.courses[k.requires])) return;
     sv.courses[k.id] = true;
     if (k.nitrox) sv.gas = 'ean32';
     DG.Save.save();
@@ -427,8 +426,8 @@
     const c = UI.modal(
       '<div class="welcome-photo"><img src="img/winkel-pui-en-bus.jpg" alt="De winkel van Duikcentrum De Tuimelaar in Zwolle met de Tuimelaar-bus ervoor"></div>' +
       '<h2>Welkom bij De Tuimelaar in Zwolle!</h2>' +
-      '<p class="lead">Hier begint je duikreis. Je hebt <b>' + U.euro(DG.Save.data.budget) + '</b> duikbudget. Kies eerst je uitrusting: alles met een <b style="color:var(--sun)">★</b> heb je nodig. Een lamp en een camera zijn optioneel, maar wel heel handig.</p>' +
-      '<p class="lead">Met elke duik verdien je budget bij: voor nieuwe ontdekkingen, mooie foto’s en veilig duiken. Daarmee kun je later betere spullen of een cursus kopen.</p>' +
+      '<p class="lead">Hier begint je duikreis. Je <b>huurt je uitrusting</b> bij De Tuimelaar: kies eerst wat je meeneemt. Alles met een <b style="color:var(--sun)">★</b> heb je nodig. Een lamp en een camera zijn optioneel, maar wel heel handig.</p>' +
+      '<p class="lead">Betere spullen en cursussen <b>speel je vrij</b>: door duiken te loggen, soorten te ontdekken en fotochallenges te halen. Achter elk slotje 🔒 staat wat je nog nodig hebt.</p>' +
       '<div class="modal-actions"><button class="btn primary big">Stap binnen</button></div>');
     c.querySelector('button').onclick = UI.closeModal;
   };
@@ -857,6 +856,14 @@
   /* ================================================================
    * Samenvatting na de duik
    * ================================================================ */
+  // het eerstvolgende dat je kunt vrijspelen (voor in de samenvatting)
+  UI.nextUnlockHtml = function () {
+    const next = DG.GEAR.concat(DG.COURSES).filter((g) => g.unlock && !DG.Save.isUnlocked(g) && !(g.requires && !DG.Save.data.courses[g.requires]))
+      .map((g) => ({ g, m: DG.Save.missingFor(g) }))
+      .sort((a, b) => a.m.length - b.m.length)[0];
+    return next ? '<h3>🔒 Volgende bij De Tuimelaar</h3><ul class="sum-checks"><li><b>' + esc(next.g.name) + '</b> · vrij na ' + esc(next.m.join(' en ')) + '</li></ul>' : '';
+  };
+
   UI.showSummary = function (res) {
     const s = DG.siteById(res.site);
     UI.modalKind = 'summary';
@@ -866,8 +873,15 @@
     checks.push([res.ooa ? '❌' : res.bar >= 50 ? '✅' : '⚠️', res.ooa ? 'Lucht op: je buddy hielp je naar boven' : 'Boven met ' + res.bar + ' bar']);
     if (res.decoViolation) checks.push(['❌', 'Decompressieplicht genegeerd']);
     if (res.cold > 60) checks.push(['🥶', 'Je had het koud (' + res.cold + '%). Een dikker pak helpt.']);
-    let rightCol = '<h3>Verdiend</h3><ul class="sum-lines">' + res.lines.map((l) => '<li><span>' + esc(l[0]) + '</span><b>+' + U.euro(l[1]) + '</b></li>').join('') + '</ul>';
-    let earnTxt = '+' + U.euro(res.earned);
+    // vrijgespeeld bij De Tuimelaar door deze duik, en wat er daarna komt
+    const fresh = DG.Save.takeNewUnlocks();
+    const unlockHtml = fresh.length
+      ? '<h3>🔓 Vrijgespeeld bij De Tuimelaar</h3><ul class="sum-checks">' + fresh.map((g) => '<li>🎉 <b>' + esc(g.name) + '</b>' + (g.cat ? ' · nu te huur' : ' · cursus') + '</li>').join('') + '</ul>'
+      : UI.nextUnlockHtml();
+    let rightCol = '<h3>Logboek</h3><ul class="sum-checks"><li>📖 Duik #' + DG.Save.data.dives.length + ' gelogd</li>' +
+      (res.newSpecies.length ? '<li>🐠 ' + res.newSpecies.length + ' nieuwe soorten</li>' : '') +
+      (res.photos.length ? '<li>📷 ' + res.photos.length + ' foto’s</li>' : '') + '</ul>';
+    let earnTxt = res.newSpecies.length ? '+' + res.newSpecies.length + ' nieuwe soorten' : 'Duik #' + DG.Save.data.dives.length;
     if (res.three) {
       const R = res.rules || {};
       const nf = DG.Save.data.noFlyUntil ? Math.ceil((DG.Save.data.noFlyUntil - UI.gameNow()) / 3600e3) : 0;
@@ -890,6 +904,7 @@
       '<div>' + rightCol + '</div></div>' +
       '<h3>Gespot (' + res.species.length + ')</h3><div class="species-row" id="sum-species">' + (res.species.length ? '' : '<span class="t-sub">Nog niets gespot. Zwem eens wat dichter naar de dieren toe!</span>') + '</div>' +
       (res.drills && res.drills.length ? '<h3>🎓 Buddy-oefeningen</h3><ul class="sum-checks">' + res.drills.map((d) => '<li>' + (d.ok ? '✅ ' : '⚠️ ') + '<b>' + esc(d.title) + '</b>' + (d.notes.length ? ' · ' + esc(d.notes.join(' · ')) : '') + '</li>').join('') + '</ul>' : '') +
+      unlockHtml +
       (res.challenges && res.challenges.length ? '<h3>🏆 Fotochallenges gehaald</h3><ul class="sum-checks">' + res.challenges.map((id) => { const ch = UI.challengeById(id); return ch ? '<li>✅ ' + esc(ch.title) + '</li>' : ''; }).join('') + '</ul>' : '') +
       (res.photos.length ? '<h3>Foto’s (' + res.photos.length + ')</h3><div class="photo-row" id="sum-photos"></div>' : '') +
       '<div class="modal-actions"><button class="btn ghost" data-a="shop">Naar De Tuimelaar</button><button class="btn ghost" data-a="again">Nog een duik hier</button><button class="btn primary" data-a="map">Naar de wereldkaart</button></div>');
@@ -967,7 +982,7 @@
       sv.dives.slice().reverse().forEach((d) => {
         const s = DG.siteById(d.site);
         const it = U.el('div', 'dive-item',
-          '<div class="dive-nr">#' + d.nr + '</div><div><h4>' + (d.night ? '🌙 ' : '') + esc(s.name) + ' · ' + esc(s.area) + (d.night ? ' · nachtduik' : '') + '</h4><div class="meta"><span>' + new Date(d.date).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', year: 'numeric' }) + '</span><span>⏱ ' + d.minutes + ' min</span><span>⬇ ' + d.maxD + ' m</span><span>🐠 ' + d.species.length + ' soorten</span><span>📷 ' + d.photos + '</span>' + (d.drills && d.drills.length ? '<span>🎓 ' + d.drills.filter((x) => x.ok).length + '/' + d.drills.length + ' oefeningen</span>' : '') + '<span>' + (d.needStop ? (d.safetyDone ? '✅ stop' : '⚠️ geen stop') : '') + '</span><span style="color:var(--sun)">+' + U.euro(d.earned) + '</span></div></div><canvas></canvas>');
+          '<div class="dive-nr">#' + d.nr + '</div><div><h4>' + (d.night ? '🌙 ' : '') + esc(s.name) + ' · ' + esc(s.area) + (d.night ? ' · nachtduik' : '') + '</h4><div class="meta"><span>' + new Date(d.date).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', year: 'numeric' }) + '</span><span>⏱ ' + d.minutes + ' min</span><span>⬇ ' + d.maxD + ' m</span><span>🐠 ' + d.species.length + ' soorten</span><span>📷 ' + d.photos + '</span>' + (d.drills && d.drills.length ? '<span>🎓 ' + d.drills.filter((x) => x.ok).length + '/' + d.drills.length + ' oefeningen</span>' : '') + '<span>' + (d.needStop ? (d.safetyDone ? '✅ stop' : '⚠️ geen stop') : '') + '</span></div></div><canvas></canvas>');
         list.appendChild(it);
         requestAnimationFrame(() => UI.drawProfile(it.querySelector('canvas'), d.profile || [[0, 0], [1, 0]], false));
       });
@@ -1059,7 +1074,7 @@
       if (DG.Save.data.settings.sound) DG.Audio.setSound(true);
       UI.go(DG.Save.kitMissing().length ? 'shop' : 'map');
     };
-    $('btn-new').onclick = () => UI.confirm('Opnieuw beginnen?', 'Je budget, uitrusting, logboek en foto’s worden gewist.', 'Wissen', () => { DG.Save.reset(); UI.cat = 'overzicht'; UI.sel = null; UI.renderTitle(); });
+    $('btn-new').onclick = () => UI.confirm('Opnieuw beginnen?', 'Je uitrusting, brevetten, logboek en foto’s worden gewist.', 'Wissen', () => { DG.Save.reset(); UI.cat = 'overzicht'; UI.sel = null; UI.renderTitle(); });
     $('btn-reset').onclick = $('btn-new').onclick;
     $('btn-to-map').onclick = () => {
       const miss = DG.Save.kitMissing();

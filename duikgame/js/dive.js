@@ -518,7 +518,7 @@
     const earned = lines.reduce((s, l) => s + l[1], 0);
     res.lines = lines; res.earned = earned;
     // opslaan
-    sv.budget += earned;
+    // geen spelgeld meer: je huurt bij De Tuimelaar en speelt vrij (zie Save.missingFor)
     sv.earned = (sv.earned || 0) + earned;
     const prof = res.profile;
     const step = Math.max(1, Math.ceil(prof.length / 70));

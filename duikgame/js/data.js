@@ -31,68 +31,72 @@
       intro: 'Je start met een Open Water-brevet (max. 18 m). Wil je dieper of met nitrox? Volg een cursus.' },
   ];
 
+  /* Huren bij De Tuimelaar en vrijspelen: er is geen spelgeld. Alles huur je bij De Tuimelaar.
+     De basisset is meteen te huur; betere spullen en cursussen speel je vrij met gelogde duiken
+     (dives), ontdekte soorten (species), gehaalde fotochallenges (challenges) of een brevet (course).
+     price is alleen nog een indicatie van de winkelprijs. */
   DG.GEAR = [
     // Duikbril
     { id: 'm_basis', cat: 'masker', name: 'Basic duikbril', price: 39,
       desc: 'Degelijk siliconen masker met helder glas.', stats: { zicht: 1.0 }, look: { mask: '#3d7fbf', maskFrame: '#9fd0f0' } },
-    { id: 'm_hd', cat: 'masker', name: 'Low-volume HD-masker', price: 95,
+    { id: 'm_hd', unlock: { dives: 2 }, cat: 'masker', name: 'Low-volume HD-masker', price: 95,
       desc: 'Klein binnenvolume en ontspiegeld glas: breder zicht, minder randvignet.', stats: { zicht: 1.25 }, look: { mask: '#151515', maskFrame: '#2a2a2a' } },
     // Vinnen
     { id: 'v_allround', cat: 'vinnen', name: 'Allround vinnen', price: 65,
       desc: 'Lichte vinnen voor elke duik. Prima om mee te beginnen.', stats: { snelheid: 1.0 }, look: { fin: '#f2c21a' } },
-    { id: 'v_split', cat: 'vinnen', name: 'Split-fins', price: 129,
+    { id: 'v_split', unlock: { dives: 3 }, cat: 'vinnen', name: 'Split-fins', price: 129,
       desc: 'Minder kracht per slag, dus zuiniger met lucht.', stats: { snelheid: 1.08, sac: 0.95 }, look: { fin: '#2a7ad8', split: true } },
-    { id: 'v_jet', cat: 'vinnen', name: 'Jet fins (zwaar rubber)', price: 159,
+    { id: 'v_jet', unlock: { course: 'k_aow' }, cat: 'vinnen', name: 'Jet fins (zwaar rubber)', price: 159,
       desc: 'Krachtig en stuurvast. Ideaal tegen de stroming van Darwin of de Dampier Strait.', stats: { snelheid: 1.22 }, look: { fin: '#1b1b1b', jet: true } },
     // Duikpak
     { id: 'p_shorty', cat: 'pak', name: 'Shorty 3 mm', price: 99,
       desc: 'Korte mouwen en pijpen. Comfortabel vanaf ±26 °C.', stats: { warmte: 26 }, look: { suit: 'shorty', suitC: '#1c1c20', accent: '#d8402a' } },
     { id: 'p_5mm', cat: 'pak', name: 'Natpak 5 mm', price: 229,
       desc: 'Volledig pak, comfortabel vanaf ±22 °C.', stats: { warmte: 22 }, look: { suit: 'full', suitC: '#1c1c20', accent: '#4a90d8' } },
-    { id: 'p_semidry', cat: 'pak', name: 'Semi-droogpak 7 mm', price: 429,
+    { id: 'p_semidry', unlock: { dives: 4 }, cat: 'pak', name: 'Semi-droogpak 7 mm', price: 429,
       desc: 'Dichte manchetten en een kap. Comfortabel vanaf ±16 °C.', stats: { warmte: 16 }, look: { suit: 'full', hood: true, suitC: '#18181c', accent: '#2ab0a0' } },
-    { id: 'p_droog', cat: 'pak', name: 'Droogpak (trilaminaat)', price: 1395,
+    { id: 'p_droog', unlock: { dives: 8, course: 'k_aow' }, cat: 'pak', name: 'Droogpak (trilaminaat)', price: 1395,
       desc: 'Je blijft droog en warm, ook in de Oosterschelde. In de tropen wordt het wel erg warm…', stats: { warmte: 4, snelheid: 0.95 }, look: { suit: 'dry', hood: true, suitC: '#2a2c33', accent: '#e8b020' } },
     // Trimvest
     { id: 't_jacket', cat: 'trimvest', name: 'Jacket-trimvest', price: 399,
       desc: 'Vertrouwd en stabiel aan de oppervlakte.', stats: { sac: 1.0 }, look: { bcd: 'jacket', bcdC: '#1a1a1e', bcdAccent: '#f2c21a' } },
-    { id: 't_wing', cat: 'trimvest', name: 'Backplate & wing', price: 595,
+    { id: 't_wing', unlock: { dives: 5 }, cat: 'trimvest', name: 'Backplate & wing', price: 595,
       desc: 'Perfecte horizontale trim: minder weerstand, minder luchtverbruik.', stats: { sac: 0.93, snelheid: 1.04 }, look: { bcd: 'wing', bcdC: '#2a2a2e', bcdAccent: '#a8b0b8' } },
     // Ademautomaat
     { id: 'a_basis', cat: 'automaat', name: 'Ademautomaat standaard', price: 279,
       desc: 'Betrouwbare set voor warm water.', stats: { sac: 1.0, koud: false }, look: { reg: '#202020' } },
-    { id: 'a_koud', cat: 'automaat', name: 'Koudwater-ademautomaat', price: 549,
+    { id: 'a_koud', unlock: { dives: 3 }, cat: 'automaat', name: 'Koudwater-ademautomaat', price: 549,
       desc: 'Afgesloten eerste trap: bevriest niet in koud water en ademt licht.', stats: { sac: 0.96, koud: true }, look: { reg: '#f2c21a' } },
     // Fles
     { id: 'f_10', cat: 'fles', name: 'Stalen fles 10 liter', price: 249,
       desc: '2000 liter lucht bij 200 bar.', stats: { liter: 10 }, look: { tank: '#c9ced3', tankLen: 0.62 } },
     { id: 'f_12', cat: 'fles', name: 'Stalen fles 12 liter', price: 299,
       desc: '2400 liter lucht bij 200 bar. De standaard op duikstekken wereldwijd.', stats: { liter: 12 }, look: { tank: '#f0c020', tankLen: 0.7 } },
-    { id: 'f_15', cat: 'fles', name: 'Stalen fles 15 liter', price: 389,
+    { id: 'f_15', unlock: { dives: 5 }, cat: 'fles', name: 'Stalen fles 15 liter', price: 389,
       desc: '3000 liter lucht: voor lange duiken en grotere ademhalers.', stats: { liter: 15 }, look: { tank: '#e9ecef', tankLen: 0.8 } },
     // Computer
     { id: 'c_basis', cat: 'computer', name: 'Duikcomputer basis', price: 229,
       desc: 'Diepte, duiktijd, nultijd (NDL), opstijgsnelheid en veiligheidsstop.', stats: { ai: false }, look: { comp: '#222' } },
-    { id: 'c_ai', cat: 'computer', name: 'Luchtgeïntegreerde computer + kompas', price: 749,
+    { id: 'c_ai', unlock: { species: 12 }, cat: 'computer', name: 'Luchtgeïntegreerde computer + kompas', price: 749,
       desc: 'Toont ook je resterende luchttijd én een kompaspijl terug naar de boot of de kant.', stats: { ai: true }, look: { comp: '#1a5aa8' } },
     // Lamp
     { id: 'l_compact', cat: 'lamp', name: 'Compacte duiklamp', price: 89,
       desc: 'Handig voor in gaatjes en spleten kijken.', stats: { bereik: 4.5, hoek: 0.36 }, look: { lamp: 'compact' } },
-    { id: 'l_primair', cat: 'lamp', name: 'Primaire lamp 3000 lumen', price: 329,
+    { id: 'l_primair', unlock: { dives: 2 }, cat: 'lamp', name: 'Primaire lamp 3000 lumen', price: 329,
       desc: 'Brede, verre lichtbundel. Ook in groen Oosterscheldewater zie je weer kleur.', stats: { bereik: 8, hoek: 0.46 }, look: { lamp: 'primair' } },
     // Camera
     { id: 'cam_compact', cat: 'camera', name: 'Compacte onderwatercamera', price: 399,
       desc: 'Leuke kiekjes; dieper wordt alles blauw (zonder lamp).', stats: { bereik: 3.5, flits: false, bonus: 1.0 }, look: { cam: 'compact' } },
-    { id: 'cam_pro', cat: 'camera', name: 'Systeemcamera + 2 flitsers', price: 1499,
+    { id: 'cam_pro', unlock: { challenges: 3 }, cat: 'camera', name: 'Systeemcamera + 2 flitsers', price: 1499,
       desc: 'Flitsers brengen de échte kleuren terug. Meer sterren, meer beloning.', stats: { bereik: 5, flits: true, bonus: 1.6 }, look: { cam: 'pro' } },
   ];
 
   DG.COURSES = [
-    { id: 'k_aow', name: 'Advanced Open Water', price: 299, maxDepth: 30,
+    { id: 'k_aow', unlock: { dives: 3 }, name: 'Advanced Open Water', price: 299, maxDepth: 30,
       desc: 'Vijf avonturenduiken, waaronder diep en navigatie. Je mag daarna tot 30 meter.' },
-    { id: 'k_deep', name: 'Diepduiken specialty', price: 249, maxDepth: 40, requires: 'k_aow',
+    { id: 'k_deep', unlock: { dives: 8 }, name: 'Diepduiken specialty', price: 249, maxDepth: 40, requires: 'k_aow',
       desc: 'Leer plannen en duiken tot 40 meter. Nodig voor de hamerhaaien van Elphinstone.' },
-    { id: 'k_nitrox', name: 'Nitrox specialty', price: 179, nitrox: true,
+    { id: 'k_nitrox', unlock: { dives: 2 }, name: 'Nitrox specialty', price: 179, nitrox: true,
       desc: 'Duik met verrijkte lucht (EAN32): langere nultijden. Let op je maximale diepte van 33 m.' },
   ];
 
