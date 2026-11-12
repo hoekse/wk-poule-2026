@@ -1,0 +1,109 @@
+/* Diepblauw 3D-duik */
+.d3 { position: fixed; inset: 0; z-index: 30; background: #03192b; touch-action: none; user-select: none; -webkit-user-select: none; --narc: 0; }
+.d3-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+.d3::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at center, transparent calc(62% - var(--narc) * 30%), rgba(0, 0, 0, calc(0.15 + var(--narc) * 0.6)) 100%); z-index: 1; }
+.d3-load { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 14px; color: #dff4ff; font-family: var(--display); font-size: 1.2rem; background: radial-gradient(ellipse at 50% 40%, #0d5a8a, #04203a); z-index: 3; }
+.d3-spin { width: 54px; height: 54px; border-radius: 50%; border: 5px solid rgba(255, 255, 255, 0.2); border-top-color: var(--sun); animation: d3spin 1s linear infinite; }
+@keyframes d3spin { to { transform: rotate(360deg); } }
+.d3-flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; transition: opacity 0.25s; z-index: 5; }
+.d3-ui { position: absolute; inset: 0; pointer-events: none; z-index: 2; font-family: var(--font); color: #fff; }
+.d3-ui button { pointer-events: auto; font-family: inherit; }
+
+/* ---- duikcomputer (ronde Suunto-stijl) ---- */
+.h3-watch {
+  position: absolute; left: max(12px, env(safe-area-inset-left)); top: max(12px, env(safe-area-inset-top));
+  width: 176px; height: 176px; border-radius: 50%;
+  background: radial-gradient(circle at 50% 40%, #11161b, #030405 70%);
+  box-shadow: 0 0 0 5px #2b3036, 0 0 0 8px #15181b, 0 12px 30px rgba(0, 0, 0, 0.5);
+  font-variant-numeric: tabular-nums; text-align: center; overflow: hidden;
+}
+.h3-ring { position: absolute; inset: 0; width: 100%; height: 100%; }
+.h3-ring line { stroke: rgba(255, 255, 255, 0.35); stroke-width: 1.2; }
+.h3-ring text { fill: #ff8a2a; font: 700 11px var(--font); text-anchor: middle; }
+.h3-asc-bg { fill: none; stroke: rgba(255, 255, 255, 0.12); stroke-width: 5; stroke-linecap: round; }
+.h3-asc { fill: none; stroke: #3ad18f; stroke-width: 5; stroke-linecap: round; stroke-dasharray: 0 100; transition: stroke-dasharray 0.15s; }
+.h3-asc.mid { stroke: #ffc94a; }
+.h3-asc.fast { stroke: #ff4a4a; }
+.h3-top { position: absolute; top: 30px; left: 0; right: 0; line-height: 1; }
+.h3-top .h3-l { display: block; font-size: 0.6rem; letter-spacing: 0.14em; color: #9fb0bb; font-weight: 800; }
+.h3-top b { font-size: 1.05rem; color: #fff; }
+.h3-top.warn b, .h3-top.warn .h3-l { color: #ff8a2a; }
+.h3-depth { position: absolute; top: 60px; left: 0; right: 0; line-height: 1; }
+.h3-depth b { font-family: var(--display); font-size: 2.8rem; font-weight: 600; letter-spacing: -0.02em; }
+.h3-depth small { font-size: 0.9rem; color: #9fb0bb; margin-left: 2px; }
+.h3-row { position: absolute; top: 112px; left: 28px; right: 28px; display: flex; justify-content: space-between; }
+.h3-row span { display: flex; flex-direction: column; line-height: 1.05; }
+.h3-row small { font-size: 0.55rem; letter-spacing: 0.12em; color: #9fb0bb; font-weight: 800; }
+.h3-row b { font-size: 1rem; }
+.h3-bot { position: absolute; bottom: 18px; left: 34px; right: 34px; display: flex; justify-content: space-between; font-size: 0.62rem; color: #c8d3da; font-weight: 700; }
+.h3-alert { position: absolute; left: 14px; right: 14px; top: 92px; background: #ff4a1a; color: #fff; font-weight: 900; font-size: 0.72rem; letter-spacing: 0.06em; border-radius: 6px; padding: 2px 0; animation: blink 0.8s steps(2) infinite; }
+
+.h3-side { position: absolute; right: max(12px, env(safe-area-inset-right)); top: max(12px, env(safe-area-inset-top)); width: 170px; background: rgba(2, 16, 28, 0.62); border: 1px solid rgba(255, 255, 255, 0.14); border-radius: 14px; padding: 8px 10px; display: grid; gap: 6px; backdrop-filter: blur(4px); }
+.h3-meter small { display: block; font-size: 0.62rem; letter-spacing: 0.08em; text-transform: uppercase; color: #a6c0d4; font-weight: 800; }
+.h3-meter span { display: block; position: relative; height: 7px; background: rgba(255, 255, 255, 0.14); border-radius: 99px; overflow: hidden; margin-top: 2px; }
+.h3-meter span i { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: linear-gradient(90deg, #1cc0d2, #7ef6ff); border-radius: 99px; transition: width 0.2s; }
+.h3-meter span.mid::before { content: ''; position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; background: rgba(255, 255, 255, 0.5); }
+.h3-meter span.mid i { width: 10px; height: 7px; left: 50%; margin-left: -5px; background: #ffc94a; transition: left 0.2s; }
+.h3-meter em { font-style: normal; font-size: 0.72rem; color: #e5f3fb; }
+.h3-meter i.pain { background: linear-gradient(90deg, #ffb020, #ff4a4a) !important; }
+.h3-flags { display: flex; gap: 6px; flex-wrap: wrap; font-size: 0.7rem; }
+.h3-flags span { background: rgba(255, 255, 255, 0.12); border-radius: 99px; padding: 1px 8px; }
+.h3-spot { position: absolute; left: 50%; bottom: max(10px, env(safe-area-inset-bottom)); transform: translateX(-50%); background: rgba(2, 16, 28, 0.62); border-radius: 99px; padding: 5px 14px; font-size: 0.85rem; white-space: nowrap; }
+.h3-spot b { color: var(--sun); }
+.h3-msg { position: absolute; left: 50%; top: max(14px, env(safe-area-inset-top)); transform: translateX(-50%); width: min(520px, calc(100vw - 420px)); min-width: 260px; background: rgba(2, 16, 28, 0.84); border: 1px solid rgba(255, 255, 255, 0.18); border-radius: 14px; padding: 9px 14px; font-size: 0.92rem; line-height: 1.35; text-align: center; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35); }
+.h3-mask { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse 64% 58% at 50% 46%, transparent 76%, rgba(0, 0, 0, 0.55) 86%, rgba(0, 0, 0, 0.94) 93%); }
+.h3-mask::before { content: ''; position: absolute; left: 44%; right: 44%; bottom: 0; height: 24%; border-radius: 50% 50% 0 0; background: rgba(0, 0, 0, 0.9); filter: blur(6px); }
+.h3-mask::after { content: ''; position: absolute; left: 20%; top: 14%; width: 22%; height: 10%; border-radius: 50%; background: rgba(255, 255, 255, 0.05); filter: blur(10px); }
+
+/* ---- knoppen ---- */
+.c3-left { position: absolute; left: max(14px, env(safe-area-inset-left)); top: 50%; transform: translateY(-20%); display: flex; flex-direction: column; gap: 10px; }
+.c3-right { position: absolute; right: max(14px, env(safe-area-inset-right)); bottom: max(16px, env(safe-area-inset-bottom)); display: grid; grid-template-columns: repeat(3, auto); gap: 10px; align-items: end; justify-items: center; }
+.c3-btn { width: 60px; height: 60px; border-radius: 50%; border: 2px solid rgba(255, 255, 255, 0.35); background: rgba(2, 16, 28, 0.55); color: #fff; font-size: 1.35rem; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1; backdrop-filter: blur(4px); touch-action: none; }
+.c3-btn small { font-size: 0.55rem; font-weight: 800; letter-spacing: 0.04em; margin-top: 3px; text-transform: uppercase; }
+.c3-btn.on { background: rgba(255, 201, 74, 0.6); border-color: #ffc94a; }
+.c3-btn.big { width: 76px; height: 76px; font-size: 2rem; grid-column: 3; }
+.c3-stick { position: fixed; width: 130px; height: 130px; margin: -65px 0 0 -65px; border-radius: 50%; border: 2px solid rgba(255, 255, 255, 0.4); background: rgba(255, 255, 255, 0.08); pointer-events: none; z-index: 4; }
+.c3-stick i { position: absolute; left: 50%; top: 50%; width: 54px; height: 54px; margin: -27px 0 0 -27px; border-radius: 50%; background: rgba(255, 255, 255, 0.5); }
+.c3-ok, .c3-air { position: absolute; left: 50%; top: 70px; transform: translateX(-50%); border: 0; border-radius: 99px; padding: 12px 22px; font-size: 1.1rem; font-weight: 800; background: #ffc94a; color: #3a2500; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35); animation: pulse 1.6s infinite; }
+.c3-pause { position: absolute; left: 50%; bottom: 52px; transform: translateX(-50%); width: 42px; height: 42px; border-radius: 50%; border: 1px solid rgba(255, 255, 255, 0.25); background: rgba(2, 16, 28, 0.6); color: #fff; font-weight: 800; }
+.c3-exit { position: absolute; left: 50%; bottom: 104px; transform: translateX(-50%); }
+.c3-keys { position: absolute; left: 50%; bottom: 100px; transform: translateX(-50%); display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 12px; width: min(760px, 70vw); background: rgba(2, 16, 28, 0.55); border-radius: 12px; padding: 6px 12px; font-size: 0.75rem; color: #cfe5f2; animation: d3fade 1s 16s forwards; }
+@keyframes d3fade { to { opacity: 0; visibility: hidden; } }
+.c3-touch .c3-keys { display: none; }
+
+/* ---- briefing ---- */
+.b3-photos { display: grid; grid-template-columns: 1.2fr 1fr 0.8fr; gap: 6px; margin: -6px -6px 14px; border-radius: 14px; overflow: hidden; height: 170px; }
+.b3-photos img { width: 100%; height: 100%; object-fit: cover; }
+.b3-rules { list-style: none; padding: 0; margin: 6px 0 0; display: grid; gap: 6px; }
+.b3-rules label { display: flex; gap: 10px; align-items: center; background: rgba(255, 255, 255, 0.07); border-radius: 10px; padding: 9px 12px; cursor: pointer; }
+.b3-rules input { width: 20px; height: 20px; accent-color: #1cc0d2; }
+.b3-set { display: grid; gap: 6px; margin: 12px 0; }
+.b3-set .seg { justify-self: start; flex-wrap: wrap; }
+.b3-set small { color: var(--muted); }
+.b3-check { display: grid; gap: 8px; }
+.b3-ci { display: grid; grid-template-columns: 44px 1fr 30px; gap: 12px; align-items: center; text-align: left; border: 1px solid rgba(255, 255, 255, 0.16); background: rgba(255, 255, 255, 0.06); border-radius: 12px; padding: 10px 12px; color: #fff; }
+.b3-ci b { font-family: var(--display); font-size: 1.5rem; color: #7ef6ff; text-align: center; }
+.b3-ci strong { display: block; }
+.b3-ci small { color: var(--muted); }
+.b3-ci i { font-style: normal; font-size: 1.3rem; color: #6c8796; }
+.b3-ci.ok { border-color: rgba(58, 209, 143, 0.7); background: rgba(58, 209, 143, 0.12); }
+.b3-ci.ok i { color: #3ad18f; }
+
+@media (max-width: 760px), (max-height: 520px) {
+  .h3-watch { width: 140px; height: 140px; }
+  .h3-top { top: 22px; } .h3-depth { top: 46px; } .h3-depth b { font-size: 2.1rem; }
+  .h3-row { top: 86px; left: 20px; right: 20px; } .h3-row b { font-size: 0.85rem; }
+  .h3-bot { bottom: 12px; left: 26px; right: 26px; font-size: 0.55rem; }
+  .h3-alert { top: 70px; }
+  .h3-side { width: 140px; padding: 6px 8px; gap: 4px; }
+  .c3-btn { width: 50px; height: 50px; font-size: 1.1rem; }
+  .c3-btn.big { width: 62px; height: 62px; }
+  .h3-msg { width: calc(100vw - 340px); font-size: 0.82rem; }
+  .b3-photos { height: 120px; }
+}
+
+/* meldingen tijdens de 3D-duik rechts onder het zijpaneel */
+.d3-on #toasts { top: 170px; right: max(12px, env(safe-area-inset-right)); left: auto; transform: none; width: min(320px, 40vw); gap: 6px; }
+.d3-on .toast { padding: 6px 10px; font-size: 0.84rem; }
+.d3-on .toast canvas, .d3-on .toast img { width: 52px !important; height: 36px !important; }
+@media (max-width: 760px), (max-height: 520px) { .d3-on #toasts { top: 150px; width: min(260px, 40vw); } }

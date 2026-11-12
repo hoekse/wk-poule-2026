@@ -146,6 +146,10 @@
     'Knorvissen maken knorgeluiden door hun keeltanden over elkaar te wrijven. Overdag hangen ze in scholen in de schaduw.',
     { t: 'fish', shape: 'oval', h: 0.38, c: '#f2d24a', c2: '#f6e48a', fin: '#f0c030', tail: 'fork',
       pat: [{ k: 'hstripes', n: 6, c: 'rgba(70,140,220,0.85)', w: 0.08, tilt: 0.25 }] });
+  sp('kleinbek_knorvis', 'Kleinbekknorvis', 'Haemulon chrysargyreum', 0.2, 1,
+    'Zilverblauw met smalle gele strepen. Overdag hangen ze in grote scholen in de schaduw van de pijlers; ’s nachts zoeken ze op het zand naar voedsel.',
+    { t: 'fish', shape: 'oval', h: 0.34, c: '#b8c6d4', c2: '#e9eef3', fin: '#e8c84a', tail: 'fork',
+      pat: [{ k: 'hstripes', n: 6, c: 'rgba(240,200,60,0.85)', w: 0.05 }] });
   sp('sergeant', 'Sergeant-majoor', 'Abudefduf saxatilis', 0.15, 1,
     'Vijf zwarte strepen, net als de strepen van een sergeant. De mannetjes bewaken hun eitjes en kleuren dan donkerblauw.',
     { t: 'fish', shape: 'oval', h: 0.58, c: '#dfe6d8', c2: '#f4f4ec', fin: '#cfd8c4', tail: 'fork',
@@ -359,11 +363,11 @@
 
   DG.SITES = [
     {
-      id: 'saltpier', name: 'Zoutpier', area: 'Bonaire', country: 'Caribisch Nederland', lat: 12.083, lon: -68.283,
-      temp: 28, vis: 30, depth: 18, level: 'Open Water', current: 0, entry: 'Kantduik',
+      id: 'saltpier', name: 'Zoutpier', area: 'Bonaire', country: 'Caribisch Nederland', lat: 12.083, lon: -68.283, three: true,
+      temp: 28, vis: 50, depth: 40, level: 'Open Water (pier 3–12 m)', current: 0.05, entry: 'Kantduik bij de gele steen',
       travel: { mode: 'vlieg', time: '± 10 uur vliegen vanaf Schiphol' },
       desc: 'De pijlers onder de zoutpier bij de zoutpannen zijn begroeid met oranje, paarse en gele sponzen. Tarpons hangen in de schaduw en scholen knorvissen zweven tussen de palen. Duiken mag alleen als er geen schip aan de pier ligt.',
-      highlights: ['tarpon', 'karet', 'kikvorsvis_geel', 'adelaarsrog'],
+      highlights: ['tarpon', 'groene_schildpad', 'kikvorsvis_geel', 'barracuda'],
       pal: { surf: '#5fd0f0', deep: '#0a3a6c', sand: '#efe4c8', sand2: '#cfc19f', rock: '#9a8a72', back: '#3c7f9a', far: '#2f6f92' },
       absorb: { r: 10, g: 45, b: 400 }, dark: { start: 12, range: 40, max: 0.45 },
       width: 170,
@@ -381,6 +385,8 @@
       spawns: [
         { sp: 'tarpon', n: 4, b: 'wander', d: [2, 9], x: [35, 130], slow: 0.5 },
         { sp: 'franse_knorvis', n: 30, b: 'school', d: [3, 8], x: [45, 115], spread: 2.4, slow: 0.4 },
+        { sp: 'kleinbek_knorvis', n: 30, b: 'school', d: [3, 9], x: [40, 120], spread: 2.6, slow: 0.4 },
+        { sp: 'groene_schildpad', n: 2, b: 'wander', d: [2, 6], x: [10, 45], slow: 0.5 },
         { sp: 'sergeant', n: 14, b: 'school', d: [1, 5], x: [14, 90], spread: 2 },
         { sp: 'chromis_blauw', n: 14, b: 'reef', x: [10, 30] },
         { sp: 'blauwe_dokter', n: 12, b: 'school', d: [4, 10], x: [25, 160], spread: 2.5 },

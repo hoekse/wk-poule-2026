@@ -1531,10 +1531,31 @@
   };
 
   // Icoon voor het logboek in een canvas; silhouette = onbekend
+  // realistische visfoto's (Magnific) voor iconen
+  Art.photos = {};
+  ['franse_knorvis', 'kleinbek_knorvis', 'sergeant', 'blauwe_dokter', 'chromis_blauw', 'tarpon', 'barracuda', 'franse_keizer', 'koningin_keizer', 'stoplicht_papegaai', 'koffervis', 'trompetvis'].forEach((id) => {
+    const im = new Image();
+    im.src = 'img/vis/' + id + '.webp';
+    Art.photos[id] = im;
+  });
+
   Art.drawIcon = function (canvas, spc, silhouette) {
     const c = canvas.getContext('2d');
     const W = canvas.width, H = canvas.height;
     c.clearRect(0, 0, W, H);
+    const ph = Art.photos[spc.id];
+    if (ph && ph.complete && ph.naturalWidth) {
+      const s = Math.min((W * 0.9) / ph.naturalWidth, (H * 0.86) / ph.naturalHeight);
+      const w = ph.naturalWidth * s, h = ph.naturalHeight * s;
+      c.drawImage(ph, (W - w) / 2, (H - h) / 2, w, h);
+      if (silhouette) {
+        c.globalCompositeOperation = 'source-in';
+        c.fillStyle = 'rgba(20,40,70,0.85)';
+        c.fillRect(0, 0, W, H);
+        c.globalCompositeOperation = 'source-over';
+      }
+      return;
+    }
     const L = sizeOf(spc);
     const b = Art.bbox(spc);
     const bw = (b[2] - b[0]) * L, bh = (b[3] - b[1]) * L;

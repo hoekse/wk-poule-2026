@@ -69,12 +69,12 @@
     return c;
   }
   UI.iconCanvas = iconCanvas;
-  UI.spotToast = function (spc, isNew) {
+  UI.spotToast = function (spc, isNew, noPts) {
     const r = DG.RARITY[spc.r];
     const ic = iconCanvas(spc, 64, 44, false);
     const html = '<div class="t-title">' + (isNew ? 'Nieuwe soort ontdekt!' : 'Gespot') + '</div><div>' + esc(spc.name) + ' <span class="t-sub">· ' + r.name + '</span></div>';
     const t = UI.toast(html, isNew ? 'new' : '', isNew ? 4800 : 2600, ic);
-    if (isNew) { const p = U.el('div', 'pts', '+' + U.euro(r.pts)); t.appendChild(p); }
+    if (isNew && !noPts) { const p = U.el('div', 'pts', '+' + U.euro(r.pts)); t.appendChild(p); }
   };
   UI.photoToast = function (photo, spc) {
     const img = new Image(); img.src = photo.url; img.width = 64; img.height = 48;
@@ -461,7 +461,7 @@
       '<ul class="advice">' + adv.map((a) => '<li class="' + a[0] + '">' + a[1] + '</li>').join('') + '</ul>' +
       '<div class="progress"><b>Soorten ontdekt: ' + found + ' / ' + spList.length + '</b><div class="bar"><i style="width:' + (found / spList.length) * 100 + '%"></i></div><div class="mini-grid" id="mini-grid"></div></div>' +
       (DG.Save.hasNitrox() ? '<div class="gas-row">Gas: <span class="seg"><button data-gas="air" class="' + (sv.gas !== 'ean32' ? 'on' : '') + '">Lucht</button><button data-gas="ean32" class="' + (sv.gas === 'ean32' ? 'on' : '') + '">Nitrox 32%</button></span></div>' : '') +
-      (missing.length ? '<button class="btn teal wide" id="btn-go">Eerst naar De Tuimelaar</button>' : '<button class="btn primary wide big" id="btn-go">' + (bus ? '🚐 Rijd naar Zeeland en duik' : '✈ Vlieg naar ' + esc(s.area) + ' en duik') + '</button>') +
+      (missing.length ? '<button class="btn teal wide" id="btn-go">Eerst naar De Tuimelaar</button>' : '<button class="btn primary wide big" id="btn-go">' + (sv.location === s.area ? '🤿 Naar de duikstek' + (s.three ? ' (3D)' : '') : bus ? '🚐 Rijd naar Zeeland en duik' : '✈ Vlieg naar ' + esc(s.area) + ' en duik' + (s.three ? ' (3D)' : '')) + '</button>') +
       '</div>';
     card.querySelector('.sc-close').onclick = () => { card.hidden = true; $('scr-map').classList.remove('card-open'); UI.sel = null; UI.routeEl.setAttribute('d', ''); $('map-hint').hidden = false; Object.values(UI.pins).forEach((q) => q.g.classList.remove('sel')); };
     const icons = $('sc-icons');
@@ -498,7 +498,21 @@
    * Reis: met de Tuimelaar-bus en het vliegtuig
    * ================================================================ */
   let travelRaf = null, landPath = null;
-  UI.travel = function (site) {
+  UI.travel = function (site, force) {
+    const sv0 = DG.Save.data;
+    if (!force && sv0.location === site.area) {
+      UI.toast('Je bent al op ' + esc(site.area) + '. Je rijdt zo naar de duikstek.', 'info', 3000);
+      return UI.startDive(site);
+    }
+    if (!force && site.travel.mode === 'vlieg' && sv0.noFlyUntil && sv0.noFlyUntil > UI.gameNow()) {
+      const h = Math.ceil((sv0.noFlyUntil - UI.gameNow()) / 3600e3);
+      const c = UI.modal('<h2>Vliegverbod</h2><p class="lead">Je hebt kort geleden gedoken. Volgens de richtlijnen van DAN mag je nog ' + h + ' uur niet vliegen, omdat er nog stikstof uit je lichaam moet. Je duikcomputer toont dit ook.</p><div class="modal-actions"><button class="btn ghost" data-a="no">Terug</button><button class="btn primary" data-a="wait">Wacht ' + h + ' uur en vlieg</button></div>', 'narrow');
+      c.querySelector('[data-a=no]').onclick = UI.closeModal;
+      c.querySelector('[data-a=wait]').onclick = () => { sv0.clockOffset = (sv0.clockOffset || 0) + (sv0.noFlyUntil - UI.gameNow()) + 60e3; DG.Save.save(); UI.closeModal(); UI.travel(site, true); };
+      return;
+    }
+    sv0.location = site.area;
+    DG.Save.save();
     UI.go('travel');
     DG.Audio.unlock();
     const cv = $('travel-canvas');
@@ -626,7 +640,28 @@
   /* ================================================================
    * Duiken
    * ================================================================ */
+  UI.gameNow = () => Date.now() + (DG.Save.data.clockOffset || 0);
+
+  UI.startDive3D = function (site) {
+    UI.go('dive');
+    $('hud').hidden = true;
+    DG.Dive.stop();
+    DG.Audio.unlock();
+    DG.Audio.music(false);
+    DG.Save.data.location = site.area;
+    DG.Save.save();
+    import(new URL('js3d/main.js', document.baseURI).href)
+      .then((m) => m.runZoutpier(site))
+      .then((res) => { if (res) UI.showSummary(res); else UI.leaveDive('map'); })
+      .catch((e) => {
+        if (window.console) console.error(e);
+        UI.toast('De 3D-duik kon niet starten (' + esc(e && e.message ? e.message : String(e)) + '). Probeer een recente browser zoals Chrome of Safari.', 'danger', 9000);
+        UI.leaveDive('map');
+      });
+  };
+
   UI.startDive = function (site) {
+    if (site.three) return UI.startDive3D(site);
     UI.go('dive');
     $('hud').hidden = false;
     $('hud').classList.toggle('touch', TOUCH);
@@ -756,12 +791,26 @@
     checks.push([res.ooa ? '❌' : res.bar >= 50 ? '✅' : '⚠️', res.ooa ? 'Lucht op: je buddy hielp je naar boven' : 'Boven met ' + res.bar + ' bar']);
     if (res.decoViolation) checks.push(['❌', 'Decompressieplicht genegeerd']);
     if (res.cold > 60) checks.push(['🥶', 'Je had het koud (' + res.cold + '%). Een dikker pak helpt.']);
+    let rightCol = '<h3>Verdiend</h3><ul class="sum-lines">' + res.lines.map((l) => '<li><span>' + esc(l[0]) + '</span><b>+' + U.euro(l[1]) + '</b></li>').join('') + '</ul>';
+    let earnTxt = '+' + U.euro(res.earned);
+    if (res.three) {
+      const R = res.rules || {};
+      const nf = DG.Save.data.noFlyUntil ? Math.ceil((DG.Save.data.noFlyUntil - UI.gameNow()) / 3600e3) : 0;
+      rightCol = '<h3>Regels &amp; buddy</h3><ul class="sum-checks">' +
+        '<li>' + (R.touches ? '⚠️ ' + R.touches + '× een pijler geraakt' : '✅ Niets aangeraakt') + '</li>' +
+        (R.reef ? '<li>⚠️ ' + R.reef + '× het rif geraakt</li>' : '') +
+        '<li>' + (R.missed ? '⚠️ ' + R.missed + '× niet gereageerd op je buddy' : '✅ Goed contact met je buddy') + '</li>' +
+        (R.limit ? '<li>⚠️ Dieper geweest dan je brevet toestaat</li>' : '') +
+        (R.deco ? '<li>' + (R.ceil ? '❌ Decoplafond overschreden' : '⚠️ Decostop nodig geweest') + '</li>' : '<li>✅ Binnen de nultijd gebleven</li>') +
+        '<li>✈️ Vliegverbod: ' + nf + ' uur</li></ul>';
+      earnTxt = res.newSpecies.length ? '+' + res.newSpecies.length + ' nieuwe soorten' : 'Duik #' + DG.Save.data.dives.length;
+    }
     const c = UI.modal(
       '<div class="sum-head"><div><h2>Duik gelogd · ' + esc(s.name) + '</h2><p class="lead" style="margin:0">' + esc(s.area) + ' · ' + Math.round(res.minutes) + ' min · max ' + res.maxD.toFixed(1) + ' m · gem. ' + res.avgD.toFixed(1) + ' m · ' + res.temp + ' °C</p></div>' +
-      '<div class="sum-earn">+' + U.euro(res.earned) + '</div></div>' +
+      '<div class="sum-earn">' + earnTxt + '</div></div>' +
       '<canvas class="profile" id="sum-profile"></canvas>' +
       '<div class="sum-cols"><div><h3>Duikveiligheid</h3><ul class="sum-checks">' + checks.map((k) => '<li>' + k[0] + ' ' + esc(k[1]) + '</li>').join('') + '</ul></div>' +
-      '<div><h3>Verdiend</h3><ul class="sum-lines">' + res.lines.map((l) => '<li><span>' + esc(l[0]) + '</span><b>+' + U.euro(l[1]) + '</b></li>').join('') + '</ul></div></div>' +
+      '<div>' + rightCol + '</div></div>' +
       '<h3>Gespot (' + res.species.length + ')</h3><div class="species-row" id="sum-species">' + (res.species.length ? '' : '<span class="t-sub">Nog niets gespot. Zwem eens wat dichter naar de dieren toe!</span>') + '</div>' +
       (res.photos.length ? '<h3>Foto’s (' + res.photos.length + ')</h3><div class="photo-row" id="sum-photos"></div>' : '') +
       '<div class="modal-actions"><button class="btn ghost" data-a="shop">Naar De Tuimelaar</button><button class="btn ghost" data-a="again">Nog een duik hier</button><button class="btn primary" data-a="map">Naar de wereldkaart</button></div>');
