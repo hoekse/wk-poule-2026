@@ -34,12 +34,13 @@ export class Controls {
       </div>
       <button class="c3-ok" data-tap="ok" hidden>👌 OK</button>
       <button class="c3-air" data-tap="air" hidden>🫧 Laat lucht zien</button>
+      <button class="c3-exh" data-hold="exhale" hidden>💨 Uitademen<small>vasthouden (N)</small></button>
       <button class="c3-pause" data-tap="pause" aria-label="Pauze">❚❚</button>
       <button class="c3-exit btn primary" data-tap="exit" hidden>Duik beëindigen</button>
       <div class="c3-keys">
         <span><kbd>W A S D</kbd> zwemmen</span><span>muis slepen = kijken</span><span><kbd>R</kbd>/<kbd>F</kbd> trimvest</span>
         <span><kbd>B</kbd> adem in</span><span><kbd>K</kbd> klaren</span><span><kbd>Shift</kbd> harder</span><span><kbd>Spatie</kbd> foto</span>
-        <span><kbd>L</kbd> lamp</span><span><kbd>V</kbd> zicht</span><span><kbd>O</kbd> OK-teken</span><span><kbd>Esc</kbd> pauze</span>
+        <span><kbd>L</kbd> lamp</span><span><kbd>V</kbd> zicht</span><span><kbd>O</kbd> OK-teken</span><span><kbd>1</kbd>–<kbd>3</kbd> keuze bij een oefening</span><span><kbd>N</kbd> uitademen</span><span><kbd>Esc</kbd> pauze</span>
       </div>`);
     if (this.touch) r.classList.add('c3-touch');
   }
@@ -90,7 +91,7 @@ export class Controls {
       if (down && this.keys[k]) return;
       this.keys[k] = down;
       if (!down) return;
-      const map = { ' ': 'photo', l: 'lamp', v: 'view', k: 'equalize', o: 'ok', Escape: 'pause', p: 'pause', e: 'exit' };
+      const map = { ' ': 'photo', l: 'lamp', v: 'view', k: 'equalize', o: 'ok', Escape: 'pause', p: 'pause', e: 'exit', 1: 'drill:0', 2: 'drill:1', 3: 'drill:2' };
       if (map[k]) { e.preventDefault(); this.cb(map[k]); }
       if (k.indexOf('Arrow') === 0) e.preventDefault();
     };
@@ -114,7 +115,7 @@ export class Controls {
       fwd: Math.max(-1, Math.min(1, fwd)), side: Math.max(-1, Math.min(1, side)), turn,
       lookX: this.lookX, lookY: this.lookY,
       bcdIn: this.bcdIn || !!k.r, bcdOut: this.bcdOut || !!k.f,
-      breath: this.breath || !!k.b, exhale: !!k.n, hard: this.hard || !!k.Shift,
+      breath: this.breath || !!k.b, exhale: this.exhale || !!k.n, hard: this.hard || !!k.Shift,
     };
     this.lookX = 0; this.lookY = 0;
     return out;

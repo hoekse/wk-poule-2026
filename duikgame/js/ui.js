@@ -815,6 +815,7 @@
       '<div class="sum-cols"><div><h3>Duikveiligheid</h3><ul class="sum-checks">' + checks.map((k) => '<li>' + k[0] + ' ' + esc(k[1]) + '</li>').join('') + '</ul></div>' +
       '<div>' + rightCol + '</div></div>' +
       '<h3>Gespot (' + res.species.length + ')</h3><div class="species-row" id="sum-species">' + (res.species.length ? '' : '<span class="t-sub">Nog niets gespot. Zwem eens wat dichter naar de dieren toe!</span>') + '</div>' +
+      (res.drills && res.drills.length ? '<h3>🎓 Buddy-oefeningen</h3><ul class="sum-checks">' + res.drills.map((d) => '<li>' + (d.ok ? '✅ ' : '⚠️ ') + '<b>' + esc(d.title) + '</b>' + (d.notes.length ? ' · ' + esc(d.notes.join(' · ')) : '') + '</li>').join('') + '</ul>' : '') +
       (res.challenges && res.challenges.length ? '<h3>🏆 Fotochallenges gehaald</h3><ul class="sum-checks">' + res.challenges.map((id) => { const ch = UI.challengeById(id); return ch ? '<li>✅ ' + esc(ch.title) + '</li>' : ''; }).join('') + '</ul>' : '') +
       (res.photos.length ? '<h3>Foto’s (' + res.photos.length + ')</h3><div class="photo-row" id="sum-photos"></div>' : '') +
       '<div class="modal-actions"><button class="btn ghost" data-a="shop">Naar De Tuimelaar</button><button class="btn ghost" data-a="again">Nog een duik hier</button><button class="btn primary" data-a="map">Naar de wereldkaart</button></div>');
@@ -892,7 +893,7 @@
       sv.dives.slice().reverse().forEach((d) => {
         const s = DG.siteById(d.site);
         const it = U.el('div', 'dive-item',
-          '<div class="dive-nr">#' + d.nr + '</div><div><h4>' + (d.night ? '🌙 ' : '') + esc(s.name) + ' · ' + esc(s.area) + (d.night ? ' · nachtduik' : '') + '</h4><div class="meta"><span>' + new Date(d.date).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', year: 'numeric' }) + '</span><span>⏱ ' + d.minutes + ' min</span><span>⬇ ' + d.maxD + ' m</span><span>🐠 ' + d.species.length + ' soorten</span><span>📷 ' + d.photos + '</span><span>' + (d.needStop ? (d.safetyDone ? '✅ stop' : '⚠️ geen stop') : '') + '</span><span style="color:var(--sun)">+' + U.euro(d.earned) + '</span></div></div><canvas></canvas>');
+          '<div class="dive-nr">#' + d.nr + '</div><div><h4>' + (d.night ? '🌙 ' : '') + esc(s.name) + ' · ' + esc(s.area) + (d.night ? ' · nachtduik' : '') + '</h4><div class="meta"><span>' + new Date(d.date).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', year: 'numeric' }) + '</span><span>⏱ ' + d.minutes + ' min</span><span>⬇ ' + d.maxD + ' m</span><span>🐠 ' + d.species.length + ' soorten</span><span>📷 ' + d.photos + '</span>' + (d.drills && d.drills.length ? '<span>🎓 ' + d.drills.filter((x) => x.ok).length + '/' + d.drills.length + ' oefeningen</span>' : '') + '<span>' + (d.needStop ? (d.safetyDone ? '✅ stop' : '⚠️ geen stop') : '') + '</span><span style="color:var(--sun)">+' + U.euro(d.earned) + '</span></div></div><canvas></canvas>');
         list.appendChild(it);
         requestAnimationFrame(() => UI.drawProfile(it.querySelector('canvas'), d.profile || [[0, 0], [1, 0]], false));
       });

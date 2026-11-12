@@ -12,6 +12,7 @@ import { Hud } from './hud.js';
 import { Sound3D } from './sound3d.js';
 import { gradePhoto, checkChallenges } from './photo.js';
 import { BlobShadows } from './shadows.js';
+import { Drills } from './drills.js';
 
 const DG = window.DG;
 const UI = DG.UI;
@@ -153,6 +154,11 @@ export async function runZoutpier(site) {
   };
   const ctl = new Controls(ui, (a) => action(a), canvas);
   hud.setMask(D.view === 'bril');
+  // buddy-oefeningen (als je ze aanzet bij de voorbereiding)
+  const drills = new Drills({
+    root: ui, hud, night, on: !!plan.drills,
+    onSound: (k) => { if (k === 'done') DG.Audio.newSpecies(); else if (k === 'ok') DG.Audio.spot(); else if (k === 'bad') DG.Audio.beep(); else DG.Audio.click(); },
+  });
 
   function hex(c, def) {
     if (typeof c === 'number') return c;
@@ -186,6 +192,8 @@ export async function runZoutpier(site) {
       D.sig = null; ui.querySelector('.c3-air').hidden = true;
       const bar = D.gas / TANK_L;
       hud.msg((night ? 'Je schijnt op je manometer: ' : 'Je laat ') + Math.round(bar) + ' bar zien. Buddy: ' + Math.round(Math.max(60, bar - 12 + Math.random() * 20)) + ' bar.', 3500);
+    } else if (a.indexOf('drill:') === 0) {
+      drills.choose(+a.slice(6));
     } else if (a === 'exit') {
       if (-D.p.y < 0.8 && D.gt > 60) finish(false);
     }
@@ -302,6 +310,7 @@ export async function runZoutpier(site) {
     const prevYaw = D.lookYaw;
     D.lookYaw -= inp.lookX * 0.0045 + inp.turn * dt * 1.3;
     D.turnRate = (D.turnRate || 0) * 0.8 + (Math.abs(D.lookYaw - prevYaw) / Math.max(dt, 1e-3)) * 0.2;
+    D.yawStep = D.lookYaw - prevYaw;
     D.lookPitch = Math.max(-1.35, Math.min(1.35, D.lookPitch - inp.lookY * 0.0038));
     // lichaam volgt kijkrichting; trimt horizontaal als je niet zwemt
     let dy = D.lookYaw - D.yaw;
@@ -404,7 +413,7 @@ export async function runZoutpier(site) {
       if (D.profT > 20) { D.profT = 0; D.prof.push([D.gt / 60, dNow]); }
       // luchtverbruik
       const effort = Math.min(1, Math.abs(inp.fwd) * (inp.hard ? 1 : 0.55) + Math.abs(inp.side) * 0.3);
-      const sac = (13 + effort * 15 + (D.alarm ? 4 : 0)) * lo.sac;
+      const sac = (13 + effort * 15 + (D.alarm ? 4 : 0)) * lo.sac * drills.gasFactor();
       D.gas -= (sac * amb * gdt) / 60;
       if (D.gas < 0) D.gas = 0;
     }
@@ -420,7 +429,7 @@ export async function runZoutpier(site) {
     if (D.ear < 0.1) D.warned.ear = 0;
     // opstijgsnelheid (echte meters per minuut)
     D.asc += ((D.v.y * 60) - D.asc) * Math.min(1, dt * 3);
-    if (D.asc > 10 && dNow > 1) {
+    if (D.asc > drills.ascLimit() && dNow > 1) {
       D.fastT += dt;
       if (D.fastT > 0.8 && !D.inFast) { D.inFast = true; D.fastCount++; DG.Audio.alarm(); }
     } else { D.fastT = 0; D.inFast = false; }
@@ -458,8 +467,14 @@ export async function runZoutpier(site) {
     ui.querySelector('.c3-exit').hidden = !(dNow < 0.8 && D.gt > 60);
     D.alarm = D.inFast ? 'LANGZAMER OMHOOG' : inDeco && dNow < D.ceil - 0.5 ? 'PLAFOND!' : D.ooa ? 'LUCHT OP' : bar < 50 ? 'RESERVE' : D.ear > 1 ? 'KLAREN!' : dNow > limit + 0.5 ? 'TE DIEP' : '';
 
-    /* ---- buddy ---- */
+    /* ---- buddy en oefeningen ---- */
     updateBuddy(dt, f, r);
+    if (drills.on) {
+      drills.update(dt, {
+        depth: dNow, inp, asc: D.asc, yawStep: D.yawStep || 0, me: D.p, camPos: D.p, camFwd: fwdOf(D.lookYaw, D.lookPitch), buddyP: D.buddy.p,
+        lampOn: D.lamp, needStop: D.needStop, stopDone: D.stopDone, inDeco, bar, fastCount: D.fastCount,
+      });
+    }
 
     /* ---- dieren ---- */
     lampInfo.on = D.lamp && !!lo.lamp;
@@ -583,12 +598,21 @@ export async function runZoutpier(site) {
 
   function updateBuddy(dt, f, r) {
     const b = D.buddy;
-    const target = D.p.clone().addScaledVector(r, 2.2).addScaledVector(f.clone().setY(0).normalize(), -0.8);
+    const fh = f.clone().setY(0);
+    if (fh.lengthSq() < 1e-4) fh.set(-Math.sin(D.yaw), 0, -Math.cos(D.yaw));
+    fh.normalize();
+    let target = D.p.clone().addScaledVector(r, 2.2).addScaledVector(fh, -0.8);
     target.y = Math.min(-0.3, D.p.y + 0.2);
+    let maxV = null, gain = 0.8;
+    const bm = drills.buddyMode(), dc = drills.cur;
+    if (bm === 'front') { target = D.p.clone().addScaledVector(fh, 1.9); target.y = Math.min(-0.3, D.p.y + 0.7); }
+    else if (bm === 'attach') { target = D.p.clone().addScaledVector(r, 0.75); target.y = Math.min(-0.3, D.p.y); maxV = 2.2; gain = 3; }
+    else if (bm === 'gone') { if (!dc.snapped) { b.p.copy(dc.lostAt); b.v.set(0, 0, 0); dc.snapped = true; } target = dc.lostAt.clone(); }
+    else if (bm === 'surface') { if (!dc.snapped2) { b.p.copy(D.p).addScaledVector(r, 1.3); b.p.y = -0.3; b.v.set(0, 0, 0); dc.snapped2 = true; } target = D.p.clone().addScaledVector(r, 1.3); target.y = -0.3; }
     const to = target.sub(b.p);
     const dist = b.p.distanceTo(D.p);
-    const maxV = dist > 8 ? 1.2 : 0.7;
-    const want = to.clone().multiplyScalar(0.8);
+    if (maxV === null) maxV = dist > 8 ? 1.2 : 0.7;
+    const want = to.clone().multiplyScalar(gain);
     if (want.length() > maxV) want.setLength(maxV);
     b.v.lerp(want, Math.min(1, dt * 1.5));
     for (const pl of nearP) {
@@ -601,7 +625,8 @@ export async function runZoutpier(site) {
     if (b.p.y < fl) b.p.y = fl;
     if (b.p.y > -0.3) b.p.y = -0.3;
     const hv = Math.hypot(b.v.x, b.v.z);
-    if (hv > 0.05) b.yaw = Math.atan2(-b.v.x, -b.v.z);
+    if (bm === 'front' && hv < 0.25) { let d2 = D.yaw + Math.PI - b.yaw; while (d2 > Math.PI) d2 -= Math.PI * 2; while (d2 < -Math.PI) d2 += Math.PI * 2; b.yaw += d2 * Math.min(1, dt * 2); }
+    else if (hv > 0.05) b.yaw = Math.atan2(-b.v.x, -b.v.z);
     else { let d2 = D.yaw - b.yaw; while (d2 > Math.PI) d2 -= Math.PI * 2; while (d2 < -Math.PI) d2 += Math.PI * 2; b.yaw += d2 * dt; }
     buddyM.position.copy(b.p);
     buddyM.rotation.order = 'YXZ';
@@ -610,14 +635,14 @@ export async function runZoutpier(site) {
     b.br += dt / 4.3;
     if (b.br > 1) { b.br -= 1; if (b.p.y < -0.7) { const mp = buddyM.userData.mouth.getWorldPosition(tmpV); spawnBubbles(bubbles, mp.x, mp.y, mp.z, 10, false); } }
     // signalen
-    if (D.gt > D.nextOk && !D.sig && -D.p.y > 2) { D.sig = 'ok'; D.sigT = 0; D.nextOk = D.gt + 300; ui.querySelector('.c3-ok').hidden = false; hud.msg(night ? 'Je buddy maakt een cirkel met zijn lampbundel: alles OK? Antwoord met een cirkel van jouw lamp (👌 of O).' : 'Je buddy vraagt met een teken: alles OK? (👌 of O)', 4500); }
-    if (D.gt > D.nextAir && !D.sig && -D.p.y > 2) { D.sig = 'air'; D.sigT = 0; D.nextAir = D.gt + 600; ui.querySelector('.c3-air').hidden = false; hud.msg(night ? 'Je buddy schijnt op zijn manometer en vraagt: hoeveel lucht heb jij nog?' : 'Je buddy vraagt: hoeveel lucht heb je nog?', 4000); }
+    if (D.gt > D.nextOk && !D.sig && !drills.active && -D.p.y > 2) { D.sig = 'ok'; D.sigT = 0; D.nextOk = D.gt + 300; ui.querySelector('.c3-ok').hidden = false; hud.msg(night ? 'Je buddy maakt een cirkel met zijn lampbundel: alles OK? Antwoord met een cirkel van jouw lamp (👌 of O).' : 'Je buddy vraagt met een teken: alles OK? (👌 of O)', 4500); }
+    if (D.gt > D.nextAir && !D.sig && !drills.active && -D.p.y > 2) { D.sig = 'air'; D.sigT = 0; D.nextAir = D.gt + 600; ui.querySelector('.c3-air').hidden = false; hud.msg(night ? 'Je buddy schijnt op zijn manometer en vraagt: hoeveel lucht heb jij nog?' : 'Je buddy vraagt: hoeveel lucht heb je nog?', 4000); }
     if (D.sig) {
       D.sigT += dt;
       if (D.sigT > 14) { D.missed++; D.sig = null; ui.querySelector('.c3-ok').hidden = true; ui.querySelector('.c3-air').hidden = true; hud.msg('Je reageerde niet op je buddy. Hij komt dichterbij kijken.', 3500); }
     }
     // buddy kwijt?
-    if (dist > (night ? 7 : 12)) { D.sepT += dt; if (D.sepT > 1 && !D.warned.sep) { D.warned.sep = 1; hud.msg(night ? 'Je ziet het lampje van je buddy bijna niet meer! ’s Nachts blijf je binnen 2–3 m van elkaar.' : 'Blijf bij je buddy! Hij is ' + Math.round(dist) + ' m van je af.', 3500); } }
+    if (dist > (night ? 7 : 12) && !drills.quietSep()) { D.sepT += dt; if (D.sepT > 1 && !D.warned.sep) { D.warned.sep = 1; hud.msg(night ? 'Je ziet het lampje van je buddy bijna niet meer! ’s Nachts blijf je binnen 2–3 m van elkaar.' : 'Blijf bij je buddy! Hij is ' + Math.round(dist) + ' m van je af.', 3500); } }
     else { D.sepT = 0; D.warned.sep = 0; }
   }
 
@@ -708,7 +733,7 @@ export async function runZoutpier(site) {
       site: 'saltpier', date: Date.now(), minutes, maxD: D.maxD, avgD: D.gt > 0 ? D.sumD / D.gt : 0, temp: 28, bar,
       species: Object.keys(D.spotted), newSpecies: D.newSp.slice(), photos: D.photos, challenges: D.chDone.slice(), needStop: D.needStop, safetyDone: D.stopDone,
       ascentWarnings: D.fastCount, ooa: !!ooa, decoViolation: D.decoViol || D.ceilViol > 0, cold: 0, gas: lo.gas, tankL: TANK_L,
-      profile: D.prof.concat([[minutes, 0]]), lines, earned: 0, xp, three: true, night, bio: D.bioSeen,
+      profile: D.prof.concat([[minutes, 0]]), lines, earned: 0, xp, three: true, night, bio: D.bioSeen, drills: drills.results(),
       rules: { touches: D.touches, reef: D.reefTouch, missed: D.missed, limit: D.limitViol, deco: D.wasDeco, ceil: D.ceilViol, glare: D.glare, night },
     };
     // opslaan: logboek, foto's, restverzadiging, vliegverbod
@@ -719,7 +744,7 @@ export async function runZoutpier(site) {
       avgD: Math.round(res.avgD * 10) / 10, temp: 28, species: res.species, newSpecies: res.newSpecies, photos: res.photos.length, earned: 0,
       safetyDone: res.safetyDone, needStop: res.needStop, ascentWarnings: res.ascentWarnings, ooa: res.ooa, bar, gas: res.gas,
       profile: prof.filter((p, i) => i % stp === 0 || i === prof.length - 1).map((p) => [Math.round(p[0] * 10) / 10, Math.round(p[1] * 10) / 10]),
-      three: true, rules: res.rules, night,
+      three: true, rules: res.rules, night, drills: res.drills.map((x) => ({ id: x.id, ok: x.ok })),
     });
     res.photos.forEach((p) => { sv.photos.push(p); if (p.sp && sv.species[p.sp]) sv.species[p.sp].photo = true; });
     if (sv.photos.length > 40) sv.photos = sv.photos.slice(-40);
@@ -742,7 +767,7 @@ export async function runZoutpier(site) {
   requestAnimationFrame((t) => { last = t; loop(t); });
   // testhaakje: simulatie vooruitspoelen zonder beeld
   window.__d3 = {
-    D, deco, camera, scene, renderer, action, fauna, camPos, shadows, snd,
+    D, deco, camera, scene, renderer, action, fauna, camPos, shadows, snd, drills,
     sim(sec, inp) {
       D.forceInp = Object.assign({ fwd: 0, side: 0, turn: 0, lookX: 0, lookY: 0, bcdIn: false, bcdOut: false, breath: false, exhale: false, hard: false }, inp || {});
       for (let t = 0; t < sec && !D.ended; t += 0.05) step(0.05);
@@ -853,11 +878,12 @@ async function preDive(site) {
     '<h2>Hoe wil je duiken?</h2>' +
     '<div class="b3-set"><b>Duiktijd</b><span class="seg" data-k="ts"><button data-v="1">Echt ×1</button><button data-v="2">×2</button><button data-v="4">×4</button></span><small>Klok, lucht en stikstof lopen sneller; jij zwemt op normale snelheid.</small></div>' +
     '<div class="b3-set"><b>Trimhulp</b><span class="seg" data-k="assist"><button data-v="1">Aan</button><button data-v="0">Uit</button></span><small>Uit = zelf trimmen met trimvest (▲▼ / R F) en ademhaling (🫁 / B).</small></div>' +
+    '<div class="b3-set"><b>Buddy-oefeningen</b><span class="seg" data-k="drills"><button data-v="0">Uit</button><button data-v="1">Aan</button></span><small>Je buddy oefent onverwacht met je: lucht delen, buddy kwijt, handsignalen en een gecontroleerde noodopstijging. Kies eerst wat je moet doen en doe het dan echt.</small></div>' +
     '<div class="b3-set"><b>Zicht</b><span class="seg" data-k="view"><button data-v="achter">Achter de duiker</button><button data-v="bril">Door je duikbril</button></span></div>' +
     '<div class="b3-set"><b>Beeldkwaliteit</b><span class="seg" data-k="quality"><button data-v="laag">Laag</button><button data-v="midden">Midden</button><button data-v="hoog">Hoog</button></span><small>Kies laag als het schokt op je telefoon.</small></div>' +
     '<div class="modal-actions"><button class="btn primary" data-a="go">Naar de buddycheck</button></div>',
     '', (c, done) => {
-      const cur = { ts: String(s3.ts), assist: s3.assist ? '1' : '0', view: s3.view, quality: s3.quality };
+      const cur = { ts: String(s3.ts), assist: s3.assist ? '1' : '0', view: s3.view, quality: s3.quality, drills: s3.drills ? '1' : '0' };
       c.querySelectorAll('.seg').forEach((seg) => {
         const k = seg.dataset.k;
         const sync = () => seg.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.v === cur[k]));
@@ -865,7 +891,7 @@ async function preDive(site) {
         sync();
       });
       c.querySelector('[data-a=go]').onclick = () => {
-        s3.ts = +cur.ts; s3.assist = cur.assist === '1'; s3.view = cur.view; s3.quality = cur.quality;
+        s3.ts = +cur.ts; s3.assist = cur.assist === '1'; s3.view = cur.view; s3.quality = cur.quality; s3.drills = cur.drills === '1';
         DG.Save.save(); done(true);
       };
     });
@@ -891,5 +917,5 @@ async function preDive(site) {
       c.querySelector('[data-a=go]').onclick = () => done(true);
     });
   if (!ok3) return null;
-  return { tissues, current: cur, curTxt, night: when === 'nacht' };
+  return { tissues, current: cur, curTxt, night: when === 'nacht', drills: !!s3.drills };
 }
