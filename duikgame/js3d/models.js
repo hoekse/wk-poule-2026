@@ -24,6 +24,12 @@ export const FILES = {
   vaasspons: 'models/rif/vaasspons.glb', tonspons: 'models/rif/tonspons.glb',
   bekerkoraal: 'models/rif/bekerkoraal.glb', korstspons: 'models/rif/korstspons.glb', zilvervisje: 'models/vis/zilvervisje.glb',
   zeepluim: 'models/rif/zeepluim.glb',
+  // Oosterschelde (Zeelandbrug)
+  zeeanjelier: 'models/os/zeeanjelier.glb', dodemansduim: 'models/os/dodemansduim.glb',
+  lipvis: 'models/os/lipvis.glb', steenbolk: 'models/os/steenbolk.glb', zeebrasem: 'models/os/zeebrasem.glb',
+  'lipvis-ver': 'models/os/lipvis-ver.glb', 'steenbolk-ver': 'models/os/steenbolk-ver.glb', 'zeebrasem-ver': 'models/os/zeebrasem-ver.glb',
+  kreeft: 'models/os/kreeft.glb', zwemkrab: 'models/os/zwemkrab.glb', zeedonderpad: 'models/os/zeedonderpad.glb', kathaai: 'models/os/kathaai.glb',
+  zeekat: 'models/os/zeekat.glb', vlokslak: 'models/os/vlokslak.glb', bruinvis: 'models/os/bruinvis.glb',
   // meer leven: geelstaartsnappers en gele geitenvissen
   geelstaart_snapper: 'models/vis/geelstaart_snapper.glb', gele_geitenvis: 'models/vis/gele_geitenvis.glb',
 };

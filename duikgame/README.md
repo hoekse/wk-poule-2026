@@ -37,6 +37,14 @@ De Zoutpier is de eerste duikstek in 3D: vrij rondzwemmen volgens de echte duikr
   - camera achter de duiker of door de duikbril;
   - beeldkwaliteit laag, midden of hoog.
 
+## Zeelandbrug, Oosterschelde (3D)
+
+- Kantduik vanaf de dijk: een helling van stortsteen met suikerwier loopt af naar een slibbodem. Op ± 50 m staat het eerste pijlerpaar van de brug, vol zeeanjelieren en dodemansduimen.
+- Groen water met ± 5 m zicht, 13 °C en een grijze Hollandse lucht. Je lamp staat standaard aan en de bundel is zichtbaar in het troebele water.
+- Dieren als 3D-modellen uit Magnific: kreeft, fluwelen zwemkrab, zeedonderpad, vlokslak, kathaai, zeekat en soms een bruinvis. Daarnaast scholen steenbolken, zwarte zeebrasems en gevlekte lipvissen.
+- Je duikt alleen rond de kentering. Ben je te laat, dan wacht je op de volgende. Met een te dun pak krijg je het koud en verbruik je meer lucht.
+- Zes fotochallenges.
+
 ### Besturing
 
 | | Telefoon / tablet | Pc |
@@ -65,10 +73,10 @@ Op GitHub Pages of Vercel werkt het direct.
 ## Bestanden
 
 - `js/`: menu's, winkel, wereldkaart, logboek en de 2D-duikstekken
-- `js3d/`: de 3D-duik (Three.js): water, bodem, pier, dieren, duiker, 3D-modellen laden, fysica, decompressie, besturing en HUD; `shop3d.js` (3D-winkel) en `trip3d.js` (busrit)
+- `js3d/`: de 3D-duik (Three.js): water, bodem, pier, dieren, duiker, 3D-modellen laden, fysica, decompressie, besturing en HUD; `sites.js` (per duikstek: water, bodem, bouwwerken, dieren en briefing), `site-oosterschelde.js` (Zeelandbrug), `shop3d.js` (3D-winkel) en `trip3d.js` (busrit)
 - `vendor/three/`: Three.js 0.186.1 (MIT-licentie)
-- `models/`: 3D-modellen (glTF) uit Magnific: `duiker.glb` en `buddy.glb` met skelet, `vis/` (met `-ver`-versies voor op afstand), `dier/`, `rif/` en `winkel/` (paspop, torso, tas, fles en de Tuimelaar-bus)
+- `models/`: 3D-modellen (glTF) uit Magnific: `duiker.glb` en `buddy.glb` met skelet, `vis/` (met `-ver`-versies voor op afstand), `dier/`, `rif/`, `os/` (Oosterschelde) en `winkel/` (paspop, torso, tas, fles en de Tuimelaar-bus)
 - `audio/`: geluiden uit Magnific
-- `img/`: winkelfoto's en logo van De Tuimelaar, foto's van Bonaire, pijler- en zandtextuur, zeewaaier, `vis/` met de vissenfoto's (reserve als een 3D-model niet laadt), `winkel3d/` (wanden voor de 3D-winkel, uit de winkelfoto's) en `reis/` (stockfoto's van Schiphol, de vlucht en Bonaire)
+- `img/`: winkelfoto's en logo van De Tuimelaar, foto's van Bonaire, pijler- en zandtextuur, zeewaaier, `vis/` met de vissenfoto's (reserve als een 3D-model niet laadt), `winkel3d/` (wanden voor de 3D-winkel, uit de winkelfoto's), `oosterschelde/` (pijler, bodem en suikerwier) en `reis/` (stockfoto's van Schiphol, de vlucht en Bonaire)
 
 Fan-project in samenwerking met Duikcentrum De Tuimelaar Zwolle. Sommige referentiefoto's van internet zijn alleen als voorbeeld gebruikt en zitten niet in het spel.

@@ -33,7 +33,12 @@ export function fbm(x, z) {
 }
 
 // bodemhoogte (y) op positie x,z
-export function seabed(x, z) {
+// bodem per duikstek: standaard de Zoutpier; andere stekken zetten hun eigen vorm met setSeabed()
+let floorFn = null;
+export function setSeabed(fn) { floorFn = fn || null; }
+export function seabed(x, z) { return floorFn ? floorFn(x, z) : saltSeabed(x, z); }
+export { fbm as floorNoise };
+function saltSeabed(x, z) {
   let y = profile(x);
   const reef = x < -138 ? Math.min(1, (-138 - x) / 12) : 0;
   y += (fbm(x * 0.05, z * 0.05) - 0.45) * (1.2 + reef * 3.0);
@@ -110,7 +115,8 @@ export function loadSandTextures() {
   return Promise.all([one('img/tex-zand.webp', true), one('img/tex-zand-n.webp', false)]).then(([map, normal]) => (map ? { map, normal } : null));
 }
 
-export function makeSeabed(quality, sandTex) {
+export function makeSeabed(quality, sandTex, opts = {}) {
+  if (opts.custom) return opts.custom(quality, sandTex);
   const W = 340, D = 300;
   const segX = quality === 'laag' ? 110 : 170, segZ = quality === 'laag' ? 96 : 150;
   const geo = new THREE.PlaneGeometry(W, D, segX, segZ);

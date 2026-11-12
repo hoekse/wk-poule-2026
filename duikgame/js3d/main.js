@@ -1,10 +1,10 @@
-/* Diepblauw 3D — de duik bij de Zoutpier (Bonaire): vrij zwemmen in 3D met echte duikregels */
+/* Diepblauw 3D — vrij zwemmen in 3D met echte duikregels. De duikstek zelf (water, bodem,
+   bouwwerk, dieren, briefing) komt uit een profiel in sites.js. */
 import * as THREE from 'three';
 import { UW, makeCausticTexture, makeDome, makeSurface, makeRays, updateRays, makeParticles, makeBubbles, spawnBubbles, updateBubbles, makeBeam, updateBeam, makeBio, spawnBio, updateBio, makeGlows } from './water.js';
-import { makeSeabed, makeReef, makePillarGrowth, seabed, loadSandTextures } from './terrain.js';
-import { loadModels } from './models.js';
-import { makePier, pillarAt } from './pier.js';
-import { Fauna, preloadFishPhotos, preloadFaunaModels } from './creatures3d.js';
+import { seabed } from './terrain.js';
+import { pillarAt } from './pier.js';
+import { profileFor } from './sites.js';
 import { buildDiver, animateDiver, preloadDivers } from './diver3d.js';
 import { Deco, noFlyHours } from './deco.js';
 import { Controls } from './controls.js';
@@ -20,12 +20,12 @@ const esc = DG.U.esc;
 const frame = () => new Promise((r) => requestAnimationFrame(() => r()));
 
 // fysische constanten (kg = liter zeewater)
-const TANK_L = 11.1;          // aluminium 80 (standaard op Bonaire)
-const START_BAR = 207;        // 3000 psi
+let TANK_L = 11.1;            // fles per duikstek (Bonaire: aluminium 80)
+let START_BAR = 207;          // 3000 psi
 const AIR_KG_PER_L = 0.001225;
 const SUIT0 = 3.2;            // 3 mm natpak: ±3,2 kg drijfvermogen aan de oppervlakte
 const LEAD_REF = 10;          // jouw lood: 10 kg
-const BASE = LEAD_REF + 50 * TANK_L * AIR_KG_PER_L - SUIT0 / 1.5; // neutraal op 5 m met 50 bar en lege trimvest
+let BASE = LEAD_REF + 50 * TANK_L * AIR_KG_PER_L - SUIT0 / 1.5; // neutraal op 5 m met 50 bar en lege trimvest
 const BCD_CAP = 16;
 const M_EFF = 135;
 
@@ -34,16 +34,20 @@ export function gameNow() { return Date.now() + ((DG.Save.data && DG.Save.data.c
 /* ================================================================
  * Opstarten
  * ================================================================ */
-export async function runZoutpier(site) {
+export function runZoutpier(site) { return runDive3D(site); }
+export async function runDive3D(site) {
   const sv = DG.Save.data;
+  const P = profileFor(site);
+  TANK_L = P.tank.L || DG.Save.loadout().tankL; START_BAR = P.tank.bar;
+  BASE = LEAD_REF + 50 * TANK_L * AIR_KG_PER_L - SUIT0 / 1.5;
   sv.set3d = Object.assign({ quality: matchMedia('(pointer: coarse)').matches ? 'midden' : 'hoog', ts: 2, assist: true, view: 'achter' }, sv.set3d || {});
   // vooraf: briefing, regels, instellingen en buddycheck
-  const plan = await preDive(site);
+  const plan = await preDive(site, P);
   if (!plan) return null;
   const root = document.createElement('div');
   root.className = 'd3';
   document.body.classList.add('d3-on');
-  root.innerHTML = '<canvas class="d3-canvas"></canvas><div class="d3-load"><div class="d3-spin"></div><p>Zoutpier laden…</p></div>';
+  root.innerHTML = '<canvas class="d3-canvas"></canvas><div class="d3-load"><div class="d3-spin"></div><p>' + P.loadTitle + '</p></div>';
   document.body.appendChild(root);
   const loadTxt = root.querySelector('.d3-load p');
   const canvas = root.querySelector('canvas');
@@ -66,19 +70,23 @@ export async function runZoutpier(site) {
   UW.uCaus.value = night ? 0 : q === 'laag' ? 0.7 : 1;
   // nacht: alleen maanlicht en lampen; het water zelf is bijna zwart
   UW.uNight.value = night ? 1 : 0;
-  UW.uWaterTop.value.set(night ? 0x0a1824 : 0x6fe0f6);
-  UW.uWaterDeep.value.set(night ? 0x010409 : 0x0d5596);
+  const W = P.water(night);
+  UW.uWaterTop.value.set(W.top);
+  UW.uWaterDeep.value.set(W.deep);
+  UW.uSea.value.setRGB(...(W.sea || [0.12, 0.62, 0.72]));
+  UW.uOvercast.value = W.overcast || 0;
+  UW.uCaus.value *= W.caus;
   UW.uLampPower.value = night ? 2.3 : 1.6;
   UW.uLampOn.value = 0; UW.uLamp2On.value = 0;
-  renderer.toneMappingExposure = night ? 1.5 : 1.28;
-  scene.add(night ? new THREE.HemisphereLight(0x5b7bb0, 0x1a1a22, 0.1) : new THREE.HemisphereLight(0xd6f2ff, 0xa8977a, 1.9));
-  const sun = night ? new THREE.DirectionalLight(0x9fb4e0, 0.18) : new THREE.DirectionalLight(0xfff2dc, 2.8);
+  renderer.toneMappingExposure = W.exposure;
+  scene.add(new THREE.HemisphereLight(W.hemi[0], W.hemi[1], W.hemi[2]));
+  const sun = new THREE.DirectionalLight(W.sun[0], W.sun[1]);
   sun.position.set(30, 80, -40);
   scene.add(sun);
   const dome = makeDome(); scene.add(dome);
   const surf = makeSurface(); scene.add(surf);
   const rays = makeRays(q === 'laag' ? 14 : 28); scene.add(rays);
-  rays.visible = !night;
+  rays.visible = W.rays;
   const parts = makeParticles(q === 'laag' ? 700 : 1600); scene.add(parts);
   parts.material.uniforms.uPx.value = pr;
   const bubbles = makeBubbles(600); scene.add(bubbles);
@@ -94,27 +102,11 @@ export async function runZoutpier(site) {
   glows.material.uniforms.uPx.value = pr;
   glows.visible = night;
 
-  await loading('Bodem en rif…');
-  const [sandTex] = await Promise.all([loadSandTextures(), loadModels(['hersenkoraal', 'sterkoraal', 'buisspons', 'vaasspons', 'tonspons', 'bekerkoraal', 'korstspons', 'zeepluim'])]);
-  scene.add(makeSeabed(q, sandTex));
-  await loading('De pijlers van de Zoutpier…');
-  const pier = makePier(scene, q);
-  const pTex = new THREE.TextureLoader().load(q === 'laag' ? 'img/tex-pijler-laag.jpg' : 'img/tex-pijler.jpg', (t) => {
-    t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(1, 1.2); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4;
-    pier.mesh.material.map = t; pier.mesh.material.needsUpdate = true;
-    // reliëf van sponzen, koralen en zeepokken (normaalkaart uit dezelfde textuur)
-    new THREE.TextureLoader().load(q === 'laag' ? 'img/tex-pijler-laag-n.jpg' : 'img/tex-pijler-n.jpg', (n) => {
-      n.wrapS = n.wrapT = THREE.RepeatWrapping; n.repeat.set(1, 1.2);
-      pier.mesh.material.normalMap = n; pier.mesh.material.normalScale = new THREE.Vector2(1.2, 1.2); pier.mesh.material.needsUpdate = true;
-    }, undefined, () => { pier.mesh.material.bumpMap = t; pier.mesh.material.bumpScale = 1.6; pier.mesh.material.needsUpdate = true; });
-  });
-  void pTex;
-  makeReef(scene, q, pier.pillars);
-  makePillarGrowth(scene, q, pier.pillars, pillarAt);
-  await loading('Vissen, tarpons en schildpadden…');
-  await Promise.all([preloadFishPhotos(), preloadFaunaModels(night)]);
-  const fauna = new Fauna(scene, q, { night });
-  fauna.placeFrogs(pier.pillars);
+  await loading('Bodem en begroeiing…');
+  // de duikstek bouwen: bodem, bouwwerk (pier, brug, wrak), begroeiing en dieren
+  const world = await P.build({ scene, q, loading, night });
+  const pier = { pillars: world.pillars || [] };
+  const fauna = world.fauna;
 
   await loading('Duikers en geluid…');
   const snd = new Sound3D();
@@ -136,19 +128,21 @@ export async function runZoutpier(site) {
   const hud = new Hud(ui);
 
   /* ---------------- staat ---------------- */
+  // te dun pak voor dit water? Dan heb je het koud en verbruik je meer lucht
+  const coldK = Math.max(0, Math.min(1, (lo.warmth - P.temp) / 8));
   const deco = new Deco({ gfLo: 0.4, gfHi: 0.85, fN2: lo.gas === 'ean32' ? 0.68 : 0.79, tissues: plan.tissues });
   const D = {
-    p: new THREE.Vector3(-3.5, -0.25, 8), v: new THREE.Vector3(),
-    yaw: Math.PI / 2, pitch: 0, lookYaw: Math.PI / 2, lookPitch: -0.15,
+    p: new THREE.Vector3(...P.start.p), v: new THREE.Vector3(),
+    yaw: P.start.yaw, pitch: 0, lookYaw: P.start.yaw, lookPitch: -0.15,
     bcdN: 5, gas: START_BAR * TANK_L, lungPh: 0, holdT: 0,
     t: 0, gt: 0, maxD: 0, sumD: 0, lastEq: 0, ear: 0,
     stop: 0, stopDone: false, needStop: false, asc: 0, fastT: 0, fastCount: 0, inFast: false,
     ceilViol: 0, decoViol: false, wasDeco: false, limitViol: 0, inLimit: false,
     touches: 0, reefTouch: 0, touchCool: 0,
     spotted: {}, newSp: [], photos: [], chDone: [], prof: [[0, 0]], profT: 0,
-    lamp: night && !!lo.lamp, view: sv.set3d.view, ts: sv.set3d.ts, assist: sv.set3d.assist,
+    lamp: (night || !!P.murky) && !!lo.lamp, view: sv.set3d.view, ts: sv.set3d.ts, assist: sv.set3d.assist,
     night, glareT: 0, glare: 0, glareCool: 0, bioT: 0, bioSeen: false, aimT: 0, aimP: null, nextAim: 45,
-    buddy: { p: new THREE.Vector3(-4.5, -0.3, 10), v: new THREE.Vector3(), yaw: Math.PI / 2, br: 0 },
+    buddy: { p: new THREE.Vector3(...P.start.buddy), v: new THREE.Vector3(), yaw: P.start.yaw, br: 0 },
     sig: null, sigT: 0, nextOk: 240, nextAir: 600, missed: 0, warned: {}, sepT: 0, ooa: false,
     ndl: 999, ceil: 0, stopPlan: null, planT: 0, paused: false, ended: false, cur: plan.current,
   };
@@ -247,10 +241,10 @@ export async function runZoutpier(site) {
       });
     }
     const spId = ph.none ? null : ph.s.spc.id;
-    const photo = { sp: ph.none || ph.s.buddy ? null : spId, title: ph.none ? 'Sfeerfoto' : ph.s.buddy ? 'Je buddy' : ph.s.sleep ? 'Slapende stoplichtpapegaaivis' : null, night, stars: g.stars, max: 5, note: g.note, url: c.toDataURL('image/jpeg', 0.78), site: 'saltpier', date: Date.now(), depth: Math.round(-D.p.y * 10) / 10, ch: [] };
+    const photo = { sp: ph.none || ph.s.buddy ? null : spId, title: ph.none ? 'Sfeerfoto' : ph.s.buddy ? 'Je buddy' : ph.s.sleep ? 'Slapende stoplichtpapegaaivis' : null, night, stars: g.stars, max: 5, note: g.note, url: c.toDataURL('image/jpeg', 0.78), site: P.id, date: Date.now(), depth: Math.round(-D.p.y * 10) / 10, ch: [] };
     // fotochallenges
     sv.challenges = sv.challenges || {};
-    checkChallenges((DG.PHOTO_CHALLENGES || {})[night ? 'saltpier_nacht' : 'saltpier'], sv.challenges, spId, g.stars).forEach((ch) => {
+    checkChallenges((DG.PHOTO_CHALLENGES || {})[P.challenges(night)], sv.challenges, spId, g.stars).forEach((ch) => {
       const t = document.createElement('canvas'); t.width = 160; t.height = 120;
       t.getContext('2d').drawImage(c, 0, 0, 160, 120);
       sv.challenges[ch.id] = { stars: g.stars, date: Date.now(), thumb: t.toDataURL('image/jpeg', 0.7) };
@@ -275,7 +269,7 @@ export async function runZoutpier(site) {
     nearP = pier.pillars.filter((pl) => Math.abs(pl.x - D.p.x) < 14 && Math.abs(pl.z - D.p.z) < 14);
   }
   function litBy(p, pos, dir, cosA, range) { const v = p.clone().sub(pos); const d = v.length(); return d < range && d > 0.01 && v.divideScalar(d).dot(dir) > cosA; }
-  function inShadow(x, z) { return (x > -122 && x < -3 && Math.abs(z) < 2.6) || (Math.abs(x + 120) < 9 && Math.abs(z) < 7); }
+  const inShadow = P.inShadow || (() => false);
   const fwdOf = (yaw, pitch) => new THREE.Vector3(-Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), -Math.cos(yaw) * Math.cos(pitch));
 
   /* ---------------- hoofdlus ---------------- */
@@ -383,7 +377,7 @@ export async function runZoutpier(site) {
       D.p.y = fl; if (D.v.y < 0) D.v.y = 0;
       if (hit > 0.12 && D.touchCool <= 0) {
         D.touchCool = 3;
-        if (D.p.x < -136) { D.reefTouch++; hud.msg('Pas op: je raakt het rif! In het Bonaire Marine Park mag je niets aanraken.'); }
+        if (P.isReef && P.isReef(D.p.x, D.p.z)) { D.reefTouch++; hud.msg(P.reefMsg); }
         else hud.msg('Je raakt de bodem en het zand dwarrelt op. Trim iets bij.', 2500);
       }
     }
@@ -392,14 +386,14 @@ export async function runZoutpier(site) {
     for (const pl of nearP) {
       const a = pillarAt(pl, D.p.y);
       const dx = D.p.x - a.x, dz = D.p.z - a.z, d = Math.hypot(dx, dz);
-      const minD = 0.62 + 0.38;
+      const minD = (pl.r || 0.55) + 0.45;
       if (d < minD && D.p.y < pl.y0 + 20) {
         D.p.x = a.x + (dx / d) * minD; D.p.z = a.z + (dz / d) * minD;
-        if (D.touchCool <= 0 && D.v.length() > 0.08) { D.touchCool = 3; D.touches++; hud.msg('Je raakt een pijler. Niets aanraken: het leven op de pijlers is kwetsbaar.', 3000); }
+        if (D.touchCool <= 0 && D.v.length() > 0.08) { D.touchCool = 3; D.touches++; hud.msg(P.pillarMsg, 3000); }
       }
     }
     // gebied begrenzen
-    D.p.x = Math.max(-260, Math.min(2, D.p.x)); D.p.z = Math.max(-140, Math.min(140, D.p.z));
+    D.p.x = Math.max(P.bounds.x[0], Math.min(P.bounds.x[1], D.p.x)); D.p.z = Math.max(P.bounds.z[0], Math.min(P.bounds.z[1], D.p.z));
 
     /* ---- duikcomputer ---- */
     const dNow = Math.max(0, -D.p.y - 0.0);
@@ -413,7 +407,8 @@ export async function runZoutpier(site) {
       if (D.profT > 20) { D.profT = 0; D.prof.push([D.gt / 60, dNow]); }
       // luchtverbruik
       const effort = Math.min(1, Math.abs(inp.fwd) * (inp.hard ? 1 : 0.55) + Math.abs(inp.side) * 0.3);
-      const sac = (13 + effort * 15 + (D.alarm ? 4 : 0)) * lo.sac * drills.gasFactor();
+      const sac = (13 + effort * 15 + (D.alarm ? 4 : 0)) * lo.sac * drills.gasFactor() * (1 + 0.35 * coldK);
+      D.coldT = (D.coldT || 0) + gdt * coldK;
       D.gas -= (sac * amb * gdt) / 60;
       if (D.gas < 0) D.gas = 0;
     }
@@ -512,7 +507,7 @@ export async function runZoutpier(site) {
       UW.uLampRange.value = lo.lamp.bereik;
       UW.uLampCos.value = Math.cos(lo.lamp.hoek);
     }
-    updateBeam(beam, night && D.lamp, UW.uLampPos.value, UW.uLampDir.value, lo.lamp ? lo.lamp.bereik : 1, lo.lamp ? lo.lamp.hoek : 0.4, D.view === 'bril' ? 0 : 0.1);
+    updateBeam(beam, (night || !!P.murky) && D.lamp, UW.uLampPos.value, UW.uLampDir.value, lo.lamp ? lo.lamp.bereik : 1, lo.lamp ? lo.lamp.hoek : 0.4, D.view === 'bril' ? 0 : 0.1);
     if (night) nightStep(dt, inp, dNow);
 
     // HUD
@@ -522,7 +517,7 @@ export async function runZoutpier(site) {
       const heading = (Math.atan2(-Math.sin(D.lookYaw), -Math.cos(D.lookYaw)) * 180) / Math.PI;
       const sp = D.stopPlan && D.stopPlan.stops[0];
       hud.update({
-        depth: dNow, time: D.gt, bar, temp: 28, maxD: D.maxD, heading,
+        depth: dNow, time: D.gt, bar, temp: P.temp, maxD: D.maxD, heading,
         ndl: D.ndl, deco: inDeco, ceil: sp ? sp.depth : D.ceil, stopMin: sp ? sp.min : 0,
         stop: D.needStop && !D.stopDone && !inDeco && dNow < 7.5 ? 180 - D.stop : 0,
         asc: Math.max(0, D.asc), alert: D.alarm,
@@ -668,7 +663,7 @@ export async function runZoutpier(site) {
       if (ok) {
         D.spotted[s.spc.id] = true;
         const isNew = !sv.species[s.spc.id];
-        if (isNew) { sv.species[s.spc.id] = { seen: true, photo: false, site: 'saltpier', date: Date.now() }; D.newSp.push(s.spc.id); DG.Audio.newSpecies(); }
+        if (isNew) { sv.species[s.spc.id] = { seen: true, photo: false, site: P.id, date: Date.now() }; D.newSp.push(s.spc.id); DG.Audio.newSpecies(); }
         else DG.Audio.spot();
         UI.spotToast(s.sleep ? Object.assign({}, s.spc, { name: 'Slapende ' + s.spc.name.toLowerCase() }) : s.spc, isNew, true);
       }
@@ -730,9 +725,9 @@ export async function runZoutpier(site) {
     xp.push(['Duik gelogd', 1]);
     if (D.newSp.length) xp.push(['Nieuwe soorten', D.newSp.length]);
     const res = {
-      site: 'saltpier', date: Date.now(), minutes, maxD: D.maxD, avgD: D.gt > 0 ? D.sumD / D.gt : 0, temp: 28, bar,
+      site: P.id, date: Date.now(), minutes, maxD: D.maxD, avgD: D.gt > 0 ? D.sumD / D.gt : 0, temp: P.temp, bar,
       species: Object.keys(D.spotted), newSpecies: D.newSp.slice(), photos: D.photos, challenges: D.chDone.slice(), needStop: D.needStop, safetyDone: D.stopDone,
-      ascentWarnings: D.fastCount, ooa: !!ooa, decoViolation: D.decoViol || D.ceilViol > 0, cold: 0, gas: lo.gas, tankL: TANK_L,
+      ascentWarnings: D.fastCount, ooa: !!ooa, decoViolation: D.decoViol || D.ceilViol > 0, cold: D.gt > 0 ? Math.round(100 * (D.coldT || 0) / D.gt) : 0, gas: lo.gas, tankL: TANK_L,
       profile: D.prof.concat([[minutes, 0]]), lines, earned: 0, xp, three: true, night, bio: D.bioSeen, drills: drills.results(),
       rules: { touches: D.touches, reef: D.reefTouch, missed: D.missed, limit: D.limitViol, deco: D.wasDeco, ceil: D.ceilViol, glare: D.glare, night },
     };
@@ -740,8 +735,8 @@ export async function runZoutpier(site) {
     const prof = res.profile;
     const stp = Math.max(1, Math.ceil(prof.length / 70));
     sv.dives.push({
-      nr: sv.dives.length + 1, site: 'saltpier', date: res.date, minutes: Math.round(minutes), maxD: Math.round(res.maxD * 10) / 10,
-      avgD: Math.round(res.avgD * 10) / 10, temp: 28, species: res.species, newSpecies: res.newSpecies, photos: res.photos.length, earned: 0,
+      nr: sv.dives.length + 1, site: P.id, date: res.date, minutes: Math.round(minutes), maxD: Math.round(res.maxD * 10) / 10,
+      avgD: Math.round(res.avgD * 10) / 10, temp: P.temp, species: res.species, newSpecies: res.newSpecies, photos: res.photos.length, earned: 0,
       safetyDone: res.safetyDone, needStop: res.needStop, ascentWarnings: res.ascentWarnings, ooa: res.ooa, bar, gas: res.gas,
       profile: prof.filter((p, i) => i % stp === 0 || i === prof.length - 1).map((p) => [Math.round(p[0] * 10) / 10, Math.round(p[1] * 10) / 10]),
       three: true, rules: res.rules, night, drills: res.drills.map((x) => ({ id: x.id, ok: x.ok })),
@@ -761,8 +756,8 @@ export async function runZoutpier(site) {
 
   if (snd.ok) snd.startLoops(); else DG.Audio.ambience(true);
   DG.Audio.splash();
-  if (night) hud.msg('Het is donker. Je ligt met je buddy bij de gele steen, lampen aan. Laat lucht uit je vest (▼ of F) om af te dalen. Blijf dicht bij elkaar: zie je zijn lampje niet meer, stop dan en kijk rond.', 8000);
-  else hud.msg(D.cur.length() > 0.01 ? 'Je ligt aan de oppervlakte bij de gele steen. Er staat lichte stroming: ' + plan.curTxt + '. Laat lucht uit je vest (▼ of F) om af te dalen.' : 'Je ligt aan de oppervlakte bij de gele steen. Laat lucht uit je trimvest (▼ of F) om af te dalen, en vergeet niet te klaren.', 7000);
+  hud.msg(P.startMsg(night, plan), night ? 8000 : 7000);
+  if (coldK > 0.3) setTimeout(() => { if (!D.ended) hud.msg('Brr: je pak is te dun voor ' + P.temp + ' °C water. Je krijgt het koud en verbruikt meer lucht.', 5000); }, 9000);
   updateNear();
   requestAnimationFrame((t) => { last = t; loop(t); });
   // testhaakje: simulatie vooruitspoelen zonder beeld
@@ -788,7 +783,8 @@ function ask(html, cls, bind) {
   });
 }
 
-async function preDive(site) {
+async function preDive(site, P) {
+  const B = P.brief;
   const sv = DG.Save.data;
   const nowG = gameNow();
   // restverzadiging na eerdere duiken
@@ -803,43 +799,33 @@ async function preDive(site) {
       siTxt = 'Oppervlakte-interval ' + h + ' u ' + m + ' min: je hebt nog restverzadiging, dus je nultijden zijn korter.';
     }
   }
-  // stroming vandaag
-  const r = Math.random();
-  const cur = new THREE.Vector3(0, 0, 0);
-  let curTxt = 'geen';
-  if (r > 0.45) { const s = r > 0.75 ? 1 : -1; cur.z = s * (0.05 + Math.random() * 0.1); curTxt = s > 0 ? 'van zuid naar noord' : 'van noord naar zuid'; }
-  const route = cur.z > 0.01 ? 'Begin tegen de stroom in aan de linkerkant (zuid) en laat je terugdrijven langs de rechterkant.'
-    : cur.z < -0.01 ? 'Begin tegen de stroom in aan de rechterkant (noord) en laat je terugdrijven langs de linkerkant.'
-    : 'Geen stroming: zwem langs de pier naar de laadkop (tarpons) en daarna links of rechts langs de pijlergroepen.';
-  const ship = Math.random() < 0.1;
+  // stroming vandaag, route en of er vandaag gedoken kan worden
+  const { cur, curTxt, route, ship } = P.conditions();
   const s3 = sv.set3d;
-  const hasLamp = !!DG.Save.loadout().lamp;
+  const hasLamp = !!DG.Save.loadout().lamp && P.nightOk;
   let when = s3.when === 'nacht' && hasLamp ? 'nacht' : 'dag';
   const chLine = (key, w) => {
     const list = (DG.PHOTO_CHALLENGES || {})[key] || [], done = DG.Save.data.challenges || {};
     const n = list.filter((c) => done[c.id]).length, next = list.find((c) => !done[c.id]);
     const nm = w === 'nacht' ? 'nachtchallenges' : 'fotochallenges';
-    if (!DG.Save.loadout().camera) return '<p class="b3-ch" data-w="' + w + '">📷 Huur een camera bij De Tuimelaar voor de ' + list.length + ' ' + nm + ' van de Zoutpier.</p>';
+    if (!list.length) return '';
+    if (!DG.Save.loadout().camera) return '<p class="b3-ch" data-w="' + w + '">📷 Huur een camera bij De Tuimelaar voor de ' + list.length + ' ' + nm + ' van ' + B.name + '.</p>';
     return '<p class="b3-ch" data-w="' + w + '">' + (w === 'nacht' ? '🌙' : '🏆') + ' ' + nm[0].toUpperCase() + nm.slice(1) + ': ' + n + '/' + list.length + (next ? ' · volgende: <b>' + next.title + '</b> (minimaal ' + next.min + '★). ' + next.tip : ' · alles gehaald!') + '</p>';
   };
   // 1. briefing (dag of nacht)
   const go = await ask(
-    '<div class="b3-photos"><img src="img/bonaire-zoutpier-lucht.jpg" alt="Luchtfoto van de Zoutpier"><img src="img/bonaire-zoutpier-steen.jpg" alt="De gele steen Salt Pier"><img src="img/bonaire-zoutpier-knorvissen.jpg" alt="Knorvissen tussen de pijlers"></div>' +
-    '<div class="b3-when"><span class="seg" data-k="when"><button data-v="dag">☀️ Dagduik</button><button data-v="nacht"' + (hasLamp ? '' : ' disabled') + '>🌙 Nachtduik</button></span>' +
-    (hasLamp ? '' : '<small>Voor een nachtduik heb je een duiklamp nodig. Die kun je huren bij De Tuimelaar.</small>') + '</div>' +
-    '<h2>Briefing · Zoutpier, Bonaire<span data-w="nacht"> · nachtduik</span></h2>' +
-    chLine('saltpier', 'dag') + chLine('saltpier_nacht', 'nacht') +
-    '<div class="brief-grid">' +
-    '<div><small>Water</small>28 °C · <span data-w="dag">zicht ±50 m</span><span data-w="nacht">zicht: alleen in je lampbundel</span></div><div><small>Ingang</small><span data-w="dag">Kantduik bij de gele steen</span><span data-w="nacht">Gele steen, ingang bij daglicht verkend</span></div>' +
-    '<div><small>Stroming vandaag</small>' + curTxt + '</div><div><small>Diepte</small>pier 3–12 m · rif tot 40 m</div>' +
-    '<div><small>Jouw grens</small>' + DG.Save.maxDepth() + ' m (' + esc(DG.Save.brevet()) + ')</div><div><small>Fles</small>aluminium 80 · 207 bar · ' + (DG.Save.loadout().gas === 'ean32' ? 'nitrox 32%' : 'lucht') + '</div>' +
+    '<div class="b3-photos">' + B.photos + '</div>' +
+    (P.nightOk ? '<div class="b3-when"><span class="seg" data-k="when"><button data-v="dag">☀️ Dagduik</button><button data-v="nacht"' + (hasLamp ? '' : ' disabled') + '>🌙 Nachtduik</button></span>' +
+    (hasLamp ? '' : '<small>Voor een nachtduik heb je een duiklamp nodig. Die kun je huren bij De Tuimelaar.</small>') + '</div>' : '<div class="b3-when" hidden><span class="seg" data-k="when"><button data-v="dag">☀️ Dagduik</button></span></div>') +
+    '<h2>Briefing · ' + esc(B.title) + '<span data-w="nacht"> · nachtduik</span></h2>' +
+    chLine(P.challenges(false), 'dag') + (P.nightOk ? chLine(P.challenges(true), 'nacht') : '') +
+    '<div class="brief-grid">' + B.grid(curTxt) +
+    '<div><small>Jouw grens</small>' + DG.Save.maxDepth() + ' m (' + esc(DG.Save.brevet()) + ')</div><div><small>Fles</small>' + esc(P.tank.name || DG.Save.loadout().tankL + ' liter staal · 200 bar') + ' · ' + (DG.Save.loadout().gas === 'ean32' ? 'nitrox 32%' : 'lucht') + '</div>' +
     '</div>' +
     '<p class="lead" data-w="dag">' + esc(route) + ' ' + esc(siTxt) + '</p>' +
-    '<p class="lead" data-w="nacht">De zon is net onder. ’s Nachts is de Zoutpier een andere wereld: tarpons jagen in het licht van je lamp, octopussen, murenen en langoesten zwerven over de bodem, mandsters vouwen hun armen uit op de pijlers en papegaaivissen slapen in een slijmcocon. Blijf vlak bij je buddy en zwem rustig: alleen in je lampbundel zie je kleur. ' + esc(siTxt) + '</p>' +
-    '<h3>Regels van het Bonaire Marine Park</h3><ul class="b3-rules">' +
-    '<li><label><input type="checkbox" required> Ik heb een geldige natuurtag (STINAPA)</label></li>' +
-    '<li><label><input type="checkbox" required> Ik duik zonder handschoenen en raak niets aan</label></li>' +
-    '<li><label><input type="checkbox" required> Ik heb gecontroleerd dat er geen schip aan de pier ligt</label></li>' +
+    (P.nightOk ? '<p class="lead" data-w="nacht">' + esc(B.nightLead) + ' ' + esc(siTxt) + '</p>' : '') +
+    '<h3>' + esc(B.rulesTitle) + '</h3><ul class="b3-rules">' +
+    B.rules.map((t) => '<li><label><input type="checkbox" required> ' + esc(t) + '</label></li>').join('') +
     '</ul>' +
     '<div data-w="nacht"><h3>Afspraken voor de nachtduik</h3><ul class="b3-rules">' +
     '<li><label><input type="checkbox" required> Hoofdlamp en reservelamp zijn opgeladen en getest</label></li>' +
@@ -859,19 +845,19 @@ async function preDive(site) {
       c.querySelector('[data-a=back]').onclick = () => done(false);
       c.querySelector('[data-a=go]').onclick = () => {
         const all = [...c.querySelectorAll('.b3-rules input')].filter((i) => !i.closest('[hidden]')).every((i) => i.checked);
-        if (!all) { DG.UI.toast(when === 'nacht' ? 'Vink eerst de regels en de afspraken voor de nachtduik af.' : 'Vink eerst de regels van het marine park af.', 'warn'); return; }
+        if (!all) { DG.UI.toast(when === 'nacht' ? 'Vink eerst de regels en de afspraken voor de nachtduik af.' : B.rulesToast, 'warn'); return; }
         s3.when = when; DG.Save.save();
         done(true);
       };
     });
   if (!go) return null;
   if (ship) {
-    const again = await ask('<h2>Er ligt een schip aan de pier</h2><p class="lead">Een zoutschip ligt aan de laadkop. Dan mag je bij de Zoutpier niet duiken. Kom later terug.</p><div class="modal-actions"><button class="btn ghost" data-a="map">Naar de kaart</button><button class="btn primary" data-a="wait">Morgen terugkomen</button></div>', 'narrow', (c, done) => {
+    const again = await ask(B.blocked + '<div class="modal-actions"><button class="btn ghost" data-a="map">Naar de kaart</button><button class="btn primary" data-a="wait">' + esc(B.waitLabel || 'Morgen terugkomen') + '</button></div>', 'narrow', (c, done) => {
       c.querySelector('[data-a=map]').onclick = () => done(false);
-      c.querySelector('[data-a=wait]').onclick = () => { sv.clockOffset = (sv.clockOffset || 0) + 20 * 3600e3; DG.Save.save(); done(true); };
+      c.querySelector('[data-a=wait]').onclick = () => { sv.clockOffset = (sv.clockOffset || 0) + (B.waitHours || 20) * 3600e3; DG.Save.save(); done(true); };
     });
     if (!again) return null;
-    return preDive(site);
+    return preDive(site, P);
   }
   // 2. instellingen
   const ok2 = await ask(
@@ -899,9 +885,9 @@ async function preDive(site) {
   // 3. buddycheck (BWRAF)
   const items = [
     ['B', 'Trimvest', 'Inblazer en leeglaatventielen werken. Trimvest kort opgeblazen en weer leeg.'],
-    ['W', 'Lood', '10 kg aan de loodgordel, snelsluiting vrij en met de rechterhand te openen.'],
+    ['W', 'Lood', P.lead + ', snelsluiting vrij en met de rechterhand te openen.'],
     ['R', 'Sluitingen', 'Schouder- en buikbanden dicht, fles zit vast, slangen goed geborgen.'],
-    ['A', 'Lucht', 'Fles helemaal open, manometer 207 bar, drie keer proefademen op ademautomaat en octopus.'],
+    ['A', 'Lucht', 'Fles helemaal open, manometer ' + START_BAR + ' bar, drie keer proefademen op ademautomaat en octopus.'],
     ['F', 'Laatste check', 'Masker, vinnen, computer aan (Bühlmann GF 40/85), duikplan afgesproken. OK!'],
   ];
   const ok3 = await ask(

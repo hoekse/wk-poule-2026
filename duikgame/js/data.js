@@ -309,6 +309,10 @@
     'Zo glibberig als boter. Beide ouders bewaken samen het eiklompje.',
     { t: 'fish', shape: 'eelish', h: 0.12, c: '#a07040', c2: '#d8b080', fin: '#8a6038', tail: 'round', dorsal: 'long',
       pat: [{ k: 'dorsalspots', n: 10, c: '#111', ring: '#f0e0c0' }] }, { hidden: true, ds: 1.4 });
+  sp('steenbolk', 'Steenbolk', 'Trisopterus luscus', 0.3, 1,
+    'Koperkleurig met brede lichte banden en een baarddraadje onder de kin. Hangt in groepjes rond pijlers en wrakken.',
+    { t: 'fish', shape: 'oval', h: 0.34, c: '#9a6a3e', c2: '#d8b48a', fin: '#7a5432', tail: 'round', dorsal: 'normal',
+      pat: [{ k: 'vbars', n: 4, c: 'rgba(240,220,190,0.45)', w: 0.08 }] });
   sp('zeebrasem', 'Zwarte zeebrasem', 'Spondyliosoma cantharus', 0.35, 1,
     'In de zomer graven de mannetjes kuiltjes in het zand, waar de vrouwtjes hun eitjes leggen.',
     { t: 'fish', shape: 'oval', h: 0.42, c: '#7c8a94', c2: '#c8d0d6', fin: '#4a5660', tail: 'fork',
@@ -510,7 +514,7 @@
       ],
     },
     {
-      id: 'oosterschelde', name: 'Zeelandbrug', area: 'Oosterschelde', country: 'Nederland', lat: 51.59, lon: 3.9,
+      id: 'oosterschelde', name: 'Zeelandbrug', area: 'Oosterschelde', country: 'Nederland', lat: 51.59, lon: 3.9, three: true,
       temp: 13, vis: 4, depth: 22, level: 'Open Water (koud!)', current: 0.06, entry: 'Kantduik vanaf de dijk',
       travel: { mode: 'bus', time: '± 2,5 uur rijden vanaf Zwolle' },
       desc: 'Een van de bekendste duikstekken van Nederland. Langs de pijlers van de ruim 5 km lange Zeelandbrug groeien zeeanjelieren en dodemansduimen. Duik rond de kentering, want de stroming is hier stevig. En trek iets warms aan…',
@@ -543,6 +547,7 @@
         { sp: 'vlokslak', n: 2, b: 'crawl', x: [8, 120] },
         { sp: 'botervis', n: 1, b: 'hidden', x: [5, 30] },
         { sp: 'zeebrasem', n: 8, b: 'school', d: [4, 12], x: [30, 140], spread: 2, p: 0.7 },
+        { sp: 'steenbolk', n: 14, b: 'school', d: [6, 18], x: [40, 140], spread: 2 },
         { sp: 'grondel', n: 40, b: 'bottom', x: [5, 150] },
       ],
     },
@@ -635,6 +640,15 @@
       { id: 'zp_buddy', title: 'Buddy-portret', sp: ['buddy'], min: 3, tip: 'Fotografeer je buddy van 2–3 m tussen de pijlers.' },
       { id: 'zp_perfect', title: 'Perfecte foto (5 sterren)', sp: null, min: 5, tip: 'Dichtbij, scherp, in het midden en met flitsers.' },
     ],
+    // Zeelandbrug, Oosterschelde
+    oosterschelde: [
+      { id: 'os_kreeft', title: 'Kreeft tussen de stenen', sp: ['kreeft'], min: 3, tip: 'Kijk in de spleten tussen de stenen van de dijk, op 3–7 m. Een lamp helpt.' },
+      { id: 'os_steenbolk', title: 'Steenbolken bij de pijler', sp: ['steenbolk'], min: 3, tip: 'Ze hangen in groepjes in de luwte van de pijlers.' },
+      { id: 'os_donderpad', title: 'Zeedonderpad', sp: ['zeedonderpad'], min: 3, tip: 'Perfect gecamoufleerd op de stenen. Zwem langzaam en kijk goed.' },
+      { id: 'os_kathaai', title: 'Kathaai op de bodem', sp: ['kathaai'], min: 3, tip: 'Op de slibbodem tussen dijk en pijlers.' },
+      { id: 'os_vlokslak', title: 'Vlokslak (macro)', sp: ['vlokslak'], min: 3, tip: 'Klein! Op de stenen van de dijk. Ga heel dichtbij met flitsers.' },
+      { id: 'os_zeekat', title: 'Zeekat', sp: ['zeekat'], min: 3, tip: 'Soms bij de pijlers. Benader hem heel rustig.' },
+    ],
     // nachtduik bij de Zoutpier
     saltpier_nacht: [
       { id: 'zn_tarpon', title: 'Tarpon in je lampbundel', sp: ['tarpon'], min: 3, tip: '’s Nachts jagen de tarpons op visjes in het licht van je lamp. Houd je lamp stil en wacht.' },
@@ -645,7 +659,7 @@
       { id: 'zn_inktvis', title: 'Rifinktvissen', sp: ['rifinktvis'], min: 3, tip: 'Vlak onder het oppervlak, 1–3 m, vooral bij de ingang en onder de pier.' },
     ],
   };
-  DG.CHALLENGE_SITE = { saltpier: 'saltpier', saltpier_nacht: 'saltpier' };
+  DG.CHALLENGE_SITE = { saltpier: 'saltpier', saltpier_nacht: 'saltpier', oosterschelde: 'oosterschelde' };
   DG.siteById = (id) => DG.SITES.find((s) => s.id === id);
   DG.gearById = (id) => DG.GEAR.find((g) => g.id === id);
   DG.courseById = (id) => DG.COURSES.find((c) => c.id === id);

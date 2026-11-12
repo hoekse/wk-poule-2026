@@ -10,6 +10,9 @@ export const UW = {
   uDown: { value: new THREE.Vector3(0.072, 0.02, 0.0095) },
   uWaterTop: { value: new THREE.Color(0x6fe0f6) },
   uWaterDeep: { value: new THREE.Color(0x0d5596) },
+  // kleur van de zee van bovenaf en hoe bewolkt de lucht is (0 = tropisch blauw, 1 = grijs)
+  uSea: { value: new THREE.Color().setRGB(0.12, 0.62, 0.72) },
+  uOvercast: { value: 0 },
   uCaus: { value: 1.0 },
   uCausTex: { value: null },
   uLampOn: { value: 0 },
@@ -217,7 +220,7 @@ export function makeDome() {
         gl_Position.z = gl_Position.w * 0.9999;
       }`,
     fragmentShader: /* glsl */ `
-      uniform vec3 uWaterTop; uniform vec3 uWaterDeep; uniform vec3 uDown; uniform vec3 uSun; uniform float uNight;
+      uniform vec3 uWaterTop; uniform vec3 uWaterDeep; uniform vec3 uDown; uniform vec3 uSun; uniform float uNight; uniform vec3 uSea; uniform float uOvercast;
       varying vec3 vDir;
       float hash3(vec3 p) { return fract(sin(dot(p, vec3(127.1, 311.7, 74.7))) * 43758.5453); }
       void main() {
@@ -231,9 +234,10 @@ export function makeDome() {
         } else {
           float h = clamp(d.y, 0.0, 1.0);
           col = mix(vec3(0.82, 0.92, 0.98), vec3(0.32, 0.62, 0.92), pow(h, 0.55));
+          col = mix(col, mix(vec3(0.86, 0.88, 0.9), vec3(0.5, 0.58, 0.68), pow(h, 0.7)), uOvercast);
           float sd = max(dot(d, uSun), 0.0);
-          col += vec3(1.0, 0.95, 0.85) * (pow(sd, 900.0) * 6.0 + pow(sd, 24.0) * 0.25);
-          if (d.y < 0.0) col = mix(vec3(0.05, 0.38, 0.55), vec3(0.2, 0.55, 0.7), clamp(1.0 + d.y * 6.0, 0.0, 1.0));
+          col += vec3(1.0, 0.95, 0.85) * (pow(sd, 900.0) * 6.0 + pow(sd, 24.0) * 0.25) * (1.0 - uOvercast * 0.8);
+          if (d.y < 0.0) col = mix(mix(vec3(0.05, 0.38, 0.55), vec3(0.2, 0.55, 0.7), clamp(1.0 + d.y * 6.0, 0.0, 1.0)), mix(uSea, vec3(0.6, 0.64, 0.66), clamp(1.0 + d.y * 6.0, 0.0, 1.0) * 0.5), uOvercast);
           if (uNight > 0.5) {
             // nachthemel: sterren en maan boven de zoutpannen
             vec3 n = mix(vec3(0.035, 0.05, 0.09), vec3(0.006, 0.01, 0.025), pow(h, 0.5));
@@ -272,7 +276,7 @@ export function makeSurface() {
         gl_Position = projectionMatrix * viewMatrix * w;
       }`,
     fragmentShader: /* glsl */ `
-      uniform float uTime; uniform vec3 uAbs; uniform vec3 uDown; uniform vec3 uWaterTop; uniform vec3 uWaterDeep; uniform vec3 uSun; uniform float uNight;
+      uniform float uTime; uniform vec3 uAbs; uniform vec3 uDown; uniform vec3 uWaterTop; uniform vec3 uWaterDeep; uniform vec3 uSun; uniform float uNight; uniform vec3 uSea; uniform float uOvercast;
       varying vec3 vW;
       vec3 rippleN(vec2 p) {
         float t = uTime;
@@ -309,12 +313,12 @@ export function makeSurface() {
         } else {
           // van boven: turquoise met luchtweerspiegeling
           float fres = pow(1.0 - max(dot(-v, n), 0.0), 4.0);
-          vec3 sky = mix(vec3(0.75, 0.88, 0.97), vec3(0.35, 0.62, 0.9), 0.4);
-          vec3 sea = vec3(0.12, 0.62, 0.72);
+          vec3 sky = mix(mix(vec3(0.75, 0.88, 0.97), vec3(0.35, 0.62, 0.9), 0.4), vec3(0.68, 0.72, 0.76), uOvercast);
+          vec3 sea = uSea;
           vec3 col = mix(sea, sky, clamp(fres * 1.4, 0.0, 1.0));
           float gl = pow(max(dot(reflect(v, n), uSun), 0.0), 220.0);
           col = mix(col, vec3(0.01, 0.025, 0.045) + vec3(0.03, 0.04, 0.06) * fres, uNight);
-          col += vec3(1.0, 0.95, 0.85) * gl * mix(3.0, 1.2, uNight);
+          col += vec3(1.0, 0.95, 0.85) * gl * mix(3.0, 1.2, uNight) * (1.0 - uOvercast * 0.6);
           float a = clamp(0.35 + fres * 0.6 + dist * 0.004, 0.0, 0.92);
           gl_FragColor = vec4(col, a);
         }

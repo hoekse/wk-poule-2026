@@ -276,8 +276,10 @@ function eagleRayModel() {
  * Spawnen en gedrag
  * ================================================================ */
 // plekken waar vissen graag hangen: pijlergroepen, laadkop en onder de pier
-const HANG = [{ x: CENTER.x, z: CENTER.z, d: 7 }].concat(GROUPS.map((g) => ({ x: g.x, z: g.z, d: 8 }))).concat([-30, -55, -80].map((x) => ({ x, z: 0, d: 4 })))
+const SALT_HANG = [{ x: CENTER.x, z: CENTER.z, d: 7 }].concat(GROUPS.map((g) => ({ x: g.x, z: g.z, d: 8 }))).concat([-30, -55, -80].map((x) => ({ x, z: 0, d: 4 })))
   .concat([{ x: -150, z: -30, d: 15 }, { x: -152, z: 18, d: 16 }, { x: -147, z: 62, d: 14 }]);
+// plekken waar scholen hangen; elke duikstek zet zijn eigen lijst (Fauna opts.hang)
+let HANG = SALT_HANG;
 
 class School {
   constructor(spc, n, opts) {
@@ -443,6 +445,17 @@ export class Fauna {
     this.sleepers = [];
     const S = DG.SPECIES;
     const k = this.lo ? 0.55 : 1;
+    HANG = opts.hang || SALT_HANG;
+    this.hang = HANG;
+    this.site = opts.site || 'saltpier';
+    this.turtles = []; this.frogs = []; this.ray = null; this.lurkers = []; this.cruisers = [];
+    // andere duikstekken geven hun eigen samenstelling mee
+    if (opts.comp) {
+      opts.comp(this, S, k, { rand, hasModel });
+      this.buildMeshes();
+      if (opts.extra) opts.extra(this, scene, { rand, hasModel });
+      return;
+    }
     if (!this.night) {
       // scholen
       this.addSchool(S.franse_knorvis, Math.round(80 * k), { spread: 1.7, speed: 0.25, roam: 0.15 });
@@ -520,7 +533,42 @@ export class Fauna {
       this.ray = { m: r, spc: DG.SPECIES.adelaarsrog, a: Math.random() * TAU, L: 2.2 };
     }
   }
+  // algemeen bodemdier (Magnific 3D): kruipt rond (moving) of ligt verstopt (hidden)
+  // opts: at() → {x, z, a}, rot, scale, lift, speed, range, moving, hidden, L, wave (vertex-code)
+  addCrawler(id, opts) {
+    if (!hasModel(id)) return null;
+    const spc = DG.SPECIES[id];
+    const m = new THREE.Mesh(modelGeo(id, 'center', { rot: opts.rot || [0, 0, 0] }), animalMat(id, 'cr_' + id, opts.wave || ''));
+    m.scale.setScalar(opts.scale || spc.size);
+    const q = opts.at();
+    m.rotation.y = -q.a;
+    m.position.set(0, 0, 0);
+    m.updateMatrixWorld(true);
+    const b = new THREE.Box3().setFromObject(m);
+    const lift = -b.min.y - 0.02 + (opts.lift || 0);
+    m.position.set(q.x, seabed(q.x, q.z) + lift, q.z);
+    this.scene.add(m);
+    const o = { m, spc, L: opts.L || spc.size, hidden: opts.hidden !== false, lift, home: new THREE.Vector3(q.x, 0, q.z), t: new THREE.Vector3(q.x, 0, q.z),
+      timer: rand(1, 5), pause: 0, speed: opts.speed || 0.06, range: opts.range || 4, wig: opts.wig || 0, yaw: -q.a, ph: Math.random() * TAU };
+    if (opts.moving) this.crawlers.push(o);
+    this.lurkers.push(o);
+    return o;
+  }
+
+  // groot dier dat in een wijde boog langs zwemt (bruinvis, haai, manta)
+  addCruiser(id, opts) {
+    if (!hasModel(id)) return null;
+    const spc = DG.SPECIES[id];
+    const m = new THREE.Mesh(modelGeo(id, 'center', { rot: opts.rot || [0, 0, 0] }), animalMat(id, 'cz_' + id, opts.wave || 'transformed.z += sin(uTime * 2.4 - position.x * 4.0) * 0.03 * (0.5 - position.x);'));
+    m.scale.setScalar(opts.scale || spc.size);
+    this.scene.add(m);
+    const o = { m, spc, L: spc.size, c: opts.center, r: opts.r || 30, depth: opts.depth || 5, speed: opts.speed || 1.5, a: Math.random() * TAU, v: new THREE.Vector3() };
+    this.cruisers.push(o);
+    return o;
+  }
+
   placeFrogs(pillars) {
+    if (this.site !== 'saltpier') return;
     const cand = pillars.filter((p) => p.y0 < -6);
     for (let i = 0; i < 2; i++) {
       const p = cand[Math.floor(Math.random() * cand.length)];
@@ -720,6 +768,16 @@ export class Fauna {
     });
     // 's nachts: murenen, octopussen en langoesten lopen/zwemmen over de bodem
     this.crawlers.forEach((o) => this.crawl(o, dt, env));
+    // grote zwemmers op een vaste, wijde baan
+    this.cruisers.forEach((o) => {
+      o.a += (o.speed / o.r) * dt;
+      const x = o.c.x + Math.cos(o.a) * o.r, z = o.c.z + Math.sin(o.a) * o.r * 0.6;
+      const y = Math.max(-o.depth + Math.sin(o.a * 3) * 1.2, seabed(x, z) + 1.2);
+      const pv = o.m.position;
+      o.v.set(x - pv.x, y - pv.y, z - pv.z).divideScalar(Math.max(dt, 1e-3));
+      pv.set(x, y, z);
+      if (o.v.lengthSq() > 1e-4) o.m.rotation.y = Math.atan2(-o.v.z, o.v.x);
+    });
     // mandsters rollen zich op als je er te lang op schijnt
     const L = env.lamp;
     this.stars.forEach((st) => {
@@ -806,7 +864,8 @@ export class Fauna {
     for (const pl of env.nearPillars || []) {
       const a = pillarAt(pl, pl.y0 + 0.3);
       const ex = nx - a.x, ez = nz - a.z, e = Math.hypot(ex, ez);
-      if (e < 0.85 && e > 0.001) { nx = a.x + (ex / e) * 0.85; nz = a.z + (ez / e) * 0.85; }
+      const mn = (pl.r || 0.55) + 0.3;
+      if (e < mn && e > 0.001) { nx = a.x + (ex / e) * mn; nz = a.z + (ez / e) * mn; }
     }
     p.x = nx; p.z = nz;
     p.y = seabed(p.x, p.z) + o.lift;
@@ -823,6 +882,7 @@ export class Fauna {
     this.sleepers.forEach((f) => out.push({ spc: f.spc, p: f.m.position, L: f.L, hidden: true, sleep: true }));
     this.stars.forEach((f) => out.push({ spc: f.spc, p: f.m.position, L: f.L }));
     if (this.ray) out.push({ spc: this.ray.spc, p: this.ray.m.position, L: 2.2 });
+    this.cruisers.forEach((o) => out.push({ spc: o.spc, p: o.m.position, L: o.L, v: o.v }));
     return out;
   }
 }

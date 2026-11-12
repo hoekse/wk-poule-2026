@@ -904,7 +904,7 @@
     DG.Save.data.location = site.area;
     DG.Save.save();
     import(new URL('js3d/main.js', document.baseURI).href)
-      .then((m) => m.runZoutpier(site))
+      .then((m) => m.runDive3D(site))
       .then((res) => { if (res) UI.showSummary(res); else UI.leaveDive('map'); })
       .catch((e) => {
         if (window.console) console.error(e);
