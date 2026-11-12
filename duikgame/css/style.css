@@ -129,9 +129,12 @@ kbd {
 .chip.on .req { color: #00262c; }
 .chip .ok { color: var(--good); }
 .chip.on .ok { color: #004a2a; }
-.shop-hero { position: relative; border-radius: var(--r); overflow: hidden; aspect-ratio: 16 / 7; background: #111; box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4); }
-.shop-hero img { width: 100%; height: 100%; object-fit: cover; animation: kenburns 24s ease-in-out infinite alternate; }
-@keyframes kenburns { from { transform: scale(1.02) translate(0, 0); } to { transform: scale(1.12) translate(-2%, -2%); } }
+.shop-main { min-width: 0; }
+/* de foto's zijn bijna vierkant: niet te ver inzoomen en altijd binnen het scherm houden */
+.shop-hero { position: relative; width: 100%; border-radius: var(--r); overflow: hidden; aspect-ratio: 16 / 9; max-height: max(240px, calc(100vh - 236px)); max-height: max(240px, calc(100svh - 236px)); background: #111; box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4); }
+.shop-hero img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 42%; animation: kenburns 30s ease-in-out infinite alternate; }
+@keyframes kenburns { from { transform: scale(1); } to { transform: scale(1.05); } }
+.shop-hero.cat { aspect-ratio: 3 / 1; max-height: 300px; }
 .hero-text { position: absolute; left: 0; right: 0; bottom: 0; padding: 40px 18px 14px; background: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.78)); }
 .hero-text h3 { margin: 0 0 4px; font-family: var(--display); font-size: 1.35rem; }
 .hero-text p { margin: 0; color: #e5edf2; max-width: 680px; font-size: 0.95rem; line-height: 1.45; }
@@ -139,6 +142,11 @@ kbd {
 .hotspot { position: absolute; transform: translate(-50%, -50%); border: 0; background: none; padding: 0; display: flex; align-items: center; gap: 6px; }
 .hotspot i { width: 22px; height: 22px; border-radius: 50%; background: var(--sun); border: 3px solid #fff; box-shadow: 0 0 0 0 rgba(255, 201, 74, 0.7); animation: pulse 2s infinite; flex: none; }
 .hotspot span { background: rgba(0, 0, 0, 0.72); padding: 4px 10px; border-radius: 999px; font-weight: 700; font-size: 0.85rem; white-space: nowrap; }
+.hotspot span b { font-weight: 700; }
+.hotspot .sh { display: none; }
+/* de stip blijft op zijn plek; het label staat ernaast */
+.hotspot { transform: translate(-11px, -50%); }
+.hotspot.flip { flex-direction: row-reverse; transform: translate(calc(-100% + 11px), -50%); }
 @keyframes pulse { 70% { box-shadow: 0 0 0 14px rgba(255, 201, 74, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 201, 74, 0); } }
 .products { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px; margin-top: 16px; }
 .product { position: relative; background: var(--tag); color: var(--tag-ink); border-radius: var(--r); padding: 16px; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 8px 22px rgba(0, 0, 0, 0.3); border-top: 5px solid var(--navy); }
@@ -380,14 +388,14 @@ kbd {
 
 /* ---------- responsief ---------- */
 @media (max-width: 980px) {
-  .shop-body { grid-template-columns: 1fr; padding-bottom: 120px; }
+  .shop-body { grid-template-columns: minmax(0, 1fr); padding-bottom: 120px; }
   .shop-side { position: fixed; left: 0; right: 0; bottom: 0; top: auto; border-radius: 18px 18px 0 0; padding: 10px 14px calc(10px + env(safe-area-inset-bottom)); z-index: 10; display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; background: rgba(12, 14, 17, 0.94); }
   .shop-side h3, #diver-preview, .kit { display: none; }
   .kit-stats { grid-template-columns: repeat(4, auto); margin: 0; gap: 4px; font-size: 0.8rem; }
   .kit-stats div { padding: 4px 8px; }
   .kit-stats b { font-size: 0.85rem; }
   #btn-to-map { width: auto; }
-  .shop-hero { aspect-ratio: 16 / 9; }
+  .shop-hero { aspect-ratio: 4 / 3; max-height: none; }
   .nav-btn .lbl { display: none; }
   .brevet { display: none; }
   .site-card { top: auto; bottom: 0; right: 0; left: 0; width: 100%; max-height: 72vh; border-radius: 20px 20px 0 0; }
@@ -405,11 +413,53 @@ kbd {
   .gauge { width: 92px; height: 92px; }
   .g-read { bottom: 12px; }
   .compass { top: 130px; }
-  .shop-front { width: 76px; height: 48px; }
-  .shop-logo { width: 48px; height: 48px; }
+  .shop-head { gap: 10px; padding-top: 10px; }
+  .shop-front { width: 64px; height: 42px; border-radius: 9px; }
+  .shop-logo { width: 42px; height: 42px; }
+  .shop-title h2 { font-size: 1.1rem; line-height: 1.2; }
+  .shop-title p { display: none; }
+  .cat-tabs { padding-bottom: 8px; }
+  .chip { padding: 6px 12px; min-height: 36px; font-size: 0.86rem; }
+  /* foto vierkant met de tekst eronder, zodat de hele winkel in beeld is */
+  .shop-hero { aspect-ratio: auto; background: rgba(10, 12, 14, 0.55); }
+  .shop-hero img { height: auto; aspect-ratio: 9 / 8; }
+  .shop-hero.cat { aspect-ratio: auto; max-height: none; }
+  .shop-hero.cat img { aspect-ratio: 2 / 1; }
+  .hero-text { position: static; padding: 10px 14px 12px; background: none; }
+  .hero-text h3 { font-size: 1.1rem; }
+  .hero-text p { font-size: 0.88rem; }
+  .hotspot { gap: 3px; transform: translate(-8px, -50%); }
+  .hotspot.flip { transform: translate(calc(-100% + 8px), -50%); }
+  .hotspot i { width: 16px; height: 16px; border-width: 2px; }
+  .hotspot span { font-size: 0.72rem; padding: 3px 7px; }
+  .hotspot .lg { display: none; }
+  .hotspot .sh { display: inline; }
   .dive-item { grid-template-columns: auto 1fr; }
   .dive-item canvas { display: none; }
   .product .foot { flex-wrap: wrap; }
+}
+@media (max-height: 520px) and (min-width: 621px) {
+  .shop-head { padding-top: 6px; padding-bottom: 2px; }
+  .shop-front { width: 58px; height: 36px; border-radius: 8px; }
+  .shop-logo { width: 36px; height: 36px; }
+  .shop-title h2 { font-size: 1.05rem; }
+  .shop-title p { display: none; }
+  .cat-tabs { padding-bottom: 6px; }
+  .chip { padding: 5px 11px; min-height: 34px; font-size: 0.84rem; }
+  .shop-hero { aspect-ratio: 16 / 9; max-height: max(170px, calc(100svh - 76px)); }
+  .shop-hero.cat { aspect-ratio: 3 / 1; max-height: 170px; }
+  .hero-text { padding: 24px 14px 8px; }
+  .hero-text p { display: none; }
+  .hotspot { gap: 3px; transform: translate(-8px, -50%); }
+  .hotspot.flip { transform: translate(calc(-100% + 8px), -50%); }
+  .hotspot i { width: 16px; height: 16px; border-width: 2px; }
+  .hotspot span { font-size: 0.72rem; padding: 3px 7px; }
+  .hotspot .lg { display: none; }
+  .hotspot .sh { display: inline; }
+  /* alleen de knop rechtsonder, zodat de winkel meer ruimte krijgt */
+  .shop-side { left: auto; right: 10px; bottom: 8px; padding: 0; background: none; border: 0; backdrop-filter: none; display: block; }
+  .shop-side .kit-stats { display: none; }
+  .shop-body { padding-bottom: 70px; }
 }
 @media (max-height: 520px) {
   .dc { transform: scale(0.8); }

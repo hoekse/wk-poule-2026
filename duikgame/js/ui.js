@@ -123,15 +123,16 @@
    * Winkel
    * ================================================================ */
   const HOTSPOTS = [
-    { cat: 'masker', x: 0.43, y: 0.27, label: 'Duikbrillen' },
-    { cat: 'trimvest', x: 0.47, y: 0.33, label: 'Trimvesten' },
-    { cat: 'automaat', x: 0.16, y: 0.36, label: 'Ademautomaten' },
-    { cat: 'camera', x: 0.545, y: 0.42, label: 'Vitrine: camera’s' },
-    { cat: 'computer', x: 0.66, y: 0.44, label: 'Duikcomputers' },
-    { cat: 'lamp', x: 0.72, y: 0.27, label: 'Lampen & accessoires' },
-    { cat: 'pak', x: 0.86, y: 0.56, label: 'Duikpakken' },
-    { cat: 'fles', x: 0.27, y: 0.6, label: 'Flessen & vullen' },
-    { cat: 'vinnen', x: 0.06, y: 0.5, label: 'Vinnen' },
+    // side 'l': label links van de stip, zodat labels elkaar niet raken; short: op de telefoon
+    { cat: 'masker', x: 0.43, y: 0.27, label: 'Duikbrillen', short: 'Brillen' },
+    { cat: 'trimvest', x: 0.47, y: 0.33, label: 'Trimvesten', short: 'Trimvesten' },
+    { cat: 'automaat', x: 0.16, y: 0.36, label: 'Ademautomaten', short: 'Automaten' },
+    { cat: 'camera', x: 0.545, y: 0.42, label: 'Vitrine: camera’s', short: 'Camera’s', side: 'l' },
+    { cat: 'computer', x: 0.66, y: 0.44, label: 'Duikcomputers', short: 'Computers' },
+    { cat: 'lamp', x: 0.72, y: 0.27, label: 'Lampen & accessoires', short: 'Lampen' },
+    { cat: 'pak', x: 0.86, y: 0.56, label: 'Duikpakken', short: 'Pakken', side: 'l' },
+    { cat: 'fles', x: 0.27, y: 0.6, label: 'Flessen & vullen', short: 'Flessen' },
+    { cat: 'vinnen', x: 0.06, y: 0.5, label: 'Vinnen', short: 'Vinnen' },
   ];
 
   UI.renderShop = function () {
@@ -163,13 +164,16 @@
     if (img.getAttribute('src') !== src) img.setAttribute('src', src);
     img.alt = cat ? 'Foto uit de winkel: ' + cat.name : 'Overzicht van de winkel van Duikcentrum De Tuimelaar';
     img.style.animation = cat ? '' : 'none';
+    // bij een afdeling is de foto sfeer: lager, zodat de producten meteen in beeld zijn
+    $('shop-hero').classList.toggle('cat', !!cat);
     $('hero-title').textContent = cat ? cat.name : 'Welkom in de winkel';
     $('hero-intro').textContent = cat ? cat.intro : 'Klik op een afdeling in de winkel, of kies hierboven. Alles met een ★ heb je nodig om te kunnen duiken.';
     const hs = $('hotspots');
     hs.innerHTML = '';
     if (!cat) {
       HOTSPOTS.forEach((h) => {
-        const b = U.el('button', 'hotspot', '<i></i><span>' + esc(h.label) + '</span>');
+        const b = U.el('button', 'hotspot' + (h.side === 'l' ? ' left' : ''), '<i></i><span><b class="lg">' + esc(h.label) + '</b><b class="sh">' + esc(h.short) + '</b></span>');
+        b.setAttribute('aria-label', h.label);
         b.dataset.x = h.x; b.dataset.y = h.y;
         b.onclick = () => { UI.cat = h.cat; DG.Audio.click(); UI.renderShop(); };
         hs.appendChild(b);
@@ -186,16 +190,19 @@
   UI.placeHotspots = function () {
     const img = $('hero-img'), box = $('shop-hero');
     if (!img.naturalWidth) return;
-    const cw = box.clientWidth, ch = box.clientHeight;
+    // gemeten op de foto zelf: op de telefoon staat de tekst onder de foto
+    const cw = img.clientWidth || box.clientWidth, ch = img.clientHeight || box.clientHeight;
     const sc = Math.max(cw / img.naturalWidth, ch / img.naturalHeight);
     const dw = img.naturalWidth * sc, dh = img.naturalHeight * sc;
-    const ox = (cw - dw) / 2, oy = (ch - dh) / 2;
+    // object-position van de foto volgen (bijv. '50% 42%')
+    const op = (getComputedStyle(img).objectPosition || '50% 50%').split(' ').map((v) => (v.endsWith('%') ? parseFloat(v) / 100 : 0.5));
+    const ox = (cw - dw) * op[0], oy = (ch - dh) * (op[1] === undefined ? 0.5 : op[1]);
     $('hotspots').querySelectorAll('.hotspot').forEach((b) => {
       const x = ox + dw * +b.dataset.x, y = oy + dh * +b.dataset.y;
       b.style.left = x + 'px'; b.style.top = y + 'px';
       b.hidden = x < 10 || x > cw - 10 || y < 10 || y > ch - 10;
-      const sp = b.querySelector('span');
-      sp.style.order = x > cw * 0.7 ? -1 : 0;
+      // label links bij de rechterrand of als dat zo is ingesteld
+      b.classList.toggle('flip', b.classList.contains('left') || x > cw * 0.78);
     });
   };
 
