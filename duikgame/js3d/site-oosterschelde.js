@@ -4,13 +4,12 @@
    zeeanjelieren en dodemansduimen. Groen water, ± 4 m zicht, 13 °C. Alleen rond de kentering. */
 import * as THREE from 'three';
 import { UW, uw } from './water.js';
-import { setSeabed, seabed, floorNoise as fbm } from './terrain.js';
+import { setSeabed, setSolid, seabed, floorNoise as fbm } from './terrain.js';
 import { loadModels, hasModel, modelGeo, modelMap } from './models.js';
 import { Fauna } from './creatures3d.js';
+import { rng, smooth, tileable, loadTex, lumpy, makeRayGround } from './sitekit.js';
 
 const DG = window.DG;
-const rng = (seed) => { let s = seed >>> 0; return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296); };
-const smooth = (t) => t * t * (3 - 2 * t);
 
 // dwarsprofiel van de dijk naar de geul: [x, diepte (negatief)]
 const PROF = [[12, 3.2], [3, 0.4], [0, -0.6], [-6, -3.6], [-14, -7.2], [-30, -10.5], [-60, -14], [-95, -17], [-130, -20.5], [-170, -22]];
@@ -37,40 +36,6 @@ function osSeabed(x, z) {
     if (d < 9) y -= (1 - d / 9) * 0.9;
   }
   return y;
-}
-
-function tileable(img, w, h) {
-  // maakt een foto naadloos door de randen in elkaar over te laten lopen
-  const c = document.createElement('canvas'); c.width = w; c.height = h;
-  const g = c.getContext('2d');
-  g.drawImage(img, 0, 0, w, h);
-  const src = g.getImageData(0, 0, w, h), out = g.createImageData(w, h);
-  const B = Math.round(Math.min(w, h) * 0.18);
-  for (let y = 0; y < h; y++) {
-    for (let x = 0; x < w; x++) {
-      const i = (y * w + x) * 4;
-      const wx = x < B ? x / B : 1, wy = y < B ? y / B : 1;
-      const xo = (x + w - B) % w, yo = (y + h - B) % h;
-      const j = (y * w + (x < B ? (w - B + x) : x)) * 4, k = ((y < B ? (h - B + y) : y) * w + x) * 4;
-      for (let ch = 0; ch < 4; ch++) {
-        let v = src.data[i + ch];
-        if (x < B) v = v * wx + src.data[j + ch] * (1 - wx);
-        if (y < B) v = v * wy + src.data[k + ch] * (1 - wy);
-        out.data[i + ch] = v;
-      }
-      void xo; void yo;
-    }
-  }
-  g.putImageData(out, 0, 0);
-  // uitsnede zonder de overgangsrand
-  const c2 = document.createElement('canvas'); c2.width = w - B; c2.height = h - B;
-  c2.getContext('2d').drawImage(c, B, B, w - B, h - B, 0, 0, w - B, h - B);
-  return c2;
-}
-function loadTex(url, cb) {
-  const img = new Image();
-  img.onload = () => cb(img);
-  img.src = url;
 }
 
 /* ---------------- bodem ---------------- */
@@ -107,18 +72,6 @@ function makeFloor(scene, q) {
 }
 
 /* ---------------- stortsteen op de dijk en losse stenen ---------------- */
-function lumpy(geo, amt, seed) {
-  // hobbels op basis van de positie: hoekpunten die samenvallen schuiven even ver op, dus geen scheuren
-  const p = geo.attributes.position, v = new THREE.Vector3();
-  const h = (x, y, z) => { const t = Math.sin(x * 127.1 + y * 311.7 + z * 74.7 + seed * 13.3) * 43758.5453; return t - Math.floor(t); };
-  for (let i = 0; i < p.count; i++) {
-    v.fromBufferAttribute(p, i);
-    const k = 1 + (h(Math.round(v.x * 1000) / 1000, Math.round(v.y * 1000) / 1000, Math.round(v.z * 1000) / 1000) - 0.5) * amt;
-    v.multiplyScalar(k); p.setXYZ(i, v.x, v.y, v.z);
-  }
-  geo.computeVertexNormals();
-  return geo;
-}
 function makeStones(scene, q) {
   const R = rng(4242);
   const geo = lumpy(new THREE.IcosahedronGeometry(0.5, q === 'laag' ? 1 : 2), 0.38, 7);
@@ -152,23 +105,6 @@ function makeStones(scene, q) {
   mesh.computeBoundingSphere();
   scene.add(mesh);
   return { list, mesh };
-}
-// bodemhoogte inclusief de stenen (straal van boven), zodat dieren en duiker óp de stenen komen
-function makeGround(stoneMesh) {
-  const rc = new THREE.Raycaster(), o = new THREE.Vector3(), d = new THREE.Vector3(0, -1, 0), memo = new Map();
-  rc.far = 40;
-  return (x, z) => {
-    const k = Math.round(x * 10) * 100000 + Math.round(z * 10);
-    let y = memo.get(k);
-    if (y !== undefined) return y;
-    y = osSeabed(x, z);
-    o.set(x, 8, z); rc.set(o, d);
-    const h = rc.intersectObject(stoneMesh, false);
-    if (h.length) y = Math.max(y, h[0].point.y);
-    if (memo.size > 200000) memo.clear();
-    memo.set(k, y);
-    return y;
-  };
 }
 
 /* ---------------- pijlers van de brug ---------------- */
@@ -384,11 +320,11 @@ export const oosterschelde = {
   reefMsg: '',
   pillarMsg: 'Je raakt een pijler. Zeeanjelieren en dodemansduimen zijn kwetsbaar: houd afstand.',
   async build({ scene, q, loading }) {
-    setSeabed(osSeabed);
+    setSeabed(osSeabed); setSolid(null);
     await loadModels(['zeeanjelier', 'dodemansduim'].concat(OS_MODELS));
     makeFloor(scene, q);
     const { list: stones, mesh: stoneMesh } = makeStones(scene, q);
-    setSeabed(makeGround(stoneMesh));
+    setSeabed(makeRayGround(osSeabed, [stoneMesh]));
     await loading('De pijlers van de Zeelandbrug…');
     const pillars = makePiers(scene, q);
     makeGrowth(scene, q, pillars, stones);

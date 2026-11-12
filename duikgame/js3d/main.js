@@ -2,7 +2,7 @@
    bouwwerk, dieren, briefing) komt uit een profiel in sites.js. */
 import * as THREE from 'three';
 import { UW, makeCausticTexture, makeDome, makeSurface, makeRays, updateRays, makeParticles, makeBubbles, spawnBubbles, updateBubbles, makeBeam, updateBeam, makeBio, spawnBio, updateBio, makeGlows } from './water.js';
-import { seabed } from './terrain.js';
+import { seabed, solid } from './terrain.js';
 import { pillarAt } from './pier.js';
 import { profileFor } from './sites.js';
 import { buildDiver, animateDiver, preloadDivers } from './diver3d.js';
@@ -392,6 +392,16 @@ export async function runDive3D(site) {
         if (D.touchCool <= 0 && D.v.length() > 0.08) { D.touchCool = 3; D.touches++; hud.msg(P.pillarMsg, 3000); }
       }
     }
+    // vaste delen, zoals een wrak: je kunt er niet doorheen
+    {
+      const push = solid(D.p, 0.5);
+      if (push) {
+        D.p.add(push);
+        const n = push.clone().normalize(), vn = D.v.dot(n);
+        if (vn < 0) D.v.addScaledVector(n, -vn);
+        if (vn < -0.1 && D.touchCool <= 0) { D.touchCool = 3; D.touches++; hud.msg(P.solidMsg || P.pillarMsg, 3000); }
+      }
+    }
     // gebied begrenzen
     D.p.x = Math.max(P.bounds.x[0], Math.min(P.bounds.x[1], D.p.x)); D.p.z = Math.max(P.bounds.z[0], Math.min(P.bounds.z[1], D.p.z));
 
@@ -616,6 +626,8 @@ export async function runDive3D(site) {
       if (d < 1.1 && d > 0.01) { b.v.x += (dx / d) * dt * 3; b.v.z += (dz / d) * dt * 3; }
     }
     b.p.addScaledVector(b.v, dt);
+    const bpush = solid(b.p, 0.5);
+    if (bpush) b.p.add(bpush);
     const fl = seabed(b.p.x, b.p.z) + 0.4;
     if (b.p.y < fl) b.p.y = fl;
     if (b.p.y > -0.3) b.p.y = -0.3;
@@ -672,6 +684,7 @@ export async function runDive3D(site) {
 
   /* ---------------- tekenen ---------------- */
   const camPos = new THREE.Vector3().copy(D.p).add(new THREE.Vector3(3, 0.8, 0));
+  const camFrom = new THREE.Vector3(), camSeg = new THREE.Vector3();
   function render(dt) {
     const lf = fwdOf(D.lookYaw, D.lookPitch);
     if (D.view === 'bril') {
@@ -684,6 +697,13 @@ export async function runDive3D(site) {
       const want = D.p.clone().addScaledVector(lf, -3.6).add(new THREE.Vector3(0, 1.5, 0));
       const fl = seabed(want.x, want.z) + 0.35;
       if (want.y < fl) want.y = fl;
+      // niet door wrakwanden heen kijken: camera dichterbij als er iets tussen zit
+      camFrom.copy(D.p).y += 0.3;
+      camSeg.copy(want).sub(camFrom);
+      for (let i = 1; i <= 14; i++) {
+        tmpV.copy(camFrom).addScaledVector(camSeg, i / 14);
+        if (solid(tmpV, 0.3)) { want.copy(camFrom).addScaledVector(camSeg, (i - 1) / 14); camPos.lerp(want, 0.5); break; }
+      }
       camPos.lerp(want, Math.min(1, dt * 6));
       camera.position.copy(camPos);
       camera.lookAt(D.p.clone().addScaledVector(lf, 1.6).add(new THREE.Vector3(0, 0.25, 0)));
@@ -729,7 +749,7 @@ export async function runDive3D(site) {
       species: Object.keys(D.spotted), newSpecies: D.newSp.slice(), photos: D.photos, challenges: D.chDone.slice(), needStop: D.needStop, safetyDone: D.stopDone,
       ascentWarnings: D.fastCount, ooa: !!ooa, decoViolation: D.decoViol || D.ceilViol > 0, cold: D.gt > 0 ? Math.round(100 * (D.coldT || 0) / D.gt) : 0, gas: lo.gas, tankL: TANK_L,
       profile: D.prof.concat([[minutes, 0]]), lines, earned: 0, xp, three: true, night, bio: D.bioSeen, drills: drills.results(),
-      rules: { touches: D.touches, reef: D.reefTouch, missed: D.missed, limit: D.limitViol, deco: D.wasDeco, ceil: D.ceilViol, glare: D.glare, night },
+      rules: { touches: D.touches, touchTxt: P.touchTxt || 'een pijler', reef: D.reefTouch, missed: D.missed, limit: D.limitViol, deco: D.wasDeco, ceil: D.ceilViol, glare: D.glare, night },
     };
     // opslaan: logboek, foto's, restverzadiging, vliegverbod
     const prof = res.profile;

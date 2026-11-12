@@ -32,7 +32,15 @@ export const FILES = {
   zeekat: 'models/os/zeekat.glb', vlokslak: 'models/os/vlokslak.glb', bruinvis: 'models/os/bruinvis.glb',
   // meer leven: geelstaartsnappers en gele geitenvissen
   geelstaart_snapper: 'models/vis/geelstaart_snapper.glb', gele_geitenvis: 'models/vis/gele_geitenvis.glb',
+  // Tulamben (wrak van de USAT Liberty)
+  naaktslak: 'models/tul/naaktslak.glb', reuzenkikvorsvis: 'models/tul/reuzenkikvorsvis.glb',
+  zachtkoraal: 'models/tul/zachtkoraal.glb', tafelkoraal: 'models/tul/tafelkoraal.glb',
+  schroef: 'models/tul/schroef.glb', kanon: 'models/tul/kanon.glb', ketel: 'models/tul/ketel.glb',
+  // dezelfde modellen voor verwante soorten
+  glasvisje: 'models/vis/zilvervisje.glb', reuzenmurene: 'models/dier/murene.glb',
 };
+['bultkop', 'grootoog_trevally', 'wimpelvis', 'batvis', 'kogelvis', 'koraalduivel']
+  .forEach((id) => { FILES[id] = 'models/tul/' + id + '.glb'; FILES[id + '-ver'] = 'models/tul/' + id + '-ver.glb'; });
 // eenvoudigere versies van de vissen voor op afstand (LOD)
 ['franse_knorvis', 'kleinbek_knorvis', 'sergeant', 'blauwe_dokter', 'chromis_blauw', 'tarpon', 'barracuda', 'franse_keizer', 'koningin_keizer', 'stoplicht_papegaai', 'koffervis', 'trompetvis', 'geelstaart_snapper', 'gele_geitenvis']
   .forEach((id) => { FILES[id + '-ver'] = 'models/vis/' + id + '-ver.glb'; });

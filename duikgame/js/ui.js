@@ -1065,7 +1065,7 @@
       const R = res.rules || {};
       const nf = DG.Save.data.noFlyUntil ? Math.ceil((DG.Save.data.noFlyUntil - UI.gameNow()) / 3600e3) : 0;
       rightCol = '<h3>Regels &amp; buddy</h3><ul class="sum-checks">' +
-        '<li>' + (R.touches ? '⚠️ ' + R.touches + '× een pijler geraakt' : '✅ Niets aangeraakt') + '</li>' +
+        '<li>' + (R.touches ? '⚠️ ' + R.touches + '× ' + (R.touchTxt || 'een pijler') + ' geraakt' : '✅ Niets aangeraakt') + '</li>' +
         (R.reef ? '<li>⚠️ ' + R.reef + '× het rif geraakt</li>' : '') +
         '<li>' + (R.missed ? '⚠️ ' + R.missed + '× niet gereageerd op je buddy' : '✅ Goed contact met je buddy') + '</li>' +
         (R.limit ? '<li>⚠️ Dieper geweest dan je brevet toestaat</li>' : '') +

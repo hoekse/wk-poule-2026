@@ -37,6 +37,10 @@ export function fbm(x, z) {
 let floorFn = null;
 export function setSeabed(fn) { floorFn = fn || null; }
 export function seabed(x, z) { return floorFn ? floorFn(x, z) : saltSeabed(x, z); }
+// vaste delen waar je niet doorheen kunt (bijv. een wrak): geeft een duwvector terug of null
+let solidFn = null;
+export function setSolid(fn) { solidFn = fn || null; }
+export function solid(p, r) { return solidFn ? solidFn(p, r) : null; }
 export { fbm as floorNoise };
 function saltSeabed(x, z) {
   let y = profile(x);
@@ -165,7 +169,7 @@ function rng(seed) {
 }
 
 // zwaaiende hoge vormen (zeezwepen, waaiers, zeegras) via vertex-shader
-function swayMat(params) {
+export function swayMat(params) {
   const key = params.key;
   params = Object.assign({}, params);
   delete params.key;

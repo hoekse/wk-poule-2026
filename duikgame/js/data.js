@@ -478,7 +478,7 @@
       ],
     },
     {
-      id: 'tulamben', name: 'USAT Liberty-wrak', area: 'Tulamben, Bali', country: 'Indonesië', lat: -8.276, lon: 115.593,
+      id: 'tulamben', name: 'USAT Liberty-wrak', area: 'Tulamben, Bali', country: 'Indonesië', lat: -8.276, lon: 115.593, three: true,
       temp: 27, vis: 20, depth: 30, level: 'Open Water', current: 0.03, entry: 'Kantduik',
       travel: { mode: 'vlieg', time: '± 16 uur vliegen naar Bali' },
       desc: 'Het Amerikaanse vrachtschip werd in 1942 getorpedeerd en op het strand van Tulamben gezet. Door de uitbarsting van de Gunung Agung in 1963 schoof het wrak de zee in. Nu ligt het op 5 tot 30 meter diepte, overgroeid met koraal.',
@@ -649,6 +649,14 @@
       { id: 'os_vlokslak', title: 'Vlokslak (macro)', sp: ['vlokslak'], min: 3, tip: 'Klein! Op de stenen van de dijk. Ga heel dichtbij met flitsers.' },
       { id: 'os_zeekat', title: 'Zeekat', sp: ['zeekat'], min: 3, tip: 'Soms bij de pijlers. Benader hem heel rustig.' },
     ],
+    tulamben: [
+      { id: 'tu_bultkop', title: 'Bultkoppen bij het wrak', sp: ['bultkop'], min: 3, tip: 'Een groep bultkoppapegaaivissen trekt langs het wrak. Zwem rustig mee en kom van opzij.' },
+      { id: 'tu_trevally', title: 'Trevally-tornado', sp: ['grootoog_trevally'], min: 3, tip: 'Boven het diepe deel van het wrak, rond 15–20 m, draait een school grootoogtrevally’s.' },
+      { id: 'tu_tuinaal', title: 'Tuinalen in het zand', sp: ['tuinaal'], min: 2, tip: 'Op het zwarte zand tussen strand en wrak. Ga plat liggen en kom heel langzaam dichterbij, anders duiken ze weg.' },
+      { id: 'tu_kikvors', title: 'Reuzenkikvorsvis', sp: ['reuzenkikvorsvis'], min: 3, tip: 'Hij lijkt op een oranje spons op het wrak. Kijk goed bij de koralen op de romp.' },
+      { id: 'tu_naaktslak', title: 'Naaktslak (macro)', sp: ['naaktslak'], min: 3, tip: 'Klein en knalblauw. Ze kruipen over de romp; ga dichtbij met flitsers.' },
+      { id: 'tu_schroef', title: 'Bij de schroef', sp: ['batvis', 'koraalduivel', 'wimpelvis'], min: 3, tip: 'Bij de achtersteven ligt de grote schroef met het roer. Er hangen vaak vleermuisvissen en koraalduivels.' },
+    ],
     // nachtduik bij de Zoutpier
     saltpier_nacht: [
       { id: 'zn_tarpon', title: 'Tarpon in je lampbundel', sp: ['tarpon'], min: 3, tip: '’s Nachts jagen de tarpons op visjes in het licht van je lamp. Houd je lamp stil en wacht.' },
@@ -659,7 +667,7 @@
       { id: 'zn_inktvis', title: 'Rifinktvissen', sp: ['rifinktvis'], min: 3, tip: 'Vlak onder het oppervlak, 1–3 m, vooral bij de ingang en onder de pier.' },
     ],
   };
-  DG.CHALLENGE_SITE = { saltpier: 'saltpier', saltpier_nacht: 'saltpier', oosterschelde: 'oosterschelde' };
+  DG.CHALLENGE_SITE = { saltpier: 'saltpier', saltpier_nacht: 'saltpier', oosterschelde: 'oosterschelde', tulamben: 'tulamben' };
   DG.siteById = (id) => DG.SITES.find((s) => s.id === id);
   DG.gearById = (id) => DG.GEAR.find((g) => g.id === id);
   DG.courseById = (id) => DG.COURSES.find((c) => c.id === id);

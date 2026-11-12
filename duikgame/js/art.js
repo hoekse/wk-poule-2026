@@ -1533,7 +1533,7 @@
   // Icoon voor het logboek in een canvas; silhouette = onbekend
   // realistische visfoto's (Magnific) voor iconen
   Art.photos = {};
-  ['franse_knorvis', 'kleinbek_knorvis', 'sergeant', 'blauwe_dokter', 'chromis_blauw', 'tarpon', 'barracuda', 'franse_keizer', 'koningin_keizer', 'stoplicht_papegaai', 'koffervis', 'trompetvis', 'langoest', 'rifinktvis', 'mandster', 'geelstaart_snapper', 'gele_geitenvis', 'lipvis', 'steenbolk', 'zeebrasem'].forEach((id) => {
+  ['franse_knorvis', 'kleinbek_knorvis', 'sergeant', 'blauwe_dokter', 'chromis_blauw', 'tarpon', 'barracuda', 'franse_keizer', 'koningin_keizer', 'stoplicht_papegaai', 'koffervis', 'trompetvis', 'langoest', 'rifinktvis', 'mandster', 'geelstaart_snapper', 'gele_geitenvis', 'lipvis', 'steenbolk', 'zeebrasem', 'bultkop', 'grootoog_trevally', 'wimpelvis', 'batvis', 'kogelvis', 'koraalduivel', 'naaktslak', 'reuzenkikvorsvis'].forEach((id) => {
     const im = new Image();
     im.src = 'img/vis/' + id + '.webp';
     Art.photos[id] = im;

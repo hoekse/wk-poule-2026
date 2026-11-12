@@ -4,11 +4,12 @@
    De duikmotor (main.js) is voor alle stekken hetzelfde. */
 import * as THREE from 'three';
 import { UW } from './water.js';
-import { makeSeabed, makeReef, makePillarGrowth, loadSandTextures, setSeabed } from './terrain.js';
+import { makeSeabed, makeReef, makePillarGrowth, loadSandTextures, setSeabed, setSolid } from './terrain.js';
 import { loadModels } from './models.js';
 import { makePier, pillarAt } from './pier.js';
 import { Fauna, preloadFishPhotos, preloadFaunaModels } from './creatures3d.js';
 import { oosterschelde } from './site-oosterschelde.js';
+import { tulamben } from './site-tulamben.js';
 
 const esc = (s) => window.DG.U.esc(s);
 
@@ -36,7 +37,7 @@ export const saltpier = {
   reefMsg: 'Pas op: je raakt het rif! In het Bonaire Marine Park mag je niets aanraken.',
   pillarMsg: 'Je raakt een pijler. Niets aanraken: het leven op de pijlers is kwetsbaar.',
   async build({ scene, q, loading, night }) {
-    setSeabed(null);
+    setSeabed(null); setSolid(null);
     const [sandTex] = await Promise.all([loadSandTextures(), loadModels(['hersenkoraal', 'sterkoraal', 'buisspons', 'vaasspons', 'tonspons', 'bekerkoraal', 'korstspons', 'zeepluim'])]);
     scene.add(makeSeabed(q, sandTex));
     await loading('De pijlers van de Zoutpier…');
@@ -87,6 +88,6 @@ export const saltpier = {
   },
 };
 
-export const PROFILES = { saltpier, oosterschelde };
+export const PROFILES = { saltpier, oosterschelde, tulamben };
 export function profileFor(site) { return PROFILES[site.id] || saltpier; }
 export { esc };

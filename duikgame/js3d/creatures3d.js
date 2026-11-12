@@ -1,7 +1,7 @@
 /* Diepblauw 3D — dieren: vissen (uit de bestaande soortentekeningen), scholen, tarpons, schildpadden, kikvorsvis, adelaarsrog */
 import * as THREE from 'three';
 import { uw } from './water.js';
-import { seabed } from './terrain.js';
+import { solid, seabed } from './terrain.js';
 import { CENTER, GROUPS, pillarAt } from './pier.js';
 import { loadModels, hasModel, modelGeo, modelMap } from './models.js';
 
@@ -68,7 +68,7 @@ function modelFishAsset(spc, name) {
   geo.scale(L, L, L);
   geo.computeBoundingBox();
   const shiny = /tarpon|barracuda|trevally|jacks|fuselier|zeebrasem/.test(spc.id);
-  return { geo, tex: modelMap(name || spc.id), headX: geo.boundingBox.max.x, tailX: geo.boundingBox.min.x, L, shiny: shiny || spc.id === 'zilvervisje', model: true };
+  return { geo, tex: modelMap(name || spc.id), headX: geo.boundingBox.max.x, tailX: geo.boundingBox.min.x, L, shiny: shiny || spc.id === 'zilvervisje' || spc.id === 'glasvisje', model: true };
 }
 
 const fishCache = {};
@@ -293,6 +293,8 @@ class School {
     this.vel = new THREE.Vector3();
     this.timer = 0;
     this.roam = opts.roam || 0.25;
+    this.range = opts.range || 5;  // hoe ver de school om zijn plek heen zwerft
+    this.spots = opts.spots || null; // plekken waar de school naartoe mag (anders alle hangplekken)
     this.low = !!opts.low;       // 's nachts verspreid op het zand foerageren
     this.depth = opts.depth;     // vast dieptebereik [min, max]
     this.light = !!opts.light;   // komt af op lamplicht (zilvervisjes)
@@ -314,8 +316,8 @@ class School {
       speed = 0.7;
     } else if (this.timer <= 0 || this.pos.distanceTo(this.target) < 1.5) {
       this.timer = rand(8, 20);
-      if (Math.random() < this.roam) this.home = HANG[Math.floor(Math.random() * HANG.length)];
-      const x = this.home.x + rand(-5, 5), z = this.home.z + rand(-5, 5);
+      if (Math.random() < this.roam) { const L = this.spots || HANG; this.home = L[Math.floor(Math.random() * L.length)]; }
+      const x = this.home.x + rand(-this.range, this.range), z = this.home.z + rand(-this.range, this.range);
       const fl = seabed(x, z);
       const y = this.depth ? -rand(this.depth[0], this.depth[1]) : this.low ? fl + rand(0.3, 0.9) : Math.min(-1.2, fl + rand(1.2, 4.5));
       this.target.set(x, Math.max(fl + 0.3, y), z);
@@ -325,6 +327,8 @@ class School {
     if (d > 0.01) dir.multiplyScalar(Math.min(1, d / 3) * speed / d);
     this.vel.lerp(dir, Math.min(1, dt * 0.8));
     this.pos.addScaledVector(this.vel, dt);
+    const spush = solid(this.pos, 0.6);
+    if (spush) { this.pos.add(spush); this.timer = Math.min(this.timer, 0.5); }
     const sp = this.vel.length();
     for (const m of this.members) {
       m.off.applyAxisAngle(Y, dt * 0.05);
@@ -361,6 +365,8 @@ function clampWater(p, margin) {
   const fl = seabed(p.x, p.z);
   if (p.y < fl + margin) p.y = fl + margin;
   if (p.y > -0.4) p.y = -0.4;
+  const push = solid(p, margin * 0.6);
+  if (push) p.add(push);
 }
 
 // solitaire vis met eigen doel
@@ -448,6 +454,7 @@ export class Fauna {
     HANG = opts.hang || SALT_HANG;
     this.hang = HANG;
     this.site = opts.site || 'saltpier';
+    this.ground = opts.ground || null; // bodem voor kruipers en schildpadden (bijv. bovenop een wrak)
     this.turtles = []; this.frogs = []; this.ray = null; this.lurkers = []; this.cruisers = [];
     // andere duikstekken geven hun eigen samenstelling mee
     if (opts.comp) {
@@ -546,9 +553,10 @@ export class Fauna {
     m.updateMatrixWorld(true);
     const b = new THREE.Box3().setFromObject(m);
     const lift = -b.min.y - 0.02 + (opts.lift || 0);
-    m.position.set(q.x, seabed(q.x, q.z) + lift, q.z);
+    const gnd = opts.ground || this.ground || seabed;
+    m.position.set(q.x, (q.y !== undefined ? q.y : gnd(q.x, q.z)) + lift, q.z);
     this.scene.add(m);
-    const o = { m, spc, L: opts.L || spc.size, hidden: opts.hidden !== false, lift, home: new THREE.Vector3(q.x, 0, q.z), t: new THREE.Vector3(q.x, 0, q.z),
+    const o = { m, spc, L: opts.L || spc.size, hidden: opts.hidden !== false, lift, gnd: opts.ground || this.ground || null, home: new THREE.Vector3(q.x, 0, q.z), t: new THREE.Vector3(q.x, 0, q.z),
       timer: rand(1, 5), pause: 0, speed: opts.speed || 0.06, range: opts.range || 4, wig: opts.wig || 0, yaw: -q.a, ph: Math.random() * TAU };
     if (opts.moving) this.crawlers.push(o);
     this.lurkers.push(o);
@@ -697,6 +705,18 @@ export class Fauna {
       this.stars.push({ m, spc: DG.SPECIES.mandster, L: sc, uCurl, lit: 0, warned: false });
     }
   }
+  // schildpad die graast en af en toe naar boven zwemt; box = graasgebied, ground = eigen bodem
+  addTurtle(id, opts) {
+    if (!hasModel(id) || !DG.SPECIES[id]) return null;
+    const m = turtleModel(id);
+    const gnd = opts.ground || this.ground || seabed;
+    m.position.set(opts.x, gnd(opts.x, opts.z) + 0.25, opts.z);
+    m.scale.setScalar((opts.scale || 0.95) * DG.SPECIES[id].size * (m.userData.uPh ? 1.45 : 1));
+    this.scene.add(m);
+    const o = { m, spc: DG.SPECIES[id], state: 'graze', timer: rand(20, 80), t: m.position.clone(), v: new THREE.Vector3(), ph: Math.random() * 6, L: DG.SPECIES[id].size, box: opts.box, gnd: opts.ground || this.ground || null };
+    this.turtles.push(o);
+    return o;
+  }
   addSchool(spc, n, opts) { if (spc) this.schools.push(new School(spc, n, opts)); }
   addSolo(spc, opts) { if (spc) this.solos.push(new Solo(spc, opts)); }
   buildMeshes() {
@@ -725,6 +745,7 @@ export class Fauna {
     });
   }
   update(dt, env, t) {
+    if (this.onUpdate) this.onUpdate(dt, env, t); // eigen gedrag van een duikstek (bijv. tuinalen)
     this.schools.forEach((s) => s.update(dt, env));
     this.solos.forEach((s) => s.update(dt, env));
     Object.values(this.meshes).forEach((m) => { m.i = 0; m.j = 0; });
@@ -802,7 +823,8 @@ export class Fauna {
       }
       if (tu.state === 'graze' && tu.timer <= 0) { tu.state = 'up'; tu.timer = 60; }
       if (tu.state === 'graze') {
-        if (p.distanceTo(tu.t) < 0.6 || !tu.tset) { const x = Math.max(-45, Math.min(-6, p.x + rand(-6, 6))), z = Math.max(8, Math.min(46, p.z + rand(-6, 6))); tu.t.set(x, seabed(x, z) + 0.25, z); tu.tset = true; }
+        const bx = tu.box || { x: [-45, -6], z: [8, 46] };
+        if (p.distanceTo(tu.t) < 0.6 || !tu.tset) { const x = Math.max(bx.x[0], Math.min(bx.x[1], p.x + rand(-6, 6))), z = Math.max(bx.z[0], Math.min(bx.z[1], p.z + rand(-6, 6))); tu.t.set(x, (tu.gnd || seabed)(x, z) + 0.25, z); tu.tset = true; }
       } else if (tu.state === 'up') {
         tu.t.set(p.x + 0.5, -0.3, p.z + 0.5);
         if (p.y > -0.6) { tu.state = 'down'; tu.timer = 4; }
@@ -815,8 +837,10 @@ export class Fauna {
       if (dd > 0.05) dir.multiplyScalar(Math.min(1, dd) * spd / dd);
       tu.v.lerp(dir, dt * 0.6);
       p.addScaledVector(tu.v, dt);
-      const fl = seabed(p.x, p.z) + 0.22;
+      const fl = (tu.gnd || seabed)(p.x, p.z) + 0.22;
       if (p.y < fl) p.y = fl;
+      const push = solid(p, 0.4);
+      if (push) p.add(push);
       if (tu.v.lengthSq() > 0.0004) tu.m.rotation.y = Math.atan2(-tu.v.x, -tu.v.z);
       tu.m.rotation.x = Math.max(-0.5, Math.min(0.5, tu.v.y * 1.5));
       tu.ph += dt * (0.8 + tu.v.length() * 3);
@@ -868,7 +892,7 @@ export class Fauna {
       if (e < mn && e > 0.001) { nx = a.x + (ex / e) * mn; nz = a.z + (ez / e) * mn; }
     }
     p.x = nx; p.z = nz;
-    p.y = seabed(p.x, p.z) + o.lift;
+    p.y = (o.gnd || seabed)(p.x, p.z) + o.lift;
     o.m.rotation.y = o.yaw;
   }
   // alles wat gespot kan worden, met positie

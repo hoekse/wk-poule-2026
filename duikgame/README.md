@@ -45,6 +45,14 @@ De Zoutpier is de eerste duikstek in 3D: vrij rondzwemmen volgens de echte duikr
 - Je duikt alleen rond de kentering. Ben je te laat, dan wacht je op de volgende. Met een te dun pak krijg je het koud en verbruik je meer lucht.
 - Zes fotochallenges.
 
+## USAT Liberty-wrak, Tulamben (3D)
+
+- Kantduik over een strand van zwarte keien. Het zwarte vulkanische zand loopt steil af naar het 120 m lange wrak, dat op ± 40 m uit de kust op zijn zij ligt, van 5 tot 25 m diep.
+- Het wrak is in tweeën gebroken. Je kunt door de breuk, de open ruimen en de ingestorte opbouw zwemmen, maar niet door de wanden heen: duiker, buddy, camera en vissen botsen met de romp.
+- Op het wrak: de schroef met het roer, het kanon op het achterdek en een stoomketel in de breuk (3D-modellen uit Magnific). De romp is bedekt met tafelkoraal, zacht koraal, tonsponzen en rode waaiers.
+- Dieren: bultkoppapegaaivissen, een school grootoogtrevally's, wimpelvissen, vleermuisvissen, koraalduivels, kogelvissen, glasvisjes in de ruimen, reuzenmurenen, reuzenkikvorsvissen, naaktslakken, een groene zeeschildpad en tuinalen die wegduiken als je te dichtbij komt.
+- Zes fotochallenges. De twee briefingbeelden zijn illustraties uit Magnific.
+
 ### Besturing
 
 | | Telefoon / tablet | Pc |
@@ -73,10 +81,10 @@ Op GitHub Pages of Vercel werkt het direct.
 ## Bestanden
 
 - `js/`: menu's, winkel, wereldkaart, logboek en de 2D-duikstekken
-- `js3d/`: de 3D-duik (Three.js): water, bodem, pier, dieren, duiker, 3D-modellen laden, fysica, decompressie, besturing en HUD; `sites.js` (per duikstek: water, bodem, bouwwerken, dieren en briefing), `site-oosterschelde.js` (Zeelandbrug), `shop3d.js` (3D-winkel) en `trip3d.js` (busrit)
+- `js3d/`: de 3D-duik (Three.js): water, bodem, pier, dieren, duiker, 3D-modellen laden, fysica, decompressie, besturing en HUD; `sites.js` (per duikstek: water, bodem, bouwwerken, dieren en briefing), `site-oosterschelde.js` (Zeelandbrug), `site-tulamben.js` (Liberty-wrak), `sitekit.js` (gedeeld gereedschap), `shop3d.js` (3D-winkel) en `trip3d.js` (busrit)
 - `vendor/three/`: Three.js 0.186.1 (MIT-licentie)
-- `models/`: 3D-modellen (glTF) uit Magnific: `duiker.glb` en `buddy.glb` met skelet, `vis/` (met `-ver`-versies voor op afstand), `dier/`, `rif/`, `os/` (Oosterschelde) en `winkel/` (paspop, torso, tas, fles en de Tuimelaar-bus)
+- `models/`: 3D-modellen (glTF) uit Magnific: `duiker.glb` en `buddy.glb` met skelet, `vis/` (met `-ver`-versies voor op afstand), `dier/`, `rif/`, `os/` (Oosterschelde), `tul/` (Tulamben) en `winkel/` (paspop, torso, tas, fles en de Tuimelaar-bus)
 - `audio/`: geluiden uit Magnific
-- `img/`: winkelfoto's en logo van De Tuimelaar, foto's van Bonaire, pijler- en zandtextuur, zeewaaier, `vis/` met de vissenfoto's (reserve als een 3D-model niet laadt), `winkel3d/` (wanden voor de 3D-winkel, uit de winkelfoto's), `oosterschelde/` (pijler, bodem en suikerwier) en `reis/` (stockfoto's van Schiphol, de vlucht en Bonaire)
+- `img/`: winkelfoto's en logo van De Tuimelaar, foto's van Bonaire, pijler- en zandtextuur, zeewaaier, `vis/` met de vissenfoto's (reserve als een 3D-model niet laadt), `winkel3d/` (wanden voor de 3D-winkel, uit de winkelfoto's), `oosterschelde/` (pijler, bodem en suikerwier), `tulamben/` (romp, zwart zand, keien en briefingbeelden) en `reis/` (stockfoto's van Schiphol, de vlucht en Bonaire)
 
 Fan-project in samenwerking met Duikcentrum De Tuimelaar Zwolle. Sommige referentiefoto's van internet zijn alleen als voorbeeld gebruikt en zitten niet in het spel.
