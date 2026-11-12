@@ -572,6 +572,24 @@
    * Reis: met de Tuimelaar-bus en het vliegtuig
    * ================================================================ */
   let travelRaf = null, landPath = null;
+  /* De reis: een groepsreis met de Tuimelaar-bus. Stappen:
+     inpakken bij de winkel → rit in 3D over de snelweg → (vliegreizen:) inchecken op Schiphol,
+     naar de gate, de vlucht en aankomst. Overal kun je overslaan. */
+  const TRIP_ROUTES = {
+    schiphol: { pts: [['Zwolle', 52.512, 6.094, 1], ['Harderwijk', 52.342, 5.62, 0], ['Amersfoort', 52.156, 5.387, 1], ['Eemnes', 52.25, 5.26, 0], ['Muiden', 52.33, 5.07, 0], ['Amsterdam', 52.31, 4.95, 0], ['Schiphol', 52.31, 4.76, 1]], km: 125, min: 75 },
+    zeeland: { pts: [['Zwolle', 52.512, 6.094, 1], ['Amersfoort', 52.156, 5.387, 1], ['Utrecht', 52.09, 5.12, 1], ['Gorinchem', 51.83, 4.97, 1], ['Dordrecht', 51.80, 4.67, 0], ['Hellegatsplein', 51.70, 4.42, 0], ['Zierikzee', 51.65, 3.92, 1]], km: 215, min: 150 },
+  };
+  // inpakken: handbagage of ruimbagage (echte regels voor vliegreizen)
+  const PACK = [
+    { id: 'pc', name: 'Duikcomputer', ok: 'hand', why: 'Kwetsbaar, duur en met batterij: altijd in je handbagage.' },
+    { id: 'acc', name: 'Reserve-accu van je lamp', ok: 'hand', why: 'Losse lithium-accu’s en powerbanks mogen alleen in de handbagage, nooit in de ruimbagage.' },
+    { id: 'mes', name: 'Duikmes', ok: 'ruim', why: 'Messen mogen niet mee in de handbagage.' },
+    { id: 'brevet', name: 'Brevetkaart en logboek', ok: 'hand', why: 'Die laat je bij aankomst zien bij de duikschool: houd ze bij je.' },
+  ];
+  // gewicht van je duiktas (kg)
+  const BAG_KG = { masker: 0.3, vinnen: { v_allround: 1.3, v_split: 1.4, v_jet: 2.6 }, pak: { p_shorty: 1.0, p_5mm: 2.4, p_semidry: 3.6, p_droog: 4.5 },
+    trimvest: { t_jacket: 3.4, t_wing: 4.6 }, automaat: { a_basis: 1.7, a_koud: 1.9 }, computer: 0, lamp: { l_compact: 0.3, l_primair: 0.7 }, camera: { cam_compact: 0.9, cam_pro: 4.8 } };
+
   UI.travel = function (site, force) {
     const sv0 = DG.Save.data;
     if (!force && sv0.location === site.area) {
@@ -589,43 +607,204 @@
     DG.Save.save();
     UI.go('travel');
     DG.Audio.unlock();
-    const cv = $('travel-canvas');
-    const r = Math.min(2, window.devicePixelRatio || 1);
-    const fit = () => { cv.width = innerWidth * r; cv.height = innerHeight * r; };
-    fit();
     const bus = site.travel.mode === 'bus';
-    const tBus = bus ? 4.2 : 2.8, tFly = bus ? 0 : 3.6;
-    const total = tBus + tFly;
-    let t = 0, last = performance.now(), done = false;
-    if (!landPath) landPath = new Path2D(DG.WORLD_LAND);
-    DG.Audio.engine(tBus);
-    if (!bus) setTimeout(() => { if (!done) DG.Audio.plane(tFly); }, tBus * 1000);
-    const txt = $('travel-text');
+    const bonaire = site.area === 'Bonaire';
+    const steps = [];
+    steps.push({ id: 'vertrek', photo: 'img/winkel-pui-en-bus.jpg', time: bus ? '07:00' : '06:00', title: 'Vertrek bij De Tuimelaar, Zwolle',
+      text: bus ? 'Groepsreis naar ' + site.area + '! De Tuimelaar-bus staat klaar voor de winkel. Flessen en lood gaan mee in de bus.'
+        : 'Groepsreis naar ' + site.area + '! De Tuimelaar-bus staat klaar voor de winkel. Pak eerst je duiktas in: wat gaat in je handbagage en wat in de ruimbagage?' });
+    steps.push({ id: 'rit', time: bus ? '07:15' : '06:15', title: bus ? 'Met de Tuimelaar-bus naar ' + site.area : 'Met de Tuimelaar-bus naar Schiphol',
+      text: bus ? 'Via de A28, de A27 en de Zeelandbrug: ± 215 km, ruim twee uur rijden.' : 'Via de A28 en de A1 naar Schiphol: ± 125 km, ruim een uur rijden.' });
+    if (!bus) {
+      steps.push({ id: 'inchecken', photo: 'img/reis/schiphol-inchecken.webp', time: '07:45', title: 'Inchecken op Schiphol', text: 'Je duiktas gaat op de band. Bij de meeste vluchten mag je ruimbagage tot 23 kg wegen.' });
+      steps.push({ id: 'gate', photo: 'img/reis/schiphol-gates.webp', time: '09:30', title: 'Door de douane, naar je gate', text: 'Drink onderweg genoeg water: in het vliegtuig droog je uit, en uitgedroogd duiken vergroot de kans op decompressieziekte.' });
+      steps.push({ id: 'vlucht', photo: 'img/reis/vlucht-vleugel.webp', time: '10:15', title: 'Boven de oceaan', text: site.travel.time + '.' });
+      steps.push({ id: 'aankomst', photo: bonaire ? 'img/reis/bonaire-kust.webp' : null, time: bonaire ? '14:20 (lokale tijd)' : '', title: bonaire ? 'Bon bini op Bonaire!' : 'Aangekomen: ' + site.area,
+        text: bonaire ? 'Flamingo Airport, 30 °C. Op Bonaire duik je vanaf de kant: je huurt een pick-up, laadt je flessen in en rijdt naar de gele steen van de Zoutpier.'
+          : 'Welkom in ' + site.area + ', ' + site.country + '. Je duikschool brengt je naar ' + site.name + '.' });
+    }
+    let idx = -1, drive = null, done = false, raf = null;
+    const pack = {};
+    const $c = (id) => document.getElementById(id);
+    const card = $c('trip-card'), photo = $c('trip-photo'), img = $c('trip-img'), cv3 = $c('travel-3d'), cv2 = $c('travel-canvas');
+    const stopStep = () => {
+      if (drive) { drive.stop(); drive = null; }
+      if (raf) cancelAnimationFrame(raf); raf = null;
+      cv3.hidden = true; cv2.hidden = true; $c('trip-route').hidden = true; $c('trip-inset').hidden = true;
+    };
     const finish = () => {
       if (done) return; done = true;
-      cancelAnimationFrame(travelRaf);
-      window.removeEventListener('resize', fit);
+      stopStep();
+      window.removeEventListener('resize', fit2d);
       UI.startDive(site);
     };
-    $('btn-skip').onclick = finish;
-    window.addEventListener('resize', fit);
-    const loop = (now) => {
-      travelRaf = requestAnimationFrame(loop);
-      t += Math.min(0.05, (now - last) / 1000); last = now;
-      const c = cv.getContext('2d');
-      const W = cv.width, H = cv.height;
-      if (t < tBus) {
-        txt.textContent = bus ? 'Met de Tuimelaar-bus naar de Oosterschelde…' : 'Met de Tuimelaar-bus naar Schiphol…';
-        drawRoad(c, W, H, t, bus ? 'Zeeland' : 'Schiphol', r);
-      } else if (t < total) {
-        txt.textContent = 'Vliegen naar ' + site.area + '…';
-        drawFlight(c, W, H, (t - tBus) / tFly, site);
-      } else {
-        finish();
-      }
-    };
-    travelRaf = requestAnimationFrame(loop);
+    const r = Math.min(2, window.devicePixelRatio || 1);
+    const fit2d = () => { cv2.width = innerWidth * r; cv2.height = innerHeight * r; };
+    window.addEventListener('resize', fit2d);
+    $c('btn-skip').onclick = finish;
+    $c('trip-steps').innerHTML = steps.map((s, i) => '<i data-i="' + i + '"></i>').join('');
+    const next = () => { if (idx >= steps.length - 1) finish(); else show(idx + 1); };
+    $c('trip-next').onclick = next;
+
+    function setPhoto(src) {
+      if (!src) { photo.hidden = true; return; }
+      photo.hidden = false;
+      photo.classList.remove('kb'); void photo.offsetWidth; photo.classList.add('kb');
+      if (img.getAttribute('src') !== src) img.setAttribute('src', src);
+    }
+    function show(i) {
+      stopStep();
+      idx = i;
+      const st = steps[i];
+      [...$c('trip-steps').children].forEach((d, k) => { d.className = k < i ? 'done' : k === i ? 'on' : ''; });
+      $c('trip-time').textContent = st.time;
+      $c('trip-title').textContent = st.title;
+      $c('trip-text').textContent = st.text;
+      const body = $c('trip-body');
+      body.innerHTML = '';
+      const nextBtn = $c('trip-next');
+      nextBtn.textContent = i === steps.length - 1 ? '🤿 Naar de duikstek' : 'Verder ›';
+      nextBtn.disabled = false;
+      card.classList.toggle('compact', st.id === 'rit' || st.id === 'vlucht');
+      setPhoto(st.photo);
+      if (st.id === 'vertrek' && !bus) renderPack(body);
+      if (st.id === 'rit') startDrive(st);
+      if (st.id === 'inchecken') renderBag(body);
+      if (st.id === 'vlucht') { DG.Audio.plane(5); startInset(); }
+      if (st.id === 'aankomst' && !st.photo) { cv2.hidden = false; fit2d(); const c = cv2.getContext('2d'); drawFlight(c, cv2.width, cv2.height, 1, site); }
+    }
+
+    function renderPack(body) {
+      const lamp = DG.Save.equipped('lamp');
+      body.innerHTML = '<ul class="pack">' + PACK.map((it) => '<li data-id="' + it.id + '"><span>' + esc(it.id === 'acc' && !lamp ? 'Powerbank voor je telefoon' : it.name) + '</span>' +
+        '<button class="btn small" data-v="hand" aria-label="Handbagage">🎒 <b class="lg">Handbagage</b><b class="sh">Hand</b></button><button class="btn small" data-v="ruim" aria-label="Ruimbagage">🧳 <b class="lg">Ruimbagage</b><b class="sh">Ruim</b></button><em></em></li>').join('') + '</ul>' +
+        '<p class="pack-note">Flessen en lood huur je ter plaatse; die gaan niet mee in het vliegtuig.</p>';
+      body.querySelectorAll('.pack li').forEach((li) => {
+        const it = PACK.find((p) => p.id === li.dataset.id);
+        li.querySelectorAll('button').forEach((b) => {
+          b.onclick = () => {
+            pack[it.id] = b.dataset.v;
+            li.querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b));
+            const good = b.dataset.v === it.ok;
+            li.className = good ? 'good' : 'bad';
+            li.querySelector('em').textContent = (good ? '✓ ' : '✗ ') + it.why;
+            if (good) DG.Audio.click();
+          };
+        });
+      });
+    }
+    function renderBag(body) {
+      const eq = DG.Save.data.equip;
+      let kg = 7.5; // kleding, toilettas, handdoek
+      const rows = [['Kleding en toilettas', 7.5]];
+      DG.CATEGORIES.forEach((c) => {
+        const id = eq[c.id], w = BAG_KG[c.id];
+        if (!id || w == null) return;
+        const v = typeof w === 'number' ? w : (w[id] || 0);
+        if (!v || pack.pc === 'ruim' && c.id === 'computer') return;
+        if (c.id === 'camera' && v > 2) { rows.push(['Camera (handbagage)', 0]); return; }
+        kg += v; rows.push([DG.gearById(id).name, v]);
+      });
+      if (pack.mes === 'ruim') { kg += 0.2; rows.push(['Duikmes', 0.2]); }
+      kg = Math.round(kg * 10) / 10;
+      const over = kg > 23;
+      body.innerHTML = '<div class="bag"><div class="bag-scale ' + (over ? 'over' : 'ok') + '"><b>' + kg.toFixed(1).replace('.', ',') + ' kg</b><small>' + (over ? 'Te zwaar: max. 23 kg' : 'Onder de 23 kg ✓') + '</small></div>' +
+        '<ul>' + rows.filter((x) => x[1]).map((x) => '<li><span>' + esc(x[0]) + '</span><span>' + x[1].toFixed(1).replace('.', ',') + ' kg</span></li>').join('') + '</ul></div>' +
+        (over ? '<p class="pack-note">Neem zware spullen (zoals je camera) mee als handbagage, of vraag De Tuimelaar naar extra duikbagage bij de groepsreis.</p>' : '');
+    }
+    function startDrive(st) {
+      const nextBtn = $c('trip-next');
+      const R = TRIP_ROUTES[bus ? 'zeeland' : 'schiphol'];
+      $c('trip-route').hidden = false;
+      const t0 = bus ? 7 * 60 + 15 : 6 * 60 + 15;
+      const drawRoute = (p) => {
+        drawRouteMap($c('trip-map'), R, p);
+        const m = Math.round(t0 + R.min * p);
+        $c('trip-route-txt').innerHTML = '<b>' + String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0') + '</b> · nog ' + Math.max(0, Math.round(R.km * (1 - p))) + ' km';
+        $c('trip-time').textContent = String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0');
+      };
+      drawRoute(0);
+      DG.Audio.engine(4);
+      const use3d = UI.webgl() && !(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+      if (use3d) {
+        cv3.hidden = false;
+        import(new URL('js3d/trip3d.js', document.baseURI).href).then((m) => {
+          if (done || steps[idx] !== st) return;
+          drive = new m.Drive(cv3, { route: bus ? 'zeeland' : 'schiphol', duration: 20, quality: (DG.Save.data.set3d || {}).quality,
+            onProgress: drawRoute, onDone: () => { nextBtn.textContent = bus ? '🤿 Naar de duikstek' : 'Uitstappen op Schiphol ›'; nextBtn.classList.add('pulse'); } });
+          UI.drive = drive;
+        }).catch((e) => { console.warn('3D-rit niet beschikbaar', e); cv3.hidden = true; road2d(drawRoute); });
+      } else road2d(drawRoute);
+    }
+    function road2d(drawRoute) {
+      cv2.hidden = false; fit2d();
+      let t = 0, last = performance.now();
+      const loop = (now) => {
+        raf = requestAnimationFrame(loop);
+        t += Math.min(0.05, (now - last) / 1000); last = now;
+        drawRoad(cv2.getContext('2d'), cv2.width, cv2.height, t, bus ? 'Zeeland' : 'Schiphol', r);
+        drawRoute(Math.min(1, t / 14));
+      };
+      raf = requestAnimationFrame(loop);
+    }
+    // vluchtkaartje in de hoek tijdens de vlucht
+    function startInset() {
+      const c = $c('trip-inset');
+      c.hidden = false;
+      const w = c.clientWidth * r, h = c.clientHeight * r;
+      c.width = w; c.height = h;
+      if (!landPath) landPath = new Path2D(DG.WORLD_LAND);
+      let t = 0, last = performance.now();
+      const loop = (now) => {
+        raf = requestAnimationFrame(loop);
+        t += Math.min(0.05, (now - last) / 1000); last = now;
+        drawFlight(c.getContext('2d'), w, h, Math.min(1, t / 6), site);
+      };
+      raf = requestAnimationFrame(loop);
+    }
+    show(0);
   };
+
+  // routekaartje (zoals een navigatiescherm): de route, plaatsen en de bus
+  function drawRouteMap(cv, R, p) {
+    const r = Math.min(2, window.devicePixelRatio || 1);
+    const W = cv.clientWidth * r, H = cv.clientHeight * r;
+    if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
+    const c = cv.getContext('2d');
+    c.setTransform(1, 0, 0, 1, 0, 0);
+    c.fillStyle = '#eef3ee'; c.fillRect(0, 0, W, H);
+    const k = Math.cos(52 * Math.PI / 180);
+    const xs = R.pts.map((q) => q[2] * k), ys = R.pts.map((q) => -q[1]);
+    const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
+    const pad = 22 * r, sc = Math.min((W - pad * 2) / (maxX - minX || 1), (H - pad * 2) / (maxY - minY || 1));
+    const P = (q) => [pad + (q[2] * k - minX) * sc + ((W - pad * 2) - (maxX - minX) * sc) / 2, pad + (-q[1] - minY) * sc + ((H - pad * 2) - (maxY - minY) * sc) / 2];
+    const pts = R.pts.map(P);
+    // lengte langs de route
+    const seg = []; let tot = 0;
+    for (let i = 1; i < pts.length; i++) { const d = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]); seg.push(d); tot += d; }
+    c.lineCap = 'round'; c.lineJoin = 'round';
+    c.strokeStyle = '#c4ccd4'; c.lineWidth = 7 * r;
+    c.beginPath(); pts.forEach((q, i) => (i ? c.lineTo(q[0], q[1]) : c.moveTo(q[0], q[1]))); c.stroke();
+    // afgelegd stuk
+    let left = tot * p, cur = pts[0];
+    c.strokeStyle = '#1aa3b8'; c.lineWidth = 7 * r; c.beginPath(); c.moveTo(pts[0][0], pts[0][1]);
+    for (let i = 1; i < pts.length; i++) {
+      if (left >= seg[i - 1]) { c.lineTo(pts[i][0], pts[i][1]); left -= seg[i - 1]; cur = pts[i]; continue; }
+      const u = left / seg[i - 1]; cur = [pts[i - 1][0] + (pts[i][0] - pts[i - 1][0]) * u, pts[i - 1][1] + (pts[i][1] - pts[i - 1][1]) * u];
+      c.lineTo(cur[0], cur[1]); break;
+    }
+    c.stroke();
+    c.font = '700 ' + 11 * r + 'px "Nunito Sans", Arial'; c.textBaseline = 'middle';
+    R.pts.forEach((q, i) => {
+      if (!q[3]) return;
+      const [x, y] = pts[i];
+      c.fillStyle = '#fff'; c.strokeStyle = '#334'; c.lineWidth = 2 * r; c.beginPath(); c.arc(x, y, 4 * r, 0, 7); c.fill(); c.stroke();
+      c.fillStyle = '#1d2733'; c.textAlign = x > W * 0.6 ? 'right' : 'left';
+      c.fillText(q[0], x + (x > W * 0.6 ? -8 : 8) * r, y - 9 * r);
+    });
+    // de bus
+    c.fillStyle = '#ff7a59'; c.strokeStyle = '#fff'; c.lineWidth = 3 * r; c.beginPath(); c.arc(cur[0], cur[1], 7 * r, 0, 7); c.fill(); c.stroke();
+  }
 
   function drawRoad(c, W, H, t, dest, r) {
     c.setTransform(1, 0, 0, 1, 0, 0);

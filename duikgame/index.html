@@ -101,9 +101,20 @@
 
   <!-- Reis -->
   <section id="scr-travel" class="screen travel">
-    <canvas id="travel-canvas"></canvas>
-    <div class="travel-text" id="travel-text"></div>
-    <button class="btn ghost skip" id="btn-skip">Overslaan ›</button>
+    <canvas id="travel-canvas" hidden></canvas>
+    <canvas id="travel-3d" hidden aria-label="De Tuimelaar-bus op de snelweg"></canvas>
+    <div class="trip-photo" id="trip-photo" hidden><img id="trip-img" alt=""></div>
+    <div class="trip-route" id="trip-route" hidden><canvas id="trip-map" aria-label="Route"></canvas><div id="trip-route-txt"></div></div>
+    <canvas class="trip-inset" id="trip-inset" hidden aria-label="Vluchtroute"></canvas>
+    <div class="trip-card" id="trip-card">
+      <div class="trip-steps" id="trip-steps"></div>
+      <p class="trip-time" id="trip-time"></p>
+      <h2 id="trip-title"></h2>
+      <p id="trip-text"></p>
+      <div class="trip-body" id="trip-body"></div>
+      <div class="trip-actions"><button class="btn primary" id="trip-next">Verder ›</button></div>
+    </div>
+    <button class="btn ghost skip" id="btn-skip">Reis overslaan ⏭</button>
   </section>
 
   <!-- Duiken -->

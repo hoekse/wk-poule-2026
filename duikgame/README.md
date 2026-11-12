@@ -1,6 +1,12 @@
 # Diepblauw — duikgame
 
-Een duikreis rond de wereld. Je kiest je uitrusting in de winkel van Duikcentrum De Tuimelaar in Zwolle, kiest je duikstek op de wereldkaart en gaat duiken.
+Een duikreis rond de wereld. Je huurt je uitrusting in de winkel van Duikcentrum De Tuimelaar in Zwolle, kiest je duikstek op de wereldkaart, reist met de Tuimelaar-bus en gaat duiken.
+
+## De Tuimelaar en de reis
+
+- **3D-winkel:** de winkel van De Tuimelaar in 3D, opgebouwd uit de winkelfoto's. De wanden met automaten, meters, vinnen, pakken, accessoires en hangers zijn rechtgetrokken stukken uit die foto's; de paspoppen in natpak, de torso met trimvest, de reistassen en de flessen bij het vulstation zijn 3D-modellen (Magnific). Tik of klik op een afdeling: de camera loopt erheen en de producten staan eronder. Slepen of vegen = rondkijken, knijpen of scrollen = inzoomen. Met de knop rechtsboven wissel je naar de foto's.
+- **Huren en vrijspelen:** er is geen spelgeld. De basisset huur je meteen; betere spullen en cursussen speel je vrij met gelogde duiken, ontdekte soorten, fotochallenges of een brevet. Achter elk slotje staat wat je nog nodig hebt, en na elke duik zie je wat er vrijgekomen is.
+- **De reis:** een groepsreis met de Tuimelaar-bus (3D-model uit Magnific van de echte bus). Je pakt je duiktas in (wat mag in de handbagage?), rijdt over de A28 en de A1 naar Schiphol met bewegwijzering, windmolens en polders en een routekaartje, checkt in (je tas wordt gewogen), loopt naar de gate, vliegt en komt aan op Bonaire. Naar de Oosterschelde rijdt de bus via de A27 naar Zeeland. Foto's van Schiphol, de vlucht en Bonaire zijn stockfoto's (Freepik via Magnific).
 
 ## Zoutpier, Bonaire (3D)
 
@@ -59,10 +65,10 @@ Op GitHub Pages of Vercel werkt het direct.
 ## Bestanden
 
 - `js/`: menu's, winkel, wereldkaart, logboek en de 2D-duikstekken
-- `js3d/`: de 3D-duik (Three.js): water, bodem, pier, dieren, duiker, 3D-modellen laden, fysica, decompressie, besturing en HUD
+- `js3d/`: de 3D-duik (Three.js): water, bodem, pier, dieren, duiker, 3D-modellen laden, fysica, decompressie, besturing en HUD; `shop3d.js` (3D-winkel) en `trip3d.js` (busrit)
 - `vendor/three/`: Three.js 0.186.1 (MIT-licentie)
-- `models/`: 3D-modellen (glTF) uit Magnific: `duiker.glb` en `buddy.glb` met skelet, `vis/` (met `-ver`-versies voor op afstand), `dier/` en `rif/`
+- `models/`: 3D-modellen (glTF) uit Magnific: `duiker.glb` en `buddy.glb` met skelet, `vis/` (met `-ver`-versies voor op afstand), `dier/`, `rif/` en `winkel/` (paspop, torso, tas, fles en de Tuimelaar-bus)
 - `audio/`: geluiden uit Magnific
-- `img/`: winkelfoto's en logo van De Tuimelaar, foto's van Bonaire, pijler- en zandtextuur, zeewaaier, `vis/` met de vissenfoto's (reserve als een 3D-model niet laadt)
+- `img/`: winkelfoto's en logo van De Tuimelaar, foto's van Bonaire, pijler- en zandtextuur, zeewaaier, `vis/` met de vissenfoto's (reserve als een 3D-model niet laadt), `winkel3d/` (wanden voor de 3D-winkel, uit de winkelfoto's) en `reis/` (stockfoto's van Schiphol, de vlucht en Bonaire)
 
 Fan-project in samenwerking met Duikcentrum De Tuimelaar Zwolle. Sommige referentiefoto's van internet zijn alleen als voorbeeld gebruikt en zitten niet in het spel.
