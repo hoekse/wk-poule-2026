@@ -19,6 +19,14 @@ export const UW = {
   uLampRange: { value: 8 },
   uLampPower: { value: 1.6 },
   uShade: { value: 1.0 },
+  // tweede lamp: die van je buddy (alleen bij nacht)
+  uLamp2On: { value: 0 },
+  uLamp2Pos: { value: new THREE.Vector3() },
+  uLamp2Dir: { value: new THREE.Vector3(0, 0, -1) },
+  uLamp2Cos: { value: 0.92 },
+  uLamp2Range: { value: 8 },
+  // 0 = dag, 1 = nacht (maan, sterren, alleen lamplicht)
+  uNight: { value: 0 },
 };
 
 const GLSL_PARS = /* glsl */ `
@@ -36,7 +44,25 @@ uniform float uLampCos;
 uniform float uLampRange;
 uniform float uLampPower;
 uniform float uShade;
+uniform float uLamp2On;
+uniform vec3 uLamp2Pos;
+uniform vec3 uLamp2Dir;
+uniform float uLamp2Cos;
+uniform float uLamp2Range;
+uniform float uNight;
 varying vec3 vWPos;
+
+// licht van een duiklamp: kegel met een felle kern, afname met afstand en kleurverlies door het water
+vec3 uwLampAdd(vec3 base, vec3 n, vec3 lp, vec3 ldir, float lcos, float lrange) {
+  vec3 Lv = lp - vWPos;
+  float dl = length(Lv);
+  vec3 ld = Lv / max(dl, 0.001);
+  float c = dot(-ld, ldir);
+  float spot = smoothstep(lcos, lcos + 0.06, c) * (0.7 + 0.6 * smoothstep(lcos + 0.04, 1.0, c));
+  float ndl = max(dot(n, ld), 0.0) * 0.75 + 0.25;
+  float fall = (1.0 - smoothstep(lrange * 0.6, lrange, dl)) / (1.0 + dl * dl * 0.05);
+  return base * spot * ndl * fall * uLampPower * exp(-uAbs * dl * 0.6);
+}
 
 vec3 uwWaterColor(vec3 dir, float depthMid) {
   float up = clamp(dir.y * 0.5 + 0.5, 0.0, 1.0);
@@ -85,15 +111,8 @@ const GLSL_APPLY = /* glsl */ `
     uwC *= uwPierShade(vWPos.xz);
   }
   #ifdef UW_LIT
-    if (uLampOn > 0.5) {
-      vec3 Lv = uLampPos - vWPos;
-      float dl = length(Lv);
-      vec3 ld = Lv / max(dl, 0.001);
-      float spot = smoothstep(uLampCos, uLampCos + 0.06, dot(-ld, uLampDir));
-      float ndl = max(dot(uwN, ld), 0.0) * 0.75 + 0.25;
-      float fall = (1.0 - smoothstep(uLampRange * 0.6, uLampRange, dl)) / (1.0 + dl * dl * 0.05);
-      uwC += diffuseColor.rgb * spot * ndl * fall * uLampPower * exp(-uAbs * dl * 0.6);
-    }
+    if (uLampOn > 0.5) uwC += uwLampAdd(diffuseColor.rgb, uwN, uLampPos, uLampDir, uLampCos, uLampRange);
+    if (uLamp2On > 0.5) uwC += uwLampAdd(diffuseColor.rgb, uwN, uLamp2Pos, uLamp2Dir, uLamp2Cos, uLamp2Range) * 0.85;
   #endif
   float uwL = uwUnderPath(vWPos);
   if (uwL > 0.0) {
@@ -198,8 +217,9 @@ export function makeDome() {
         gl_Position.z = gl_Position.w * 0.9999;
       }`,
     fragmentShader: /* glsl */ `
-      uniform vec3 uWaterTop; uniform vec3 uWaterDeep; uniform vec3 uDown; uniform vec3 uSun;
+      uniform vec3 uWaterTop; uniform vec3 uWaterDeep; uniform vec3 uDown; uniform vec3 uSun; uniform float uNight;
       varying vec3 vDir;
+      float hash3(vec3 p) { return fract(sin(dot(p, vec3(127.1, 311.7, 74.7))) * 43758.5453); }
       void main() {
         vec3 d = normalize(vDir);
         float camD = max(0.0, -cameraPosition.y);
@@ -214,6 +234,17 @@ export function makeDome() {
           float sd = max(dot(d, uSun), 0.0);
           col += vec3(1.0, 0.95, 0.85) * (pow(sd, 900.0) * 6.0 + pow(sd, 24.0) * 0.25);
           if (d.y < 0.0) col = mix(vec3(0.05, 0.38, 0.55), vec3(0.2, 0.55, 0.7), clamp(1.0 + d.y * 6.0, 0.0, 1.0));
+          if (uNight > 0.5) {
+            // nachthemel: sterren en maan boven de zoutpannen
+            vec3 n = mix(vec3(0.035, 0.05, 0.09), vec3(0.006, 0.01, 0.025), pow(h, 0.5));
+            vec3 q = floor(d * 260.0);
+            float st = step(0.9965, hash3(q)) * smoothstep(0.02, 0.2, d.y);
+            n += vec3(0.9, 0.92, 1.0) * st * (0.5 + 0.5 * hash3(q + 3.1));
+            float md = max(dot(d, uSun), 0.0);
+            n += vec3(0.85, 0.88, 0.95) * (smoothstep(0.9993, 0.9996, md) * 1.6 + pow(md, 60.0) * 0.12);
+            if (d.y < 0.0) n = vec3(0.005, 0.012, 0.02);
+            col = n;
+          }
         }
         gl_FragColor = vec4(col, 1.0);
       }`,
@@ -241,7 +272,7 @@ export function makeSurface() {
         gl_Position = projectionMatrix * viewMatrix * w;
       }`,
     fragmentShader: /* glsl */ `
-      uniform float uTime; uniform vec3 uAbs; uniform vec3 uDown; uniform vec3 uWaterTop; uniform vec3 uWaterDeep; uniform vec3 uSun;
+      uniform float uTime; uniform vec3 uAbs; uniform vec3 uDown; uniform vec3 uWaterTop; uniform vec3 uWaterDeep; uniform vec3 uSun; uniform float uNight;
       varying vec3 vW;
       vec3 rippleN(vec2 p) {
         float t = uTime;
@@ -259,15 +290,15 @@ export function makeSurface() {
           // van onder: venster van Snellius + totale interne reflectie
           float c = dot(v, n);
           float win = smoothstep(0.60, 0.72, c);
-          vec3 sky = vec3(0.86, 0.96, 1.0) * 1.35;
-          float sun = pow(max(dot(refract(v, -n, 1.33), uSun), 0.0), 60.0);
+          vec3 sky = mix(vec3(0.86, 0.96, 1.0) * 1.35, vec3(0.03, 0.05, 0.09), uNight);
+          float sun = pow(max(dot(refract(v, -n, 1.33), uSun), 0.0), mix(60.0, 400.0, uNight)) * (1.0 - uNight * 0.7);
           vec3 tir = mix(uWaterDeep, uWaterTop, 0.55) * 0.8;
           vec3 col = mix(tir, sky + sun * 2.0, win);
           // fonkelende zonnestipjes op kleine golfjes binnen het venster van Snellius
           vec3 n2 = rippleN(vW.xz * 2.6 + vec2(13.0, 7.0));
           float spark = pow(max(dot(refract(v, -n2, 1.33), uSun), 0.0), 900.0);
-          col += vec3(1.0, 0.97, 0.88) * spark * 9.0 * win;
-          col += vec3(0.6, 0.8, 0.9) * pow(max(0.0, n.x * 4.0 + n.z * 3.0), 2.0) * 0.4;
+          col += vec3(1.0, 0.97, 0.88) * spark * 9.0 * win * (1.0 - uNight);
+          col += vec3(0.6, 0.8, 0.9) * pow(max(0.0, n.x * 4.0 + n.z * 3.0), 2.0) * 0.4 * (1.0 - uNight * 0.9);
           float camD = -cameraPosition.y;
           vec3 T = exp(-uAbs * dist);
           float upw = clamp(v.y * 0.5 + 0.5, 0.0, 1.0);
@@ -282,7 +313,8 @@ export function makeSurface() {
           vec3 sea = vec3(0.12, 0.62, 0.72);
           vec3 col = mix(sea, sky, clamp(fres * 1.4, 0.0, 1.0));
           float gl = pow(max(dot(reflect(v, n), uSun), 0.0), 220.0);
-          col += vec3(1.0, 0.95, 0.85) * gl * 3.0;
+          col = mix(col, vec3(0.01, 0.025, 0.045) + vec3(0.03, 0.04, 0.06) * fres, uNight);
+          col += vec3(1.0, 0.95, 0.85) * gl * mix(3.0, 1.2, uNight);
           float a = clamp(0.35 + fres * 0.6 + dist * 0.004, 0.0, 0.92);
           gl_FragColor = vec4(col, a);
         }
@@ -373,7 +405,14 @@ export function makeParticles(n = 1600) {
     uniforms: Object.assign({ uPx: { value: 1 } }, UW),
     vertexShader: /* glsl */ `
       attribute float aSize; uniform float uTime; uniform float uPx;
-      varying float vA; varying float vY;
+      varying float vA; varying float vY; varying float vLit;
+      uniform float uNight; uniform float uLampOn; uniform vec3 uLampPos; uniform vec3 uLampDir; uniform float uLampCos; uniform float uLampRange;
+      uniform float uLamp2On; uniform vec3 uLamp2Pos; uniform vec3 uLamp2Dir; uniform float uLamp2Cos; uniform float uLamp2Range;
+      float lampLit(vec3 p, vec3 lp, vec3 ld, float lc, float lr) {
+        vec3 v = p - lp; float d = length(v);
+        return smoothstep(lc - 0.03, lc + 0.05, dot(v / max(d, 0.001), ld)) * (1.0 - smoothstep(lr * 0.45, lr, d)) / (1.0 + d * 0.25);
+      }
+      float litAt(vec3 p) { return uLampOn * lampLit(p, uLampPos, uLampDir, uLampCos, uLampRange) + uLamp2On * 0.7 * lampLit(p, uLamp2Pos, uLamp2Dir, uLamp2Cos, uLamp2Range); }
       void main() {
         vec3 p = position + vec3(uTime * 0.05, -uTime * 0.02, uTime * 0.03);
         vec3 c = cameraPosition;
@@ -382,17 +421,19 @@ export function makeParticles(n = 1600) {
         vec4 mv = viewMatrix * vec4(p, 1.0);
         float d = -mv.z;
         vA = smoothstep(0.3, 1.5, d) * (1.0 - smoothstep(9.0, 15.0, d));
+        vLit = litAt(p);
+        vA *= mix(1.0, min(1.0, vLit * 2.2), uNight);
         gl_PointSize = aSize * uPx * 18.0 / max(d, 0.3);
         gl_Position = projectionMatrix * mv;
       }`,
     fragmentShader: /* glsl */ `
-      varying float vA; varying float vY;
+      varying float vA; varying float vY; varying float vLit;
       void main() {
         if (vY > -0.2) discard;
         vec2 q = gl_PointCoord - 0.5;
         float r = length(q);
         float a = smoothstep(0.5, 0.15, r) * vA * 0.55;
-        gl_FragColor = vec4(vec3(0.92, 0.97, 0.95), a);
+        gl_FragColor = vec4(vec3(0.92, 0.97, 0.95) * (1.0 + vLit * 0.8), a);
       }`,
   });
   const pts = new THREE.Points(geo, mat);
@@ -410,22 +451,31 @@ export function makeBubbles(max = 500) {
   const mat = new THREE.ShaderMaterial({
     transparent: true,
     depthWrite: false,
-    uniforms: { uPx: { value: 1 } },
+    uniforms: Object.assign({ uPx: { value: 1 } }, UW),
     vertexShader: /* glsl */ `
-      attribute float aSize; uniform float uPx;
+      attribute float aSize; uniform float uPx; varying float vB;
+      uniform float uNight; uniform float uLampOn; uniform vec3 uLampPos; uniform vec3 uLampDir; uniform float uLampCos; uniform float uLampRange;
+      uniform float uLamp2On; uniform vec3 uLamp2Pos; uniform vec3 uLamp2Dir; uniform float uLamp2Cos; uniform float uLamp2Range;
+      float lampLit(vec3 p, vec3 lp, vec3 ld, float lc, float lr) {
+        vec3 v = p - lp; float d = length(v);
+        return smoothstep(lc - 0.03, lc + 0.05, dot(v / max(d, 0.001), ld)) * (1.0 - smoothstep(lr * 0.45, lr, d)) / (1.0 + d * 0.25);
+      }
+      float litAt(vec3 p) { return uLampOn * lampLit(p, uLampPos, uLampDir, uLampCos, uLampRange) + uLamp2On * 0.7 * lampLit(p, uLamp2Pos, uLamp2Dir, uLamp2Cos, uLamp2Range); }
       void main() {
         vec4 mv = viewMatrix * vec4(position, 1.0);
+        vB = mix(1.0, 0.07 + min(1.0, litAt(position) * 2.5), uNight);
         gl_PointSize = aSize * uPx * 900.0 / max(-mv.z, 0.2);
         gl_Position = projectionMatrix * mv;
       }`,
     fragmentShader: /* glsl */ `
+      varying float vB;
       void main() {
         vec2 q = gl_PointCoord - 0.5;
         float r = length(q);
         if (r > 0.5) discard;
         float rim = smoothstep(0.3, 0.48, r) * 0.85;
         float hl = smoothstep(0.14, 0.0, length(q - vec2(-0.15, -0.15)));
-        gl_FragColor = vec4(vec3(0.92, 0.99, 1.0), max(rim, hl) * 0.9 + 0.08);
+        gl_FragColor = vec4(vec3(0.92, 0.99, 1.0) * vB, (max(rim, hl) * 0.9 + 0.08) * (0.4 + 0.6 * vB));
       }`,
   });
   const pts = new THREE.Points(geo, mat);
@@ -469,4 +519,161 @@ export function updateBubbles(b, dt) {
   b.geometry.setDrawRange(0, n);
   b.geometry.attributes.position.needsUpdate = true;
   b.geometry.attributes.aSize.needsUpdate = true;
+}
+
+/* ---------------- lichtbundel van een duiklamp (zichtbaar in het donker) ---------------- */
+// kegel met de punt in de lamp; dikker licht in het midden van de bundel (benadering van de lichtweg)
+export function makeBeam(color = 0xfff3dc) {
+  const geo = new THREE.CylinderGeometry(1, 0.025, 1, 28, 6, true);
+  geo.translate(0, 0.5, 0); // punt in de oorsprong, opening bij y = 1
+  const mat = new THREE.ShaderMaterial({
+    transparent: true,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+    side: THREE.DoubleSide,
+    uniforms: { uStr: { value: 0 }, uCol: { value: new THREE.Color(color) }, uApex: { value: new THREE.Vector3() }, uAxis: { value: new THREE.Vector3(0, 1, 0) }, uCos: { value: 0.9 } },
+    vertexShader: /* glsl */ `
+      varying float vAlong; varying vec3 vN; varying vec3 vW;
+      void main() {
+        vAlong = position.y;
+        vec4 w = modelMatrix * vec4(position, 1.0);
+        vW = w.xyz;
+        vN = normalize(mat3(modelMatrix) * normal);
+        gl_Position = projectionMatrix * viewMatrix * w;
+      }`,
+    fragmentShader: /* glsl */ `
+      uniform float uStr; uniform vec3 uCol; uniform vec3 uApex; uniform vec3 uAxis; uniform float uCos;
+      varying float vAlong; varying vec3 vN; varying vec3 vW;
+      void main() {
+        vec3 V = normalize(cameraPosition - vW);
+        float facing = abs(dot(V, normalize(vN)));
+        float dc = length(vW - cameraPosition);
+        float a = pow(facing, 0.9) * pow(1.0 - vAlong, 1.5) * smoothstep(0.0, 0.06, vAlong) * uStr;
+        a *= exp(-dc * 0.05) * smoothstep(0.25, 1.4, dc);
+        // staat de camera zelf in de bundel, dan geen sluier over het hele beeld
+        vec3 ca = cameraPosition - uApex; float cl = length(ca);
+        a *= 1.0 - 0.9 * smoothstep(uCos - 0.1, uCos + 0.02, dot(ca / max(cl, 0.001), uAxis));
+        gl_FragColor = vec4(uCol, a);
+      }`,
+  });
+  const m = new THREE.Mesh(geo, mat);
+  m.frustumCulled = false;
+  m.renderOrder = 5;
+  m.visible = false;
+  return m;
+}
+const _up = new THREE.Vector3(0, 1, 0);
+export function updateBeam(m, on, pos, dir, range, angle, strength) {
+  m.visible = !!on && strength > 0;
+  if (!m.visible) return;
+  m.position.copy(pos);
+  m.quaternion.setFromUnitVectors(_up, dir);
+  const r = Math.tan(angle) * range;
+  m.scale.set(r, range, r);
+  const u = m.material.uniforms;
+  u.uStr.value = strength;
+  u.uApex.value.copy(pos);
+  u.uAxis.value.copy(dir);
+  u.uCos.value = Math.cos(angle);
+}
+
+/* ---------------- lichtgevend plankton (bioluminescentie) ---------------- */
+export function makeBio(max = 500) {
+  const geo = new THREE.BufferGeometry();
+  const pos = new Float32Array(max * 3), a = new Float32Array(max);
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  geo.setAttribute('aA', new THREE.BufferAttribute(a, 1));
+  geo.setDrawRange(0, 0);
+  const mat = new THREE.ShaderMaterial({
+    transparent: true,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+    uniforms: { uPx: { value: 1 }, uBright: { value: 1 } },
+    vertexShader: /* glsl */ `
+      attribute float aA; uniform float uPx; varying float vA;
+      void main() {
+        vec4 mv = viewMatrix * vec4(position, 1.0);
+        vA = aA;
+        gl_PointSize = uPx * (2.0 + 40.0 / max(-mv.z, 0.3)) * (0.6 + aA * 0.6);
+        gl_Position = projectionMatrix * mv;
+      }`,
+    fragmentShader: /* glsl */ `
+      uniform float uBright; varying float vA;
+      void main() {
+        float r = length(gl_PointCoord - 0.5);
+        if (r > 0.5) discard;
+        float k = pow(1.0 - r * 2.0, 2.0) * vA * uBright;
+        gl_FragColor = vec4(vec3(0.35, 1.0, 0.78) * k, k);
+      }`,
+  });
+  const pts = new THREE.Points(geo, mat);
+  pts.frustumCulled = false;
+  pts.renderOrder = 6;
+  pts.userData = { list: [], max };
+  return pts;
+}
+export function spawnBio(b, x, y, z, n, spread = 0.18) {
+  const L = b.userData.list;
+  for (let i = 0; i < n && L.length < b.userData.max; i++) {
+    L.push({ x: x + (Math.random() - 0.5) * spread, y: y + (Math.random() - 0.5) * spread, z: z + (Math.random() - 0.5) * spread, t: 0, life: 0.6 + Math.random() * 1.3, vx: (Math.random() - 0.5) * 0.08, vy: (Math.random() - 0.5) * 0.08, vz: (Math.random() - 0.5) * 0.08 });
+  }
+}
+export function updateBio(b, dt) {
+  const L = b.userData.list;
+  const pos = b.geometry.attributes.position.array, aa = b.geometry.attributes.aA.array;
+  let n = 0;
+  for (let i = L.length - 1; i >= 0; i--) {
+    const q = L[i];
+    q.t += dt;
+    if (q.t > q.life) { L.splice(i, 1); continue; }
+    q.x += q.vx * dt; q.y += q.vy * dt; q.z += q.vz * dt;
+  }
+  for (const q of L) {
+    if (n >= b.userData.max) break;
+    const k = q.t < 0.08 ? q.t / 0.08 : Math.pow(1 - (q.t - 0.08) / (q.life - 0.08), 1.6);
+    pos[n * 3] = q.x; pos[n * 3 + 1] = q.y; pos[n * 3 + 2] = q.z;
+    aa[n] = k * (0.8 + 0.2 * Math.sin(q.t * 40 + q.x * 13));
+    n++;
+  }
+  b.geometry.setDrawRange(0, n);
+  b.geometry.attributes.position.needsUpdate = true;
+  b.geometry.attributes.aA.needsUpdate = true;
+}
+
+/* ---------------- lichtjes op de fles (knipperlicht / cyalume) ---------------- */
+export function makeGlows(colors) {
+  const n = colors.length;
+  const geo = new THREE.BufferGeometry();
+  const col = new Float32Array(n * 3);
+  colors.forEach((c, i) => { const cc = new THREE.Color(c); col[i * 3] = cc.r; col[i * 3 + 1] = cc.g; col[i * 3 + 2] = cc.b; });
+  geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(n * 3), 3));
+  geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  geo.setAttribute('aOn', new THREE.BufferAttribute(new Float32Array(n).fill(1), 1));
+  const mat = new THREE.ShaderMaterial({
+    transparent: true,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+    uniforms: { uPx: { value: 1 } },
+    vertexShader: /* glsl */ `
+      attribute vec3 color; attribute float aOn; uniform float uPx; varying vec3 vC; varying float vK;
+      void main() {
+        vec4 mv = viewMatrix * vec4(position, 1.0);
+        float d = max(-mv.z, 0.3);
+        vC = color; vK = aOn * exp(-d * 0.045);
+        gl_PointSize = uPx * max(5.0, 70.0 / d);
+        gl_Position = projectionMatrix * mv;
+      }`,
+    fragmentShader: /* glsl */ `
+      varying vec3 vC; varying float vK;
+      void main() {
+        float r = length(gl_PointCoord - 0.5);
+        if (r > 0.5) discard;
+        float k = (pow(1.0 - r * 2.0, 3.0) + smoothstep(0.12, 0.0, r)) * vK;
+        gl_FragColor = vec4(vC * k, k);
+      }`,
+  });
+  const pts = new THREE.Points(geo, mat);
+  pts.frustumCulled = false;
+  pts.renderOrder = 7;
+  return pts;
 }

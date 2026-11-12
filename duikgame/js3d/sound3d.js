@@ -77,7 +77,8 @@ export class Sound3D {
     if (!this.ok) return;
     const t = this.c.currentTime;
     const surf = st.depth < 0.6 ? 1 : 0;
-    if (this.rif) this.rif.g.gain.setTargetAtTime(surf ? 0.04 : 0.16 + Math.min(0.08, st.depth * 0.006), t, 0.6);
+    // knappende garnalen zijn 's nachts nog actiever
+    if (this.rif) this.rif.g.gain.setTargetAtTime(surf ? 0.04 : (0.16 + Math.min(0.08, st.depth * 0.006)) * (st.night ? 1.3 : 1), t, 0.6);
     if (this.golven) this.golven.g.gain.setTargetAtTime(surf ? 0.55 : 0, t, 0.3);
     // af en toe een boot in de verte (alleen onder water te horen)
     this.boatT -= dt;

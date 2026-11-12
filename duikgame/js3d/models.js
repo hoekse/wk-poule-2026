@@ -17,6 +17,8 @@ export const FILES = {
   // andere dieren
   groene_schildpad: 'models/dier/groene_schildpad.glb', karet: 'models/dier/karet.glb', adelaarsrog: 'models/dier/adelaarsrog.glb',
   kikvorsvis_geel: 'models/dier/kikvorsvis.glb', gevlekte_murene: 'models/dier/murene.glb', rifoctopus: 'models/dier/octopus.glb',
+  // nachtdieren
+  langoest: 'models/dier/langoest.glb', rifinktvis: 'models/dier/inktvis.glb',
   // rif
   hersenkoraal: 'models/rif/hersenkoraal.glb', sterkoraal: 'models/rif/sterkoraal.glb', buisspons: 'models/rif/buisspons.glb',
   vaasspons: 'models/rif/vaasspons.glb', tonspons: 'models/rif/tonspons.glb',

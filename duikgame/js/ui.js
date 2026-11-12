@@ -802,12 +802,14 @@
         (R.reef ? '<li>⚠️ ' + R.reef + '× het rif geraakt</li>' : '') +
         '<li>' + (R.missed ? '⚠️ ' + R.missed + '× niet gereageerd op je buddy' : '✅ Goed contact met je buddy') + '</li>' +
         (R.limit ? '<li>⚠️ Dieper geweest dan je brevet toestaat</li>' : '') +
+        (R.night ? '<li>' + (R.glare ? '⚠️ ' + R.glare + '× je buddy verblind met je lamp' : '✅ Niemand verblind met je lamp') + '</li>' : '') +
+        (res.bio ? '<li>✨ Lichtgevend plankton gezien</li>' : '') +
         (R.deco ? '<li>' + (R.ceil ? '❌ Decoplafond overschreden' : '⚠️ Decostop nodig geweest') + '</li>' : '<li>✅ Binnen de nultijd gebleven</li>') +
         '<li>✈️ Vliegverbod: ' + nf + ' uur</li></ul>';
       earnTxt = res.newSpecies.length ? '+' + res.newSpecies.length + ' nieuwe soorten' : 'Duik #' + DG.Save.data.dives.length;
     }
     const c = UI.modal(
-      '<div class="sum-head"><div><h2>Duik gelogd · ' + esc(s.name) + '</h2><p class="lead" style="margin:0">' + esc(s.area) + ' · ' + Math.round(res.minutes) + ' min · max ' + res.maxD.toFixed(1) + ' m · gem. ' + res.avgD.toFixed(1) + ' m · ' + res.temp + ' °C</p></div>' +
+      '<div class="sum-head"><div><h2>' + (res.night ? '🌙 Nachtduik' : 'Duik') + ' gelogd · ' + esc(s.name) + '</h2><p class="lead" style="margin:0">' + esc(s.area) + ' · ' + Math.round(res.minutes) + ' min · max ' + res.maxD.toFixed(1) + ' m · gem. ' + res.avgD.toFixed(1) + ' m · ' + res.temp + ' °C</p></div>' +
       '<div class="sum-earn">' + earnTxt + '</div></div>' +
       '<canvas class="profile" id="sum-profile"></canvas>' +
       '<div class="sum-cols"><div><h3>Duikveiligheid</h3><ul class="sum-checks">' + checks.map((k) => '<li>' + k[0] + ' ' + esc(k[1]) + '</li>').join('') + '</ul></div>' +
@@ -890,7 +892,7 @@
       sv.dives.slice().reverse().forEach((d) => {
         const s = DG.siteById(d.site);
         const it = U.el('div', 'dive-item',
-          '<div class="dive-nr">#' + d.nr + '</div><div><h4>' + esc(s.name) + ' · ' + esc(s.area) + '</h4><div class="meta"><span>' + new Date(d.date).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', year: 'numeric' }) + '</span><span>⏱ ' + d.minutes + ' min</span><span>⬇ ' + d.maxD + ' m</span><span>🐠 ' + d.species.length + ' soorten</span><span>📷 ' + d.photos + '</span><span>' + (d.needStop ? (d.safetyDone ? '✅ stop' : '⚠️ geen stop') : '') + '</span><span style="color:var(--sun)">+' + U.euro(d.earned) + '</span></div></div><canvas></canvas>');
+          '<div class="dive-nr">#' + d.nr + '</div><div><h4>' + (d.night ? '🌙 ' : '') + esc(s.name) + ' · ' + esc(s.area) + (d.night ? ' · nachtduik' : '') + '</h4><div class="meta"><span>' + new Date(d.date).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', year: 'numeric' }) + '</span><span>⏱ ' + d.minutes + ' min</span><span>⬇ ' + d.maxD + ' m</span><span>🐠 ' + d.species.length + ' soorten</span><span>📷 ' + d.photos + '</span><span>' + (d.needStop ? (d.safetyDone ? '✅ stop' : '⚠️ geen stop') : '') + '</span><span style="color:var(--sun)">+' + U.euro(d.earned) + '</span></div></div><canvas></canvas>');
         list.appendChild(it);
         requestAnimationFrame(() => UI.drawProfile(it.querySelector('canvas'), d.profile || [[0, 0], [1, 0]], false));
       });
@@ -938,9 +940,10 @@
     const sv = DG.Save.data, done = sv.challenges || {};
     const box = U.el('div', 'ch-list');
     Object.keys(DG.PHOTO_CHALLENGES || {}).forEach((site) => {
-      const list = DG.PHOTO_CHALLENGES[site], s = DG.siteById(site);
+      const list = DG.PHOTO_CHALLENGES[site], s = DG.siteById((DG.CHALLENGE_SITE || {})[site] || site);
       const n = list.filter((c) => done[c.id]).length;
-      box.appendChild(U.el('h3', '', '🏆 Fotochallenges · ' + esc(s ? s.name : site) + ' <small>(' + n + '/' + list.length + ')</small>'));
+      const nightList = /_nacht$/.test(site);
+      box.appendChild(U.el('h3', '', (nightList ? '🌙 Nachtchallenges · ' : '🏆 Fotochallenges · ') + esc(s ? s.name : site) + ' <small>(' + n + '/' + list.length + ')</small>'));
       const ul = U.el('ul', 'ch-items');
       list.forEach((c) => {
         const d = done[c.id];

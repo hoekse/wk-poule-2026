@@ -391,7 +391,7 @@
     const W = world.W;
     site.spawns.forEach((cfg) => {
       const spc = DG.SPECIES[cfg.sp];
-      if (!spc) return;
+      if (!spc || cfg.night) return;
       if (cfg.p != null && Math.random() > cfg.p) return;
       const xr = cfg.x || [5, W - 5], dr = cfg.d || [2, 30];
       const L = Art.sizeOf(spc);

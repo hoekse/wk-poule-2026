@@ -163,6 +163,16 @@
   sp('rifoctopus', 'Caribische rifoctopus', 'Octopus briareus', 0.5, 3,
     'Verandert in een fractie van een seconde van kleur én van huidstructuur. Vooral ’s nachts actief.',
     { t: 'octopus', c: '#c79a74', c2: '#6aa8c0' }, { hidden: true });
+  // --- Bonaire, Zoutpier bij nacht
+  sp('langoest', 'Caribische langoest', 'Panulirus argus', 0.45, 2,
+    'Een langoest heeft geen scharen maar lange stekelige antennes. Overdag zit hij diep in een spleet; ’s nachts loopt hij over de bodem op zoek naar slakken en mosselen.',
+    { t: 'lobster', c: '#9a4a28', c2: '#f0d890' }, { hidden: true, night: true });
+  sp('rifinktvis', 'Caribische rifinktvis', 'Sepioteuthis sepioidea', 0.3, 2,
+    'Rifinktvissen zweven in kleine groepjes en ‘praten’ met kleurpatronen op hun huid. ’s Nachts jagen ze vlak onder het oppervlak op visjes en garnalen.',
+    { t: 'cuttle', c: '#b8905a', c2: '#e8d8b0' }, { night: true });
+  sp('mandster', 'Mandster', 'Astrophyton muricatum', 0.6, 2,
+    'Overdag ligt de mandster opgerold als een bolletje. ’s Nachts klimt hij op een koraal of pijler en spreidt hij zijn vertakte armen uit tot een net om plankton te vangen. In fel lamplicht rolt hij zich langzaam weer op.',
+    { t: 'basket', c: '#d29a5a', c2: '#f2dcc0' }, { night: true });
   sp('adelaarsrog', 'Gevlekte adelaarsrog', 'Aetobatus narinari', 2.0, 3,
     'Vliegt als een vogel door het water en kan zelfs uit het water springen. Kraakt schelpen met zijn plaatvormige tanden.',
     { t: 'ray', v: 'eagle', c: '#27313b', spot: '#f2f2f2', belly: '#f4f4f4' });
@@ -402,6 +412,10 @@
         { sp: 'barracuda', n: 1, b: 'curious', d: [2, 8], x: [30, 120] },
         { sp: 'karet', n: 1, b: 'wander', d: [5, 14], x: [60, 170], p: 0.85, slow: 0.5 },
         { sp: 'chromis_blauw', n: 80, b: 'reef', x: [30, 170] },
+        // alleen bij een nachtduik
+        { sp: 'langoest', n: 3, b: 'crawl', night: true },
+        { sp: 'rifinktvis', n: 6, b: 'school', night: true },
+        { sp: 'mandster', n: 4, b: 'pillar', night: true },
       ],
     },
     {
@@ -607,7 +621,17 @@
       { id: 'zp_buddy', title: 'Buddy-portret', sp: ['buddy'], min: 3, tip: 'Fotografeer je buddy van 2–3 m tussen de pijlers.' },
       { id: 'zp_perfect', title: 'Perfecte foto (5 sterren)', sp: null, min: 5, tip: 'Dichtbij, scherp, in het midden en met flitsers.' },
     ],
+    // nachtduik bij de Zoutpier
+    saltpier_nacht: [
+      { id: 'zn_tarpon', title: 'Tarpon in je lampbundel', sp: ['tarpon'], min: 3, tip: '’s Nachts jagen de tarpons op visjes in het licht van je lamp. Houd je lamp stil en wacht.' },
+      { id: 'zn_octopus', title: 'Jagende octopus', sp: ['rifoctopus'], min: 3, tip: '’s Nachts kruipen octopussen over de bodem tussen de pijlers.' },
+      { id: 'zn_langoest', title: 'Langoest op pad', sp: ['langoest'], min: 3, tip: 'Laag langs de voet van de pijlers en over het zand.' },
+      { id: 'zn_slaap', title: 'Slapende papegaaivis', sp: ['stoplicht_papegaai'], min: 3, tip: 'Papegaaivissen slapen aan de voet van de pijlers in een doorzichtige slijmcocon.' },
+      { id: 'zn_mandster', title: 'Mandster in vol ornaat', sp: ['mandster'], min: 3, tip: 'Op de pijlers, 3–7 m. Schijn er niet te lang op, anders rolt hij zich op.' },
+      { id: 'zn_inktvis', title: 'Rifinktvissen', sp: ['rifinktvis'], min: 3, tip: 'Vlak onder het oppervlak, 1–3 m, vooral bij de ingang en onder de pier.' },
+    ],
   };
+  DG.CHALLENGE_SITE = { saltpier: 'saltpier', saltpier_nacht: 'saltpier' };
   DG.siteById = (id) => DG.SITES.find((s) => s.id === id);
   DG.gearById = (id) => DG.GEAR.find((g) => g.id === id);
   DG.courseById = (id) => DG.COURSES.find((c) => c.id === id);

@@ -1,6 +1,6 @@
 /* Diepblauw 3D — de duik bij de Zoutpier (Bonaire): vrij zwemmen in 3D met echte duikregels */
 import * as THREE from 'three';
-import { UW, makeCausticTexture, makeDome, makeSurface, makeRays, updateRays, makeParticles, makeBubbles, spawnBubbles, updateBubbles } from './water.js';
+import { UW, makeCausticTexture, makeDome, makeSurface, makeRays, updateRays, makeParticles, makeBubbles, spawnBubbles, updateBubbles, makeBeam, updateBeam, makeBio, spawnBio, updateBio, makeGlows } from './water.js';
 import { makeSeabed, makeReef, makePillarGrowth, seabed, loadSandTextures } from './terrain.js';
 import { loadModels } from './models.js';
 import { makePier, pillarAt } from './pier.js';
@@ -60,20 +60,38 @@ export async function runZoutpier(site) {
   const scene = new THREE.Scene();
   scene.fog = new THREE.FogExp2(0x000000, 0);
   const camera = new THREE.PerspectiveCamera(68, innerWidth / innerHeight, 0.05, 1500);
+  const night = !!plan.night;
   UW.uCausTex.value = makeCausticTexture(q === 'laag' ? 128 : 256);
-  UW.uCaus.value = q === 'laag' ? 0.7 : 1;
-  scene.add(new THREE.HemisphereLight(0xd6f2ff, 0xa8977a, 1.9));
-  const sun = new THREE.DirectionalLight(0xfff2dc, 2.8);
+  UW.uCaus.value = night ? 0 : q === 'laag' ? 0.7 : 1;
+  // nacht: alleen maanlicht en lampen; het water zelf is bijna zwart
+  UW.uNight.value = night ? 1 : 0;
+  UW.uWaterTop.value.set(night ? 0x0a1824 : 0x6fe0f6);
+  UW.uWaterDeep.value.set(night ? 0x010409 : 0x0d5596);
+  UW.uLampPower.value = night ? 2.3 : 1.6;
+  UW.uLampOn.value = 0; UW.uLamp2On.value = 0;
+  renderer.toneMappingExposure = night ? 1.5 : 1.28;
+  scene.add(night ? new THREE.HemisphereLight(0x5b7bb0, 0x1a1a22, 0.1) : new THREE.HemisphereLight(0xd6f2ff, 0xa8977a, 1.9));
+  const sun = night ? new THREE.DirectionalLight(0x9fb4e0, 0.18) : new THREE.DirectionalLight(0xfff2dc, 2.8);
   sun.position.set(30, 80, -40);
   scene.add(sun);
   const dome = makeDome(); scene.add(dome);
   const surf = makeSurface(); scene.add(surf);
   const rays = makeRays(q === 'laag' ? 14 : 28); scene.add(rays);
+  rays.visible = !night;
   const parts = makeParticles(q === 'laag' ? 700 : 1600); scene.add(parts);
   parts.material.uniforms.uPx.value = pr;
   const bubbles = makeBubbles(600); scene.add(bubbles);
   const shadows = new BlobShadows(scene, q === 'laag' ? 300 : 700);
+  shadows.mesh.visible = !night;
   bubbles.material.uniforms.uPx.value = pr;
+  // nacht: lichtbundels van beide lampen, lichtgevend plankton en lichtjes op de flessen
+  const beam = makeBeam(0xfff1d8), beam2 = makeBeam(0xf4f6ff);
+  scene.add(beam); scene.add(beam2);
+  const bio = makeBio(q === 'laag' ? 250 : 500); scene.add(bio);
+  bio.material.uniforms.uPx.value = pr;
+  const glows = makeGlows([0x39ff8a, 0x4aa8ff]); scene.add(glows);
+  glows.material.uniforms.uPx.value = pr;
+  glows.visible = night;
 
   await loading('Bodem en rif…');
   const [sandTex] = await Promise.all([loadSandTextures(), loadModels(['hersenkoraal', 'sterkoraal', 'buisspons', 'vaasspons', 'tonspons', 'bekerkoraal', 'korstspons'])]);
@@ -93,8 +111,8 @@ export async function runZoutpier(site) {
   makeReef(scene, q, pier.pillars);
   makePillarGrowth(scene, q, pier.pillars, pillarAt);
   await loading('Vissen, tarpons en schildpadden…');
-  await Promise.all([preloadFishPhotos(), preloadFaunaModels()]);
-  const fauna = new Fauna(scene, q);
+  await Promise.all([preloadFishPhotos(), preloadFaunaModels(night)]);
+  const fauna = new Fauna(scene, q, { night });
   fauna.placeFrogs(pier.pillars);
 
   await loading('Duikers en geluid…');
@@ -103,10 +121,13 @@ export async function runZoutpier(site) {
   const lo = DG.Save.loadout();
   const look = Object.assign({}, lo.look);
   const me = buildDiver({ model: 'duiker', suit: 0x16171a, bcd: 0x141518, accent: 0xf2c21a, fin: hex(look.fin, 0xf2c21a), tank: 0xc8cdd2, lamp: lo.lamp ? look.lamp || 'compact' : null, cam: lo.camera ? look.cam : null, reg: look.reg ? hex(look.reg) : null });
-  const buddyM = buildDiver({ model: 'buddy', suit: 0x1b1d22, bcd: 0x1f2026, accent: 0xd8402a, fin: 0xe86aa0, tank: 0xc8cdd2, hair: 0x6a4a2a });
+  const buddyM = buildDiver({ model: 'buddy', suit: 0x1b1d22, bcd: 0x1f2026, accent: 0xd8402a, fin: 0xe86aa0, tank: 0xc8cdd2, hair: 0x6a4a2a, lamp: night ? 'primair' : null });
+  // vinpunten en flessenlichtje in lokale coördinaten van het duikermodel (kop naar -Z, rug naar +Y)
+  const dimsOf = (d) => { d.updateMatrixWorld(true); const bb = new THREE.Box3().setFromObject(d); return { fin: bb.max.z - 0.15, valve: new THREE.Vector3(0, bb.max.y - 0.03, bb.min.z + 0.42) }; };
+  const meDim = dimsOf(me), buDim = dimsOf(buddyM);
   scene.add(me); scene.add(buddyM);
 
-  await loading('Klaar om te water te gaan');
+  await loading(night ? 'De zon is onder. Lampen aan!' : 'Klaar om te water te gaan');
   root.querySelector('.d3-load').remove();
   const ui = document.createElement('div');
   ui.className = 'd3-ui';
@@ -124,7 +145,8 @@ export async function runZoutpier(site) {
     ceilViol: 0, decoViol: false, wasDeco: false, limitViol: 0, inLimit: false,
     touches: 0, reefTouch: 0, touchCool: 0,
     spotted: {}, newSp: [], photos: [], chDone: [], prof: [[0, 0]], profT: 0,
-    lamp: false, view: sv.set3d.view, ts: sv.set3d.ts, assist: sv.set3d.assist,
+    lamp: night && !!lo.lamp, view: sv.set3d.view, ts: sv.set3d.ts, assist: sv.set3d.assist,
+    night, glareT: 0, glare: 0, glareCool: 0, bioT: 0, bioSeen: false, aimT: 0, aimP: null, nextAim: 45,
     buddy: { p: new THREE.Vector3(-4.5, -0.3, 10), v: new THREE.Vector3(), yaw: Math.PI / 2, br: 0 },
     sig: null, sigT: 0, nextOk: 240, nextAir: 600, missed: 0, warned: {}, sepT: 0, ooa: false,
     ndl: 999, ceil: 0, stopPlan: null, planT: 0, paused: false, ended: false, cur: plan.current,
@@ -146,6 +168,7 @@ export async function runZoutpier(site) {
     if (a === 'lamp') {
       if (!lo.lamp) return hud.msg('Je hebt geen lamp gehuurd. Die kun je huren bij De Tuimelaar.');
       D.lamp = !D.lamp; DG.Audio.click();
+      if (night && !D.lamp && !D.warned.lampOff) { D.warned.lampOff = 1; hud.msg('Lamp uit. Nu zie je alleen nog het lichtje op de fles van je buddy… en misschien nog iets anders als je beweegt.', 4500); }
     } else if (a === 'view') {
       D.view = D.view === 'achter' ? 'bril' : 'achter';
       sv.set3d.view = D.view; hud.setMask(D.view === 'bril');
@@ -154,11 +177,15 @@ export async function runZoutpier(site) {
       if (depth - D.lastEq > 4.5) { hud.msg('Te laat: je oren gaan niet meer open. Stijg een stukje op en probeer opnieuw.'); }
       else { D.lastEq = depth; D.ear = 0; DG.Audio.click(); }
     } else if (a === 'photo') takePhoto();
-    else if (a === 'ok' && D.sig === 'ok') { D.sig = null; ui.querySelector('.c3-ok').hidden = true; hud.msg('👌 Je geeft je buddy het OK-teken terug.', 2500); }
-    else if (a === 'air' && D.sig === 'air') {
+    else if (a === 'ok' && D.sig === 'ok') {
+      if (night && !D.lamp) { hud.msg('Doe eerst je lamp aan (L): in het donker ziet je buddy je teken alleen in je lampbundel.', 3500); return; }
+      D.sig = null; ui.querySelector('.c3-ok').hidden = true;
+      hud.msg(night ? '🔦 Je maakt een rustige cirkel met je lampbundel op de bodem: alles OK!' : '👌 Je geeft je buddy het OK-teken terug.', 2500);
+    } else if (a === 'air' && D.sig === 'air') {
+      if (night && !D.lamp) { hud.msg('Doe eerst je lamp aan (L) en schijn op je manometer.', 3500); return; }
       D.sig = null; ui.querySelector('.c3-air').hidden = true;
       const bar = D.gas / TANK_L;
-      hud.msg('Je laat ' + Math.round(bar) + ' bar zien. Buddy: ' + Math.round(Math.max(60, bar - 12 + Math.random() * 20)) + ' bar.', 3500);
+      hud.msg((night ? 'Je schijnt op je manometer: ' : 'Je laat ') + Math.round(bar) + ' bar zien. Buddy: ' + Math.round(Math.max(60, bar - 12 + Math.random() * 20)) + ' bar.', 3500);
     } else if (a === 'exit') {
       if (-D.p.y < 0.8 && D.gt > 60) finish(false);
     }
@@ -205,16 +232,17 @@ export async function runZoutpier(site) {
     c.getContext('2d').drawImage(src, (w - cw) / 2, (h - ch) / 2, cw, ch, 0, 0, 400, 300);
     let g = { stars: 1, note: 'Sfeerfoto: richt op een dier of je buddy voor een challenge.' };
     if (!ph.none) {
+      const lit = (D.lamp && litBy(ph.s.p, UW.uLampPos.value, UW.uLampDir.value, Math.cos(lo.lamp.hoek + 0.08), lo.lamp.bereik)) || (night && litBy(ph.s.p, UW.uLamp2Pos.value, UW.uLamp2Dir.value, UW.uLamp2Cos.value - 0.03, UW.uLamp2Range.value));
       g = gradePhoto({
         L: ph.s.L, d: ph.d, ang: ph.ang, vfov: camera.fov * Math.PI / 180, aspect: camera.aspect, depth: Math.max(0, -D.p.y),
-        diverSpeed: D.v.length(), turn: D.turnRate || 0, subjSpeed: ph.s.v ? ph.s.v.length() : 0, strobe: !!lo.camera.flits, lamp: !!D.lamp,
+        diverSpeed: D.v.length(), turn: D.turnRate || 0, subjSpeed: ph.s.v ? ph.s.v.length() : 0, strobe: !!lo.camera.flits, lamp: night ? lit : !!D.lamp, night, lit,
       });
     }
     const spId = ph.none ? null : ph.s.spc.id;
-    const photo = { sp: ph.none || ph.s.buddy ? null : spId, title: ph.none ? 'Sfeerfoto' : ph.s.buddy ? 'Je buddy' : null, stars: g.stars, max: 5, note: g.note, url: c.toDataURL('image/jpeg', 0.78), site: 'saltpier', date: Date.now(), depth: Math.round(-D.p.y * 10) / 10, ch: [] };
+    const photo = { sp: ph.none || ph.s.buddy ? null : spId, title: ph.none ? 'Sfeerfoto' : ph.s.buddy ? 'Je buddy' : ph.s.sleep ? 'Slapende stoplichtpapegaaivis' : null, night, stars: g.stars, max: 5, note: g.note, url: c.toDataURL('image/jpeg', 0.78), site: 'saltpier', date: Date.now(), depth: Math.round(-D.p.y * 10) / 10, ch: [] };
     // fotochallenges
     sv.challenges = sv.challenges || {};
-    checkChallenges((DG.PHOTO_CHALLENGES || {}).saltpier, sv.challenges, spId, g.stars).forEach((ch) => {
+    checkChallenges((DG.PHOTO_CHALLENGES || {})[night ? 'saltpier_nacht' : 'saltpier'], sv.challenges, spId, g.stars).forEach((ch) => {
       const t = document.createElement('canvas'); t.width = 160; t.height = 120;
       t.getContext('2d').drawImage(c, 0, 0, 160, 120);
       sv.challenges[ch.id] = { stars: g.stars, date: Date.now(), thumb: t.toDataURL('image/jpeg', 0.7) };
@@ -238,6 +266,7 @@ export async function runZoutpier(site) {
   function updateNear() {
     nearP = pier.pillars.filter((pl) => Math.abs(pl.x - D.p.x) < 14 && Math.abs(pl.z - D.p.z) < 14);
   }
+  function litBy(p, pos, dir, cosA, range) { const v = p.clone().sub(pos); const d = v.length(); return d < range && d > 0.01 && v.divideScalar(d).dot(dir) > cosA; }
   function inShadow(x, z) { return (x > -122 && x < -3 && Math.abs(z) < 2.6) || (Math.abs(x + 120) < 9 && Math.abs(z) < 7); }
   const fwdOf = (yaw, pitch) => new THREE.Vector3(-Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), -Math.cos(yaw) * Math.cos(pitch));
 
@@ -433,10 +462,14 @@ export async function runZoutpier(site) {
     updateBuddy(dt, f, r);
 
     /* ---- dieren ---- */
-    const env = { diver: D.p, nearPillars: nearP, cam: camera.position, shadows };
+    lampInfo.on = D.lamp && !!lo.lamp;
+    if (lampInfo.on) lampInfo.point.copy(UW.uLampPos.value).addScaledVector(UW.uLampDir.value, 3);
+    const env = { diver: D.p, nearPillars: nearP, cam: camera.position, shadows: night ? null : shadows, night, lamp: lampInfo, onMsg: (t) => hud.msg(t, 4500) };
     shadows.begin(camera.position);
-    shadows.add(D.p.x, D.p.y, D.p.z, 0.75, 2.0, D.yaw, 0.75);
-    shadows.add(D.buddy.p.x, D.buddy.p.y, D.buddy.p.z, 0.75, 2.0, D.buddy.yaw || 0, 0.75);
+    if (!night) {
+      shadows.add(D.p.x, D.p.y, D.p.z, 0.75, 2.0, D.yaw, 0.75);
+      shadows.add(D.buddy.p.x, D.buddy.p.y, D.buddy.p.z, 0.75, 2.0, D.buddy.yaw || 0, 0.75);
+    }
     fauna.update(dt, env, D.t);
     shadows.end();
     // geluid: diepte, en de dichtstbijzijnde papegaaivis (knagen op koraal)
@@ -447,7 +480,7 @@ export async function runZoutpier(site) {
         const dd = s.p.distanceTo(D.p);
         if (dd < pd) { pd = dd; const rx = Math.cos(D.lookYaw), rz = -Math.sin(D.lookYaw); pp = ((s.p.x - D.p.x) * rx + (s.p.z - D.p.z) * rz) / Math.max(1, dd); }
       }
-      snd.update(dt, { depth: dNow, parrotDist: pd, parrotPan: pp });
+      snd.update(dt, { depth: dNow, parrotDist: night ? 99 : pd, parrotPan: pp, night });
     }
     spotT -= dt;
     if (spotT <= 0) { spotT = 0.25; checkSpots(); }
@@ -458,11 +491,14 @@ export async function runZoutpier(site) {
       const tip = D.view === 'bril' ? me.userData.head : me.userData.lampTip || me.userData.mouth;
       tip.getWorldPosition(UW.uLampPos.value);
       if (D.view === 'bril') UW.uLampPos.value.y -= 0.25;
-      const lf = D.view === 'bril' ? fwdOf(D.lookYaw, D.lookPitch) : fwdOf(D.yaw, D.pitch);
+      // 's nachts richt je de lamp waar je kijkt; overdag in je zwemrichting
+      const lf = D.view === 'bril' || night ? fwdOf(D.lookYaw, D.lookPitch) : fwdOf(D.yaw, D.pitch);
       UW.uLampDir.value.copy(lf);
       UW.uLampRange.value = lo.lamp.bereik;
       UW.uLampCos.value = Math.cos(lo.lamp.hoek);
     }
+    updateBeam(beam, night && D.lamp, UW.uLampPos.value, UW.uLampDir.value, lo.lamp ? lo.lamp.bereik : 1, lo.lamp ? lo.lamp.hoek : 0.4, D.view === 'bril' ? 0 : 0.1);
+    if (night) nightStep(dt, inp, dNow);
 
     // HUD
     hudT -= dt;
@@ -487,6 +523,62 @@ export async function runZoutpier(site) {
     me.rotation.set(D.pitch, D.yaw, -dy * 0.25);
     animateDiver(me, dt, Math.min(1, Math.abs(inp.fwd) * (inp.hard ? 1 : 0.6) + Math.abs(inp.side) * 0.3), D.view === 'bril');
     me.visible = D.view !== 'bril';
+  }
+
+  /* ---------------- nacht: buddylamp, verblinden, plankton, flessenlichtjes ---------------- */
+  const lampInfo = { on: false, pos: UW.uLampPos.value, dir: UW.uLampDir.value, cos: lo.lamp ? Math.cos(lo.lamp.hoek) : 0.9, point: new THREE.Vector3() };
+  const tmpV2 = new THREE.Vector3(), tmpV3 = new THREE.Vector3();
+  function nightStep(dt, inp, dNow) {
+    // de lamp van je buddy: zwaait rustig over bodem en pijlers, of wijst iets aan
+    buddyM.userData.lampTip.getWorldPosition(UW.uLamp2Pos.value);
+    let want;
+    if (D.aimT > 0 && D.aimP) { D.aimT -= dt; want = tmpV2.copy(D.aimP).sub(UW.uLamp2Pos.value).normalize(); }
+    else want = fwdOf(D.buddy.yaw + Math.sin(D.t * 0.37) * 0.55, -0.38 + Math.sin(D.t * 0.23 + 1) * 0.22);
+    UW.uLamp2Dir.value.lerp(want, Math.min(1, dt * 2.5)).normalize();
+    UW.uLamp2On.value = -D.buddy.p.y > 0.6 ? 1 : 0;
+    UW.uLamp2Cos.value = Math.cos(0.42);
+    UW.uLamp2Range.value = 8;
+    updateBeam(beam2, UW.uLamp2On.value > 0, UW.uLamp2Pos.value, UW.uLamp2Dir.value, 8, 0.42, 0.1);
+    // af en toe schijnt je buddy op iets wat jij nog niet gezien hebt
+    if (D.t > D.nextAim && dNow > 2) {
+      D.nextAim = D.t + 35 + Math.random() * 30;
+      let best = null, bd = 9;
+      for (const s of fauna.spottables()) {
+        if (D.spotted[s.spc.id]) continue;
+        const d = s.p.distanceTo(D.buddy.p);
+        if (d < bd) { bd = d; best = s; }
+      }
+      if (best) { D.aimP = best.p; D.aimT = 8; hud.msg('Je buddy schijnt met zijn lamp op iets en maakt kleine rondjes met de bundel: kijk eens!', 4000); }
+    }
+    // niet in de ogen schijnen
+    D.glareCool -= dt;
+    if (D.lamp) {
+      const v = buddyM.userData.head.getWorldPosition(tmpV3).sub(UW.uLampPos.value);
+      const d = v.length();
+      const inBeam = d < 5 && d > 0.2 && v.divideScalar(d).dot(UW.uLampDir.value) > Math.cos(lo.lamp.hoek * 0.8);
+      D.glareT = inBeam ? D.glareT + dt : 0;
+      if (D.glareT > 0.9 && D.glareCool <= 0) { D.glare++; D.glareCool = 12; hud.msg('Je schijnt je buddy recht in de ogen! Richt je lamp op de bodem of op het dier dat je wilt laten zien.', 4000); }
+    }
+    // lichtgevend plankton waar vinnen en handen bewegen (het mooist met je lamp uit)
+    const kick = Math.min(1, Math.abs(inp.fwd) * (inp.hard ? 1 : 0.6) + Math.abs(inp.side) * 0.3);
+    if (dNow > 0.8) {
+      D.bioAcc = (D.bioAcc || 0) + dt * (kick * 45 + D.v.length() * 25);
+      while (D.bioAcc > 1) { D.bioAcc -= 1; const fp = me.localToWorld(tmpV2.set((Math.random() - 0.5) * 0.55, (Math.random() - 0.5) * 0.2, meDim.fin - Math.random() * 0.35)); spawnBio(bio, fp.x, fp.y, fp.z, 1, 0.25); }
+      D.bioAcc2 = (D.bioAcc2 || 0) + dt * D.buddy.v.length() * 40;
+      while (D.bioAcc2 > 1) { D.bioAcc2 -= 1; const fp = buddyM.localToWorld(tmpV2.set((Math.random() - 0.5) * 0.55, 0, buDim.fin - Math.random() * 0.35)); spawnBio(bio, fp.x, fp.y, fp.z, 1, 0.25); }
+    }
+    bio.material.uniforms.uBright.value = D.lamp ? 0.15 : 1;
+    if (!D.lamp && kick > 0.25 && dNow > 2) D.bioT += dt;
+    if (D.bioT > 2.5 && !D.bioSeen) { D.bioSeen = true; DG.Audio.newSpecies(); hud.msg('✨ Waar je vinnen bewegen, licht het water groenblauw op: lichtgevend plankton (bioluminescentie)!', 6500); }
+    if (!D.bioHint && D.gt > 300 && !D.bioSeen && D.lamp && dNow > 3) { D.bioHint = true; hud.msg('Tip: doe je lamp even uit (L) en zwem een paar slagen. Kijk naar je vinnen…', 5500); }
+    // lichtjes op de flessen
+    const gp = glows.geometry.attributes.position;
+    const a = me.localToWorld(tmpV2.copy(meDim.valve)); gp.setXYZ(0, a.x, a.y, a.z);
+    const b = buddyM.localToWorld(tmpV3.copy(buDim.valve)); gp.setXYZ(1, b.x, b.y, b.z);
+    gp.needsUpdate = true;
+    glows.geometry.attributes.aOn.array[0] = D.view === 'bril' ? 0 : 0.8;
+    glows.geometry.attributes.aOn.array[1] = 0.6 + 0.4 * (Math.sin(D.t * 6) > 0 ? 1 : 0.2);
+    glows.geometry.attributes.aOn.needsUpdate = true;
   }
 
   function updateBuddy(dt, f, r) {
@@ -518,14 +610,14 @@ export async function runZoutpier(site) {
     b.br += dt / 4.3;
     if (b.br > 1) { b.br -= 1; if (b.p.y < -0.7) { const mp = buddyM.userData.mouth.getWorldPosition(tmpV); spawnBubbles(bubbles, mp.x, mp.y, mp.z, 10, false); } }
     // signalen
-    if (D.gt > D.nextOk && !D.sig && -D.p.y > 2) { D.sig = 'ok'; D.sigT = 0; D.nextOk = D.gt + 300; ui.querySelector('.c3-ok').hidden = false; hud.msg('Je buddy vraagt met een teken: alles OK? (👌 of O)', 4000); }
-    if (D.gt > D.nextAir && !D.sig && -D.p.y > 2) { D.sig = 'air'; D.sigT = 0; D.nextAir = D.gt + 600; ui.querySelector('.c3-air').hidden = false; hud.msg('Je buddy vraagt: hoeveel lucht heb je nog?', 4000); }
+    if (D.gt > D.nextOk && !D.sig && -D.p.y > 2) { D.sig = 'ok'; D.sigT = 0; D.nextOk = D.gt + 300; ui.querySelector('.c3-ok').hidden = false; hud.msg(night ? 'Je buddy maakt een cirkel met zijn lampbundel: alles OK? Antwoord met een cirkel van jouw lamp (👌 of O).' : 'Je buddy vraagt met een teken: alles OK? (👌 of O)', 4500); }
+    if (D.gt > D.nextAir && !D.sig && -D.p.y > 2) { D.sig = 'air'; D.sigT = 0; D.nextAir = D.gt + 600; ui.querySelector('.c3-air').hidden = false; hud.msg(night ? 'Je buddy schijnt op zijn manometer en vraagt: hoeveel lucht heb jij nog?' : 'Je buddy vraagt: hoeveel lucht heb je nog?', 4000); }
     if (D.sig) {
       D.sigT += dt;
       if (D.sigT > 14) { D.missed++; D.sig = null; ui.querySelector('.c3-ok').hidden = true; ui.querySelector('.c3-air').hidden = true; hud.msg('Je reageerde niet op je buddy. Hij komt dichterbij kijken.', 3500); }
     }
     // buddy kwijt?
-    if (dist > 12) { D.sepT += dt; if (D.sepT > 1 && !D.warned.sep) { D.warned.sep = 1; hud.msg('Blijf bij je buddy! Hij is ' + Math.round(dist) + ' m van je af.', 3500); } }
+    if (dist > (night ? 7 : 12)) { D.sepT += dt; if (D.sepT > 1 && !D.warned.sep) { D.warned.sep = 1; hud.msg(night ? 'Je ziet het lampje van je buddy bijna niet meer! ’s Nachts blijf je binnen 2–3 m van elkaar.' : 'Blijf bij je buddy! Hij is ' + Math.round(dist) + ' m van je af.', 3500); } }
     else { D.sepT = 0; D.warned.sep = 0; }
   }
 
@@ -537,7 +629,10 @@ export async function runZoutpier(site) {
       const to = s.p.clone().sub(eye);
       const d = to.length();
       let ok;
-      if (s.hidden) {
+      if (night) {
+        const lit = (D.lamp && litBy(s.p, UW.uLampPos.value, UW.uLampDir.value, Math.cos(lo.lamp.hoek + 0.05), lo.lamp.bereik * 0.9)) || (UW.uLamp2On.value > 0 && litBy(s.p, UW.uLamp2Pos.value, UW.uLamp2Dir.value, UW.uLamp2Cos.value - 0.03, 7));
+        ok = d < (s.hidden ? 1.5 : 2.2) || (lit && d < (s.hidden ? lo.lamp.bereik * 0.85 : 12) && to.normalize().dot(fwd) > 0.35);
+      } else if (s.hidden) {
         let lit = false;
         if (D.lamp) { const lf = UW.uLampDir.value; const lt = s.p.clone().sub(UW.uLampPos.value); lit = lt.length() < lo.lamp.bereik * 0.85 && lt.normalize().dot(lf) > Math.cos(lo.lamp.hoek + 0.05); }
         ok = d < 1.7 || lit;
@@ -550,7 +645,7 @@ export async function runZoutpier(site) {
         const isNew = !sv.species[s.spc.id];
         if (isNew) { sv.species[s.spc.id] = { seen: true, photo: false, site: 'saltpier', date: Date.now() }; D.newSp.push(s.spc.id); DG.Audio.newSpecies(); }
         else DG.Audio.spot();
-        UI.spotToast(s.spc, isNew, true);
+        UI.spotToast(s.sleep ? Object.assign({}, s.spc, { name: 'Slapende ' + s.spc.name.toLowerCase() }) : s.spc, isNew, true);
       }
     }
   }
@@ -577,6 +672,7 @@ export async function runZoutpier(site) {
     surf.position.set(camera.position.x, 0, camera.position.z);
     updateRays(rays, camera, D.t, inShadow);
     updateBubbles(bubbles, dt);
+    if (night) updateBio(bio, D.paused ? 0 : dt);
     renderer.render(scene, camera);
     if (wantPhoto) capturePhoto();
   }
@@ -612,8 +708,8 @@ export async function runZoutpier(site) {
       site: 'saltpier', date: Date.now(), minutes, maxD: D.maxD, avgD: D.gt > 0 ? D.sumD / D.gt : 0, temp: 28, bar,
       species: Object.keys(D.spotted), newSpecies: D.newSp.slice(), photos: D.photos, challenges: D.chDone.slice(), needStop: D.needStop, safetyDone: D.stopDone,
       ascentWarnings: D.fastCount, ooa: !!ooa, decoViolation: D.decoViol || D.ceilViol > 0, cold: 0, gas: lo.gas, tankL: TANK_L,
-      profile: D.prof.concat([[minutes, 0]]), lines, earned: 0, xp, three: true,
-      rules: { touches: D.touches, reef: D.reefTouch, missed: D.missed, limit: D.limitViol, deco: D.wasDeco, ceil: D.ceilViol },
+      profile: D.prof.concat([[minutes, 0]]), lines, earned: 0, xp, three: true, night, bio: D.bioSeen,
+      rules: { touches: D.touches, reef: D.reefTouch, missed: D.missed, limit: D.limitViol, deco: D.wasDeco, ceil: D.ceilViol, glare: D.glare, night },
     };
     // opslaan: logboek, foto's, restverzadiging, vliegverbod
     const prof = res.profile;
@@ -623,7 +719,7 @@ export async function runZoutpier(site) {
       avgD: Math.round(res.avgD * 10) / 10, temp: 28, species: res.species, newSpecies: res.newSpecies, photos: res.photos.length, earned: 0,
       safetyDone: res.safetyDone, needStop: res.needStop, ascentWarnings: res.ascentWarnings, ooa: res.ooa, bar, gas: res.gas,
       profile: prof.filter((p, i) => i % stp === 0 || i === prof.length - 1).map((p) => [Math.round(p[0] * 10) / 10, Math.round(p[1] * 10) / 10]),
-      three: true, rules: res.rules,
+      three: true, rules: res.rules, night,
     });
     res.photos.forEach((p) => { sv.photos.push(p); if (p.sp && sv.species[p.sp]) sv.species[p.sp].photo = true; });
     if (sv.photos.length > 40) sv.photos = sv.photos.slice(-40);
@@ -640,7 +736,8 @@ export async function runZoutpier(site) {
 
   if (snd.ok) snd.startLoops(); else DG.Audio.ambience(true);
   DG.Audio.splash();
-  hud.msg(D.cur.length() > 0.01 ? 'Je ligt aan de oppervlakte bij de gele steen. Er staat lichte stroming: ' + plan.curTxt + '. Laat lucht uit je vest (▼ of F) om af te dalen.' : 'Je ligt aan de oppervlakte bij de gele steen. Laat lucht uit je trimvest (▼ of F) om af te dalen, en vergeet niet te klaren.', 7000);
+  if (night) hud.msg('Het is donker. Je ligt met je buddy bij de gele steen, lampen aan. Laat lucht uit je vest (▼ of F) om af te dalen. Blijf dicht bij elkaar: zie je zijn lampje niet meer, stop dan en kijk rond.', 8000);
+  else hud.msg(D.cur.length() > 0.01 ? 'Je ligt aan de oppervlakte bij de gele steen. Er staat lichte stroming: ' + plan.curTxt + '. Laat lucht uit je vest (▼ of F) om af te dalen.' : 'Je ligt aan de oppervlakte bij de gele steen. Laat lucht uit je trimvest (▼ of F) om af te dalen, en vergeet niet te klaren.', 7000);
   updateNear();
   requestAnimationFrame((t) => { last = t; loop(t); });
   // testhaakje: simulatie vooruitspoelen zonder beeld
@@ -691,33 +788,54 @@ async function preDive(site) {
     : 'Geen stroming: zwem langs de pier naar de laadkop (tarpons) en daarna links of rechts langs de pijlergroepen.';
   const ship = Math.random() < 0.1;
   const s3 = sv.set3d;
-  // 1. briefing
+  const hasLamp = !!DG.Save.loadout().lamp;
+  let when = s3.when === 'nacht' && hasLamp ? 'nacht' : 'dag';
+  const chLine = (key, w) => {
+    const list = (DG.PHOTO_CHALLENGES || {})[key] || [], done = DG.Save.data.challenges || {};
+    const n = list.filter((c) => done[c.id]).length, next = list.find((c) => !done[c.id]);
+    const nm = w === 'nacht' ? 'nachtchallenges' : 'fotochallenges';
+    if (!DG.Save.loadout().camera) return '<p class="b3-ch" data-w="' + w + '">📷 Huur een camera bij De Tuimelaar voor de ' + list.length + ' ' + nm + ' van de Zoutpier.</p>';
+    return '<p class="b3-ch" data-w="' + w + '">' + (w === 'nacht' ? '🌙' : '🏆') + ' ' + nm[0].toUpperCase() + nm.slice(1) + ': ' + n + '/' + list.length + (next ? ' · volgende: <b>' + next.title + '</b> (minimaal ' + next.min + '★). ' + next.tip : ' · alles gehaald!') + '</p>';
+  };
+  // 1. briefing (dag of nacht)
   const go = await ask(
     '<div class="b3-photos"><img src="img/bonaire-zoutpier-lucht.jpg" alt="Luchtfoto van de Zoutpier"><img src="img/bonaire-zoutpier-steen.jpg" alt="De gele steen Salt Pier"><img src="img/bonaire-zoutpier-knorvissen.jpg" alt="Knorvissen tussen de pijlers"></div>' +
-    '<h2>Briefing · Zoutpier, Bonaire</h2>' +
-    (() => {
-      const list = (DG.PHOTO_CHALLENGES || {}).saltpier || [], done = DG.Save.data.challenges || {};
-      const n = list.filter((c) => done[c.id]).length, next = list.find((c) => !done[c.id]);
-      if (!DG.Save.loadout().camera) return '<p class="b3-ch">📷 Huur een camera bij De Tuimelaar voor de ' + list.length + ' fotochallenges van de Zoutpier.</p>';
-      return '<p class="b3-ch">🏆 Fotochallenges: ' + n + '/' + list.length + (next ? ' · volgende: <b>' + next.title + '</b> (minimaal ' + next.min + '★). ' + next.tip : ' · alles gehaald!') + '</p>';
-    })() +
+    '<div class="b3-when"><span class="seg" data-k="when"><button data-v="dag">☀️ Dagduik</button><button data-v="nacht"' + (hasLamp ? '' : ' disabled') + '>🌙 Nachtduik</button></span>' +
+    (hasLamp ? '' : '<small>Voor een nachtduik heb je een duiklamp nodig. Die kun je huren bij De Tuimelaar.</small>') + '</div>' +
+    '<h2>Briefing · Zoutpier, Bonaire<span data-w="nacht"> · nachtduik</span></h2>' +
+    chLine('saltpier', 'dag') + chLine('saltpier_nacht', 'nacht') +
     '<div class="brief-grid">' +
-    '<div><small>Water</small>28 °C · zicht ±50 m</div><div><small>Ingang</small>Kantduik bij de gele steen</div>' +
+    '<div><small>Water</small>28 °C · <span data-w="dag">zicht ±50 m</span><span data-w="nacht">zicht: alleen in je lampbundel</span></div><div><small>Ingang</small><span data-w="dag">Kantduik bij de gele steen</span><span data-w="nacht">Gele steen, ingang bij daglicht verkend</span></div>' +
     '<div><small>Stroming vandaag</small>' + curTxt + '</div><div><small>Diepte</small>pier 3–12 m · rif tot 40 m</div>' +
     '<div><small>Jouw grens</small>' + DG.Save.maxDepth() + ' m (' + esc(DG.Save.brevet()) + ')</div><div><small>Fles</small>aluminium 80 · 207 bar · ' + (DG.Save.loadout().gas === 'ean32' ? 'nitrox 32%' : 'lucht') + '</div>' +
     '</div>' +
-    '<p class="lead">' + esc(route) + ' ' + esc(siTxt) + '</p>' +
+    '<p class="lead" data-w="dag">' + esc(route) + ' ' + esc(siTxt) + '</p>' +
+    '<p class="lead" data-w="nacht">De zon is net onder. ’s Nachts is de Zoutpier een andere wereld: tarpons jagen in het licht van je lamp, octopussen, murenen en langoesten zwerven over de bodem, mandsters vouwen hun armen uit op de pijlers en papegaaivissen slapen in een slijmcocon. Blijf vlak bij je buddy en zwem rustig: alleen in je lampbundel zie je kleur. ' + esc(siTxt) + '</p>' +
     '<h3>Regels van het Bonaire Marine Park</h3><ul class="b3-rules">' +
     '<li><label><input type="checkbox" required> Ik heb een geldige natuurtag (STINAPA)</label></li>' +
     '<li><label><input type="checkbox" required> Ik duik zonder handschoenen en raak niets aan</label></li>' +
     '<li><label><input type="checkbox" required> Ik heb gecontroleerd dat er geen schip aan de pier ligt</label></li>' +
     '</ul>' +
+    '<div data-w="nacht"><h3>Afspraken voor de nachtduik</h3><ul class="b3-rules">' +
+    '<li><label><input type="checkbox" required> Hoofdlamp en reservelamp zijn opgeladen en getest</label></li>' +
+    '<li><label><input type="checkbox" required> Er zit een lichtje op mijn fles, zodat mijn buddy me in het donker ziet</label></li>' +
+    '<li><label><input type="checkbox" required> Lampsignalen afgesproken: cirkel = OK, heen en weer zwaaien = aandacht of probleem, nooit in iemands ogen schijnen</label></li>' +
+    '<li><label><input type="checkbox" required> We blijven binnen 2–3 m van elkaar. Kwijt? Eén minuut rondkijken, lamp afschermen om zijn licht te zien, daarna rustig opstijgen</label></li>' +
+    '</ul></div>' +
     '<div class="modal-actions"><button class="btn ghost" data-a="back">Terug</button><button class="btn primary" data-a="go">Verder</button></div>',
     '', (c, done) => {
+      const seg = c.querySelector('.seg[data-k=when]');
+      const sync = () => {
+        seg.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.v === when));
+        c.querySelectorAll('[data-w]').forEach((el) => (el.hidden = el.dataset.w !== when));
+      };
+      seg.querySelectorAll('button').forEach((b) => (b.onclick = () => { if (b.disabled) return; when = b.dataset.v; sync(); DG.Audio.click(); }));
+      sync();
       c.querySelector('[data-a=back]').onclick = () => done(false);
       c.querySelector('[data-a=go]').onclick = () => {
-        const all = [...c.querySelectorAll('.b3-rules input')].every((i) => i.checked);
-        if (!all) { DG.UI.toast('Vink eerst de regels van het marine park af.', 'warn'); return; }
+        const all = [...c.querySelectorAll('.b3-rules input')].filter((i) => !i.closest('[hidden]')).every((i) => i.checked);
+        if (!all) { DG.UI.toast(when === 'nacht' ? 'Vink eerst de regels en de afspraken voor de nachtduik af.' : 'Vink eerst de regels van het marine park af.', 'warn'); return; }
+        s3.when = when; DG.Save.save();
         done(true);
       };
     });
@@ -773,5 +891,5 @@ async function preDive(site) {
       c.querySelector('[data-a=go]').onclick = () => done(true);
     });
   if (!ok3) return null;
-  return { tissues, current: cur, curTxt };
+  return { tissues, current: cur, curTxt, night: when === 'nacht' };
 }
