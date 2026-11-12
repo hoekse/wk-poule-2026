@@ -60,6 +60,13 @@ De Zoutpier is de eerste duikstek in 3D: vrij rondzwemmen volgens de echte duikr
 - Dieren als 3D-modellen uit Magnific: rifmanta, zwartpuntrifhaai, wobbegong, epaulettehaai, napoleonvis, clownvis, Moorse afgod, fuseliers, juweelbaarsjes en een dwergzeepaardje op een waaier. Verder bultkoppen, vleermuisvissen, koraalduivels, een karetschildpad en een tornado van chevronbarracuda's.
 - Bijna altijd stroming. Zes fotochallenges. Koraal dat te ver weg is om te zien, wordt niet getekend; zo blijft het rif vloeiend.
 
+## Elphinstone Reef, Rode Zee (3D)
+
+- Een smal rif midden in zee: de kam ligt op ± 3 m en aan beide kanten vallen bijna loodrechte wanden weg tot 50 m. Je zakt langs de wand naar beneden; de wand zelf is een vaste rand, je kunt er niet doorheen.
+- De wanden hangen vol zacht koraal, waaiers en sponzen, met wolken juweelbaarsjes. In het zuiden ligt een breed plateau op ± 29 m.
+- Uit Magnific: longimanus (oceanische witpunthaai), geschulpte hamerhaai, grijze rifhaai, tuimelaars, gemaskerde koraalvlinder, sohal-doktersvis, picassotrekkervis en de safariboot. Verder napoleonvis, Rode Zee-anemoonvissen, jacks, een reuzenmurene en een groene zeeschildpad.
+- De longimanus zwemt vlak onder de boot; de hamerhaaien zwemmen in het blauw voorbij het zuidplateau, dieper dan 30 m (alleen met een Deep-brevet). Meestal stroming van noord naar zuid. Zes fotochallenges.
+
 ### Besturing
 
 | | Telefoon / tablet | Pc |
@@ -88,10 +95,10 @@ Op GitHub Pages of Vercel werkt het direct.
 ## Bestanden
 
 - `js/`: menu's, winkel, wereldkaart, logboek en de 2D-duikstekken
-- `js3d/`: de 3D-duik (Three.js): water, bodem, pier, dieren, duiker, 3D-modellen laden, fysica, decompressie, besturing en HUD; `sites.js` (per duikstek: water, bodem, bouwwerken, dieren en briefing), `site-oosterschelde.js` (Zeelandbrug), `site-tulamben.js` (Liberty-wrak), `site-raja.js` (Raja Ampat), `sitekit.js` (gedeeld gereedschap), `shop3d.js` (3D-winkel) en `trip3d.js` (busrit)
+- `js3d/`: de 3D-duik (Three.js): water, bodem, pier, dieren, duiker, 3D-modellen laden, fysica, decompressie, besturing en HUD; `sites.js` (per duikstek: water, bodem, bouwwerken, dieren en briefing), `site-oosterschelde.js` (Zeelandbrug), `site-tulamben.js` (Liberty-wrak), `site-raja.js` (Raja Ampat), `site-elphinstone.js` (Elphinstone), `sitekit.js` (gedeeld gereedschap), `shop3d.js` (3D-winkel) en `trip3d.js` (busrit)
 - `vendor/three/`: Three.js 0.186.1 (MIT-licentie)
-- `models/`: 3D-modellen (glTF) uit Magnific: `duiker.glb` en `buddy.glb` met skelet, `vis/` (met `-ver`-versies voor op afstand), `dier/`, `rif/`, `os/` (Oosterschelde), `tul/` (Tulamben), `raja/` (Raja Ampat) en `winkel/` (paspop, torso, tas, fles en de Tuimelaar-bus)
+- `models/`: 3D-modellen (glTF) uit Magnific: `duiker.glb` en `buddy.glb` met skelet, `vis/` (met `-ver`-versies voor op afstand), `dier/`, `rif/`, `os/` (Oosterschelde), `tul/` (Tulamben), `raja/` (Raja Ampat), `elph/` (Elphinstone) en `winkel/` (paspop, torso, tas, fles en de Tuimelaar-bus)
 - `audio/`: geluiden uit Magnific
-- `img/`: winkelfoto's en logo van De Tuimelaar, foto's van Bonaire, pijler- en zandtextuur, zeewaaier, `vis/` met de vissenfoto's (reserve als een 3D-model niet laadt), `winkel3d/` (wanden voor de 3D-winkel, uit de winkelfoto's), `oosterschelde/` (pijler, bodem en suikerwier), `tulamben/` (romp, zwart zand, keien en briefingbeelden), `raja/` (koraalzand, rifbodem en briefingbeelden) en `reis/` (stockfoto's van Schiphol, de vlucht en Bonaire)
+- `img/`: winkelfoto's en logo van De Tuimelaar, foto's van Bonaire, pijler- en zandtextuur, zeewaaier, `vis/` met de vissenfoto's (reserve als een 3D-model niet laadt), `winkel3d/` (wanden voor de 3D-winkel, uit de winkelfoto's), `oosterschelde/` (pijler, bodem en suikerwier), `tulamben/` (romp, zwart zand, keien en briefingbeelden), `raja/` (koraalzand, rifbodem en briefingbeelden), `elphinstone/` (briefingbeelden) en `reis/` (stockfoto's van Schiphol, de vlucht en Bonaire)
 
 Fan-project in samenwerking met Duikcentrum De Tuimelaar Zwolle. Sommige referentiefoto's van internet zijn alleen als voorbeeld gebruikt en zitten niet in het spel.

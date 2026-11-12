@@ -34,7 +34,7 @@ export const FILES = {
   geelstaart_snapper: 'models/vis/geelstaart_snapper.glb', gele_geitenvis: 'models/vis/gele_geitenvis.glb',
   // Tulamben (wrak van de USAT Liberty)
   naaktslak: 'models/tul/naaktslak.glb', reuzenkikvorsvis: 'models/tul/reuzenkikvorsvis.glb',
-  zachtkoraal: 'models/tul/zachtkoraal.glb', tafelkoraal: 'models/tul/tafelkoraal.glb',
+  zachtkoraal: 'models/tul/zachtkoraal.glb', 'zachtkoraal-lo': 'models/tul/zachtkoraal-lo.glb', tafelkoraal: 'models/tul/tafelkoraal.glb',
   schroef: 'models/tul/schroef.glb', kanon: 'models/tul/kanon.glb', ketel: 'models/tul/ketel.glb',
   // dezelfde modellen voor verwante soorten
   glasvisje: 'models/vis/zilvervisje.glb', reuzenmurene: 'models/dier/murene.glb',
@@ -44,7 +44,14 @@ export const FILES = {
   rifmanta: 'models/raja/rifmanta.glb', wobbegong: 'models/raja/wobbegong.glb', epaulette: 'models/raja/epaulette.glb',
   dwergzeepaardje: 'models/raja/dwergzeepaardje.glb', anemoon: 'models/raja/anemoon.glb', hertshoornkoraal: 'models/raja/hertshoornkoraal.glb',
   duikboot: 'models/raja/duikboot.glb',
+  // Elphinstone (Rode Zee)
+  longimanus: 'models/elph/longimanus.glb', hamerhaai: 'models/elph/hamerhaai.glb', grijze_rifhaai: 'models/elph/grijze_rifhaai.glb',
+  tuimelaar: 'models/elph/tuimelaar.glb', safariboot: 'models/elph/safariboot.glb',
+  jacks: 'models/tul/grootoog_trevally.glb', 'jacks-ver': 'models/tul/grootoog_trevally-ver.glb',
+  rodezee_anemoonvis: 'models/raja/clownvis.glb', 'rodezee_anemoonvis-ver': 'models/raja/clownvis-ver.glb',
 };
+['koraalvlinder', 'sohal', 'picasso']
+  .forEach((id) => { FILES[id] = 'models/elph/' + id + '.glb'; FILES[id + '-ver'] = 'models/elph/' + id + '-ver.glb'; });
 ['zwartpunt', 'napoleon', 'clownvis', 'moorse_afgod', 'fuselier', 'juweelbaarsje']
   .forEach((id) => { FILES[id] = 'models/raja/' + id + '.glb'; FILES[id + '-ver'] = 'models/raja/' + id + '-ver.glb'; });
 ['bultkop', 'grootoog_trevally', 'wimpelvis', 'batvis', 'kogelvis', 'koraalduivel']

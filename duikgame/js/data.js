@@ -552,7 +552,7 @@
       ],
     },
     {
-      id: 'elphinstone', name: 'Elphinstone Reef', area: 'Rode Zee', country: 'Egypte', lat: 25.31, lon: 34.86,
+      id: 'elphinstone', name: 'Elphinstone Reef', area: 'Rode Zee', country: 'Egypte', lat: 25.31, lon: 34.86, three: true,
       temp: 26, vis: 35, depth: 40, level: 'Advanced (Deep voor de hamerhaaien)', current: 0.18, entry: 'Bootduik',
       travel: { mode: 'vlieg', time: '± 5 uur vliegen naar Marsa Alam' },
       desc: 'Een lang, smal rif midden in zee voor de kust van Marsa Alam. Steile wanden vol zachte koralen en wolken juweelbaarsjes. In het najaar patrouilleert de longimanus vlak onder de boot, en op het zuidplateau zie je soms hamerhaaien.',
@@ -649,6 +649,14 @@
       { id: 'os_vlokslak', title: 'Vlokslak (macro)', sp: ['vlokslak'], min: 3, tip: 'Klein! Op de stenen van de dijk. Ga heel dichtbij met flitsers.' },
       { id: 'os_zeekat', title: 'Zeekat', sp: ['zeekat'], min: 3, tip: 'Soms bij de pijlers. Benader hem heel rustig.' },
     ],
+    elphinstone: [
+      { id: 'el_longimanus', title: 'Longimanus onder de boot', sp: ['longimanus'], min: 3, tip: 'Hij patrouilleert vlak onder de safariboot. Blijf bij je buddy, kijk hem aan en wacht tot hij langskomt.' },
+      { id: 'el_hamerhaai', title: 'Hamerhaai in het blauw', sp: ['hamerhaai'], min: 2, tip: 'Voorbij het zuidplateau, dieper dan 30 m. Alleen met een Deep-brevet!' },
+      { id: 'el_rifhaai', title: 'Grijze rifhaai', sp: ['grijze_rifhaai'], min: 3, tip: 'Ze zwemmen een stukje van de wand af, rond 20 m.' },
+      { id: 'el_dolfijn', title: 'Dolfijnen!', sp: ['tuimelaar'], min: 2, tip: 'Soms komt er een groepje tuimelaars langs, vlak onder de oppervlakte.' },
+      { id: 'el_anemoon', title: 'Rode Zee-anemoonvis', sp: ['rodezee_anemoonvis'], min: 3, tip: 'In de anemonen op de rifkam (± 3–5 m).' },
+      { id: 'el_juweel', title: 'Juweelbaarsjes op de wand', sp: ['juweelbaarsje'], min: 3, tip: 'Oranje wolken boven het zachte koraal op de wanden.' },
+    ],
     raja: [
       { id: 'rj_manta', title: 'Rifmanta bij het poetsstation', sp: ['rifmanta'], min: 3, tip: 'Op de zandvlakte (16 m) laag achter het koraalblok liggen en wachten tot een manta over je heen komt.' },
       { id: 'rj_pygmy', title: 'Dwergzeepaardje (macro)', sp: ['dwergzeepaardje'], min: 3, tip: 'Piepklein, op een waaierkoraal dieper dan 12 m. Zoek met je lamp en ga heel dichtbij.' },
@@ -675,7 +683,7 @@
       { id: 'zn_inktvis', title: 'Rifinktvissen', sp: ['rifinktvis'], min: 3, tip: 'Vlak onder het oppervlak, 1–3 m, vooral bij de ingang en onder de pier.' },
     ],
   };
-  DG.CHALLENGE_SITE = { saltpier: 'saltpier', saltpier_nacht: 'saltpier', oosterschelde: 'oosterschelde', tulamben: 'tulamben', raja: 'raja' };
+  DG.CHALLENGE_SITE = { saltpier: 'saltpier', saltpier_nacht: 'saltpier', oosterschelde: 'oosterschelde', tulamben: 'tulamben', raja: 'raja', elphinstone: 'elphinstone' };
   DG.siteById = (id) => DG.SITES.find((s) => s.id === id);
   DG.gearById = (id) => DG.GEAR.find((g) => g.id === id);
   DG.courseById = (id) => DG.COURSES.find((c) => c.id === id);
