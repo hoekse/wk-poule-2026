@@ -592,7 +592,7 @@
       ],
     },
     {
-      id: 'darwin', name: 'Darwin Island', area: 'Galápagos', country: 'Ecuador', lat: 1.678, lon: -92.003,
+      id: 'darwin', name: 'Darwin Island', area: 'Galápagos', country: 'Ecuador', lat: 1.678, lon: -92.003, three: true,
       temp: 23, vis: 18, depth: 38, level: 'Advanced (sterke stroming)', current: 0.32, entry: 'Bootduik (liveaboard)',
       travel: { mode: 'vlieg', time: '± 20 uur via Quito, daarna 2 dagen varen' },
       desc: 'Het meest afgelegen eiland van de Galápagos, alleen bereikbaar per liveaboard. Hier zwemmen scholen hamerhaaien langs en van juni tot november, met wat geluk, een walvishaai. De beroemde Darwin’s Arch stortte in 2021 in; nu staan er twee ‘pilaren’.',
@@ -649,6 +649,14 @@
       { id: 'os_vlokslak', title: 'Vlokslak (macro)', sp: ['vlokslak'], min: 3, tip: 'Klein! Op de stenen van de dijk. Ga heel dichtbij met flitsers.' },
       { id: 'os_zeekat', title: 'Zeekat', sp: ['zeekat'], min: 3, tip: 'Soms bij de pijlers. Benader hem heel rustig.' },
     ],
+    darwin: [
+      { id: 'dw_hamerhaai', title: 'School hamerhaaien', sp: ['hamerhaai'], min: 3, tip: 'Lig stil in het Theater (± 17 m) en kijk het blauw in. Uitademen gaat het best zonder bellen in je beeld.' },
+      { id: 'dw_walvishaai', title: 'Walvishaai!', sp: ['walvishaai'], min: 2, tip: 'Niet bij elke duik. Hij zwemt langzaam rond op ± 10 m; kijk ook naar boven.' },
+      { id: 'dw_zeeleeuw', title: 'Speelse zeeleeuw', sp: ['zeeleeuw'], min: 3, tip: 'Ze komen zelf kijken, vooral bij het begin en einde van de duik vlak onder de oppervlakte.' },
+      { id: 'dw_galapagos', title: 'Galápagoshaai', sp: ['galapagoshaai'], min: 3, tip: 'Ze patrouilleren langs de helling, 18–25 m.' },
+      { id: 'dw_rog', title: 'Gevlekte adelaarsrog', sp: ['adelaarsrog'], min: 3, tip: 'Ze zweven boven de rotsblokken; wacht tot er een langs je glijdt.' },
+      { id: 'dw_dokter', title: 'Geelstaartdoktersvissen', sp: ['geelstaart_dokter'], min: 3, tip: 'Grote scholen boven het Theater.' },
+    ],
     elphinstone: [
       { id: 'el_longimanus', title: 'Longimanus onder de boot', sp: ['longimanus'], min: 3, tip: 'Hij patrouilleert vlak onder de safariboot. Blijf bij je buddy, kijk hem aan en wacht tot hij langskomt.' },
       { id: 'el_hamerhaai', title: 'Hamerhaai in het blauw', sp: ['hamerhaai'], min: 2, tip: 'Voorbij het zuidplateau, dieper dan 30 m. Alleen met een Deep-brevet!' },
@@ -683,7 +691,7 @@
       { id: 'zn_inktvis', title: 'Rifinktvissen', sp: ['rifinktvis'], min: 3, tip: 'Vlak onder het oppervlak, 1–3 m, vooral bij de ingang en onder de pier.' },
     ],
   };
-  DG.CHALLENGE_SITE = { saltpier: 'saltpier', saltpier_nacht: 'saltpier', oosterschelde: 'oosterschelde', tulamben: 'tulamben', raja: 'raja', elphinstone: 'elphinstone' };
+  DG.CHALLENGE_SITE = { saltpier: 'saltpier', saltpier_nacht: 'saltpier', oosterschelde: 'oosterschelde', tulamben: 'tulamben', raja: 'raja', elphinstone: 'elphinstone', darwin: 'darwin' };
   DG.siteById = (id) => DG.SITES.find((s) => s.id === id);
   DG.gearById = (id) => DG.GEAR.find((g) => g.id === id);
   DG.courseById = (id) => DG.COURSES.find((c) => c.id === id);

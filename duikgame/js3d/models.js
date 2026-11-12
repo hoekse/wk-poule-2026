@@ -49,7 +49,12 @@ export const FILES = {
   tuimelaar: 'models/elph/tuimelaar.glb', safariboot: 'models/elph/safariboot.glb',
   jacks: 'models/tul/grootoog_trevally.glb', 'jacks-ver': 'models/tul/grootoog_trevally-ver.glb',
   rodezee_anemoonvis: 'models/raja/clownvis.glb', 'rodezee_anemoonvis-ver': 'models/raja/clownvis-ver.glb',
+  // Darwin Island (Galápagos)
+  walvishaai: 'models/darwin/walvishaai.glb', galapagoshaai: 'models/darwin/galapagoshaai.glb', zeeleeuw: 'models/darwin/zeeleeuw.glb',
+  'zee-egel': 'models/darwin/zee-egel.glb',
 };
+['geelstaart_dokter', 'koningskeizer']
+  .forEach((id) => { FILES[id] = 'models/darwin/' + id + '.glb'; FILES[id + '-ver'] = 'models/darwin/' + id + '-ver.glb'; });
 ['koraalvlinder', 'sohal', 'picasso']
   .forEach((id) => { FILES[id] = 'models/elph/' + id + '.glb'; FILES[id + '-ver'] = 'models/elph/' + id + '-ver.glb'; });
 ['zwartpunt', 'napoleon', 'clownvis', 'moorse_afgod', 'fuselier', 'juweelbaarsje']

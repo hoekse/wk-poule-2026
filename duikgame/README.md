@@ -67,6 +67,15 @@ De Zoutpier is de eerste duikstek in 3D: vrij rondzwemmen volgens de echte duikr
 - Uit Magnific: longimanus (oceanische witpunthaai), geschulpte hamerhaai, grijze rifhaai, tuimelaars, gemaskerde koraalvlinder, sohal-doktersvis, picassotrekkervis en de safariboot. Verder napoleonvis, Rode Zee-anemoonvissen, jacks, een reuzenmurene en een groene zeeschildpad.
 - De longimanus zwemt vlak onder de boot; de hamerhaaien zwemmen in het blauw voorbij het zuidplateau, dieper dan 30 m (alleen met een Deep-brevet). Meestal stroming van noord naar zuid. Zes fotochallenges.
 
+## Darwin Island, Galápagos (3D)
+
+- Een helling van enorme basaltblokken onder het steile eiland, met de twee rotspilaren die overbleven toen Darwin's Arch in 2021 instortte. Op ± 15–20 m ligt het Theater: je houdt je vast aan kale rots en kijkt het blauw in.
+- Groenblauw, voedselrijk water van 23 °C en stevige stroming; negatieve afdaling vanaf de rubberboot, de safariboot ligt verderop.
+- Uit Magnific: walvishaai, Galápagos-zeeleeuw, Galápagoshaai, geelstaartdoktersvis, koningskeizersvis en potloodzee-egels, plus een textuur van basalt met zeepokken. Verder een school hamerhaaien, gevlekte adelaarsroggen, groene zeeschildpadden, Moorse afgoden, jacks en soms tuimelaars.
+- De walvishaai komt ongeveer bij de helft van de duiken langs. Zes fotochallenges.
+
+Zonder WebGL (een heel oude browser) duik je op elke stek in de 2D-versie.
+
 ### Besturing
 
 | | Telefoon / tablet | Pc |
@@ -95,10 +104,10 @@ Op GitHub Pages of Vercel werkt het direct.
 ## Bestanden
 
 - `js/`: menu's, winkel, wereldkaart, logboek en de 2D-duikstekken
-- `js3d/`: de 3D-duik (Three.js): water, bodem, pier, dieren, duiker, 3D-modellen laden, fysica, decompressie, besturing en HUD; `sites.js` (per duikstek: water, bodem, bouwwerken, dieren en briefing), `site-oosterschelde.js` (Zeelandbrug), `site-tulamben.js` (Liberty-wrak), `site-raja.js` (Raja Ampat), `site-elphinstone.js` (Elphinstone), `sitekit.js` (gedeeld gereedschap), `shop3d.js` (3D-winkel) en `trip3d.js` (busrit)
+- `js3d/`: de 3D-duik (Three.js): water, bodem, pier, dieren, duiker, 3D-modellen laden, fysica, decompressie, besturing en HUD; `sites.js` (per duikstek: water, bodem, bouwwerken, dieren en briefing), `site-oosterschelde.js` (Zeelandbrug), `site-tulamben.js` (Liberty-wrak), `site-raja.js` (Raja Ampat), `site-elphinstone.js` (Elphinstone), `site-darwin.js` (Darwin), `sitekit.js` (gedeeld gereedschap), `shop3d.js` (3D-winkel) en `trip3d.js` (busrit)
 - `vendor/three/`: Three.js 0.186.1 (MIT-licentie)
-- `models/`: 3D-modellen (glTF) uit Magnific: `duiker.glb` en `buddy.glb` met skelet, `vis/` (met `-ver`-versies voor op afstand), `dier/`, `rif/`, `os/` (Oosterschelde), `tul/` (Tulamben), `raja/` (Raja Ampat), `elph/` (Elphinstone) en `winkel/` (paspop, torso, tas, fles en de Tuimelaar-bus)
+- `models/`: 3D-modellen (glTF) uit Magnific: `duiker.glb` en `buddy.glb` met skelet, `vis/` (met `-ver`-versies voor op afstand), `dier/`, `rif/`, `os/` (Oosterschelde), `tul/` (Tulamben), `raja/` (Raja Ampat), `elph/` (Elphinstone), `darwin/` (Darwin) en `winkel/` (paspop, torso, tas, fles en de Tuimelaar-bus)
 - `audio/`: geluiden uit Magnific
-- `img/`: winkelfoto's en logo van De Tuimelaar, foto's van Bonaire, pijler- en zandtextuur, zeewaaier, `vis/` met de vissenfoto's (reserve als een 3D-model niet laadt), `winkel3d/` (wanden voor de 3D-winkel, uit de winkelfoto's), `oosterschelde/` (pijler, bodem en suikerwier), `tulamben/` (romp, zwart zand, keien en briefingbeelden), `raja/` (koraalzand, rifbodem en briefingbeelden), `elphinstone/` (briefingbeelden) en `reis/` (stockfoto's van Schiphol, de vlucht en Bonaire)
+- `img/`: winkelfoto's en logo van De Tuimelaar, foto's van Bonaire, pijler- en zandtextuur, zeewaaier, `vis/` met de vissenfoto's (reserve als een 3D-model niet laadt), `winkel3d/` (wanden voor de 3D-winkel, uit de winkelfoto's), `oosterschelde/` (pijler, bodem en suikerwier), `tulamben/` (romp, zwart zand, keien en briefingbeelden), `raja/` (koraalzand, rifbodem en briefingbeelden), `elphinstone/` (briefingbeelden), `darwin/` (rots en briefingbeelden) en `reis/` (stockfoto's van Schiphol, de vlucht en Bonaire)
 
 Fan-project in samenwerking met Duikcentrum De Tuimelaar Zwolle. Sommige referentiefoto's van internet zijn alleen als voorbeeld gebruikt en zitten niet in het spel.

@@ -914,7 +914,8 @@
   };
 
   UI.startDive = function (site) {
-    if (site.three) return UI.startDive3D(site);
+    // zonder WebGL (oude browser) duik je in de 2D-versie van dezelfde stek
+    if (site.three && UI.webgl()) return UI.startDive3D(site);
     UI.go('dive');
     $('hud').hidden = false;
     $('hud').classList.toggle('touch', TOUCH);

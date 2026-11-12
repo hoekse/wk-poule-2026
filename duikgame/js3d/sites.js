@@ -12,6 +12,7 @@ import { oosterschelde } from './site-oosterschelde.js';
 import { tulamben } from './site-tulamben.js';
 import { raja } from './site-raja.js';
 import { elphinstone } from './site-elphinstone.js';
+import { darwin } from './site-darwin.js';
 
 const esc = (s) => window.DG.U.esc(s);
 
@@ -90,6 +91,6 @@ export const saltpier = {
   },
 };
 
-export const PROFILES = { saltpier, oosterschelde, tulamben, raja, elphinstone };
+export const PROFILES = { saltpier, oosterschelde, tulamben, raja, elphinstone, darwin };
 export function profileFor(site) { return PROFILES[site.id] || saltpier; }
 export { esc };
