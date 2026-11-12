@@ -593,6 +593,21 @@
       ],
     },
   ];
+
+  // fotochallenges per duikstek: sp = soorten die tellen (null = elk onderwerp), min = minimaal aantal sterren (van 5)
+  DG.PHOTO_CHALLENGES = {
+    saltpier: [
+      { id: 'zp_tarpon', title: 'Tarpon van dichtbij', sp: ['tarpon'], min: 4, tip: 'Tarpons hangen onder de laadkop op 4–9 m. Benader ze rustig van opzij.' },
+      { id: 'zp_schildpad', title: 'Schildpad in het zeegras', sp: ['groene_schildpad', 'karet'], min: 3, tip: 'Ondiep aan de noordkant van de pier, 2–6 m.' },
+      { id: 'zp_kikvors', title: 'Gele kikvorsvis', sp: ['kikvorsvis_geel'], min: 3, tip: 'Op de pijlers op 5–8 m. Je buddy wijst hem soms aan; gebruik je lamp.' },
+      { id: 'zp_knorvis', title: 'Knorvissen tussen de pijlers', sp: ['franse_knorvis', 'kleinbek_knorvis'], min: 3, tip: 'De scholen hangen in de schaduw van de pier.' },
+      { id: 'zp_murene', title: 'Murene aan de pijlervoet', sp: ['gevlekte_murene'], min: 3, tip: 'Kijk laag langs de voet van de pijlers.' },
+      { id: 'zp_octopus', title: 'Octopus tussen het puin', sp: ['rifoctopus'], min: 3, tip: 'Op de bodem tussen de pijlers, goed gecamoufleerd.' },
+      { id: 'zp_barracuda', title: 'Nieuwsgierige barracuda', sp: ['barracuda'], min: 3, tip: 'De barracuda komt vaak zelf kijken.' },
+      { id: 'zp_buddy', title: 'Buddy-portret', sp: ['buddy'], min: 3, tip: 'Fotografeer je buddy van 2–3 m tussen de pijlers.' },
+      { id: 'zp_perfect', title: 'Perfecte foto (5 sterren)', sp: null, min: 5, tip: 'Dichtbij, scherp, in het midden en met flitsers.' },
+    ],
+  };
   DG.siteById = (id) => DG.SITES.find((s) => s.id === id);
   DG.gearById = (id) => DG.GEAR.find((g) => g.id === id);
   DG.courseById = (id) => DG.COURSES.find((c) => c.id === id);

@@ -462,3 +462,41 @@ export function makeReef(scene, quality, pillarList) {
   }
   return objs;
 }
+
+/* ---------------- aangroei op de pijlers: korstsponzen en oranje bekerkoralen (Magnific 3D) ---------------- */
+export function makePillarGrowth(scene, quality, pillars, pillarAt) {
+  if (!hasModel('korstspons') && !hasModel('bekerkoraal')) return;
+  const R = rng(7331);
+  const dense = quality === 'laag' ? 0.5 : quality === 'midden' ? 0.8 : 1;
+  const up = new THREE.Vector3(0, 1, 0), n = new THREE.Vector3(), tw = new THREE.Quaternion(), q = new THREE.Quaternion();
+  const m4 = new THREE.Matrix4(), pos = new THREE.Vector3(), sc = new THREE.Vector3();
+  const build = (id, perPillar, size, flat, rough) => {
+    if (!hasModel(id)) return;
+    const list = [];
+    pillars.forEach((p) => {
+      if (p.y0 > -1.2) return;
+      const k = Math.round(perPillar * dense + R() * 1.2);
+      for (let i = 0; i < k; i++) {
+        const y = p.y0 + 0.25 + R() * Math.max(0.3, -1.0 - p.y0 - 0.25);
+        const a = R() * Math.PI * 2;
+        const c = pillarAt(p, y);
+        n.set(Math.cos(a), (R() - 0.5) * 0.3, Math.sin(a)).normalize();
+        pos.set(c.x + n.x * (p.r - 0.06), y, c.z + n.z * (p.r - 0.06));
+        q.setFromUnitVectors(up, n);
+        tw.setFromAxisAngle(up, R() * Math.PI * 2);
+        q.multiply(tw);
+        const s = size[0] + R() * (size[1] - size[0]);
+        sc.set(s, s * flat, s);
+        list.push(m4.compose(pos, q, sc).clone());
+      }
+    });
+    const mesh = new THREE.InstancedMesh(modelGeo(id, 'reef'), uw(new THREE.MeshStandardMaterial({ color: 0xffffff, map: modelMap(id), roughness: rough }), { caus: true, key: 'reefM' }), list.length);
+    list.forEach((mm, i) => mesh.setMatrixAt(i, mm));
+    const col = new THREE.Color();
+    for (let i = 0; i < list.length; i++) mesh.setColorAt(i, col.setHSL(0, 0, 0.85 + R() * 0.15));
+    mesh.instanceMatrix.needsUpdate = true;
+    scene.add(mesh);
+  };
+  build('korstspons', 1.2, [0.3, 0.55], 0.45, 0.9);
+  build('bekerkoraal', 1.0, [0.16, 0.26], 0.8, 0.7);
+}

@@ -13,6 +13,7 @@
     } catch (e) { return; }
     const c = A.ctx;
     master = c.createGain(); master.gain.value = A.on ? 0.9 : 0; master.connect(c.destination);
+    A.master = master;
     sfx = c.createGain(); sfx.gain.value = 0.8; sfx.connect(master);
     amb = c.createGain(); amb.gain.value = 0; amb.connect(master);
     mus = c.createGain(); mus.gain.value = 0; mus.connect(master);

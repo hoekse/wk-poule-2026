@@ -56,15 +56,18 @@ function photoSprite(spc) {
 
 // echte 3D-modellen (Magnific: foto → 3D) voor vissen en andere dieren
 export const MODEL_ANIMALS = ['groene_schildpad', 'karet', 'adelaarsrog', 'kikvorsvis_geel', 'gevlekte_murene', 'rifoctopus'];
-export function preloadFaunaModels() { return loadModels(PHOTO_FISH.concat(MODEL_ANIMALS)); }
+export function preloadFaunaModels() { return loadModels(PHOTO_FISH.concat(MODEL_ANIMALS, ['zilvervisje'], PHOTO_FISH.map((id) => id + '-ver'))); }
+// zilvervisjes: grote, dichte scholen onder de pier (sfeer, niet in het logboek)
+const ZILVER = { id: 'zilvervisje', name: 'Zilvervisjes', size: 0.08, ds: 1, art: { t: 'fish', shape: 'long' }, log: false };
+const LOD_FAR = { laag: 9, midden: 13, hoog: 18 };
 
-function modelFishAsset(spc) {
+function modelFishAsset(spc, name) {
   const L = spc.size * Math.min(spc.ds || 1, 1.3);
-  const geo = modelGeo(spc.id, 'fish');
+  const geo = modelGeo(name || spc.id, 'fish');
   geo.scale(L, L, L);
   geo.computeBoundingBox();
   const shiny = /tarpon|barracuda|trevally|jacks|fuselier|zeebrasem/.test(spc.id);
-  return { geo, tex: modelMap(spc.id), headX: geo.boundingBox.max.x, tailX: geo.boundingBox.min.x, L, shiny, model: true };
+  return { geo, tex: modelMap(name || spc.id), headX: geo.boundingBox.max.x, tailX: geo.boundingBox.min.x, L, shiny: shiny || spc.id === 'zilvervisje', model: true };
 }
 
 const fishCache = {};
@@ -398,6 +401,7 @@ export class Fauna {
   constructor(scene, quality) {
     this.scene = scene;
     this.lo = quality === 'laag';
+    this.lodD = LOD_FAR[quality] || 13;
     this.schools = [];
     this.solos = [];
     this.meshes = {};
@@ -413,6 +417,10 @@ export class Fauna {
     this.addSchool(S.blauwe_dokter, Math.round(22 * k), { spread: 2.6, speed: 0.45, roam: 0.6 });
     this.addSchool(S.chromis_blauw, Math.round(60 * k), { spread: 1.6, speed: 0.15, home: HANG[0], roam: 0.05 });
     this.addSchool(S.chromis_blauw, Math.round(40 * k), { spread: 1.4, speed: 0.15, home: HANG[3], roam: 0.05 });
+    if (hasModel('zilvervisje')) {
+      this.addSchool(ZILVER, Math.round(320 * k), { spread: 1.2, speed: 0.3, home: HANG[0], roam: 0.05 });
+      this.addSchool(ZILVER, Math.round(200 * k), { spread: 1.0, speed: 0.3, home: HANG[2], roam: 0.08 });
+    }
     // solo's
     for (let i = 0; i < 6; i++) this.addSolo(S.tarpon, { kind: 'tarpon', home: { x: CENTER.x + rand(-3, 3), z: rand(-4, 4), d: 8 }, radius: 7, speed: 0.22, depth: [3.5, 9] });
     this.addSolo(S.barracuda, { kind: 'curious', home: HANG[1], radius: 14, speed: 0.4, depth: [2, 7] });
@@ -492,14 +500,11 @@ export class Fauna {
   addSchool(spc, n, opts) { if (spc) this.schools.push(new School(spc, n, opts)); }
   addSolo(spc, opts) { if (spc) this.solos.push(new Solo(spc, opts)); }
   buildMeshes() {
-    const count = {};
-    this.schools.forEach((s) => (count[s.spc.id] = (count[s.spc.id] || 0) + s.n));
-    this.solos.forEach((s) => (count[s.spc.id] = (count[s.spc.id] || 0) + 1));
-    Object.keys(count).forEach((id) => {
-      const spc = DG.SPECIES[id];
-      const a = fishAsset(spc);
+    const count = {}, spcs = {};
+    this.schools.forEach((s) => { count[s.spc.id] = (count[s.spc.id] || 0) + s.n; spcs[s.spc.id] = s.spc; });
+    this.solos.forEach((s) => { count[s.spc.id] = (count[s.spc.id] || 0) + 1; spcs[s.spc.id] = s.spc; });
+    const mk = (spc, a, n) => {
       const geo = a.geo.clone();
-      const n = count[id];
       const ph = new Float32Array(n), sp = new Float32Array(n);
       for (let i = 0; i < n; i++) { ph[i] = Math.random() * TAU; sp[i] = 0.4; }
       geo.setAttribute('aPh', new THREE.InstancedBufferAttribute(ph, 1));
@@ -507,37 +512,59 @@ export class Fauna {
       const mesh = new THREE.InstancedMesh(geo, fishMaterial(spc, a), n);
       mesh.frustumCulled = false;
       this.scene.add(mesh);
-      this.meshes[id] = { mesh, n, spc, L: a.L, i: 0 };
+      return mesh;
+    };
+    Object.keys(count).forEach((id) => {
+      const spc = spcs[id];
+      const a = fishAsset(spc);
+      const n = count[id];
+      // op afstand een eenvoudiger model met dezelfde maat (minder driehoeken)
+      let far = null;
+      if (a.model && hasModel(id + '-ver')) far = mk(spc, Object.assign(modelFishAsset(spc, id + '-ver'), { headX: a.headX, tailX: a.tailX }), n);
+      this.meshes[id] = { mesh: mk(spc, a, n), far, n, spc, L: a.L, i: 0, j: 0 };
     });
   }
   update(dt, env, t) {
     this.schools.forEach((s) => s.update(dt, env));
     this.solos.forEach((s) => s.update(dt, env));
-    Object.values(this.meshes).forEach((m) => (m.i = 0));
+    Object.values(this.meshes).forEach((m) => { m.i = 0; m.j = 0; });
+    const cam = env.cam, lod2 = this.lodD * this.lodD, sh = env.shadows;
     const tmp = new THREE.Object3D();
     tmp.rotation.order = 'YZX';
-    const put = (spc, p, v, speed, vertical) => {
+    const dir = new THREE.Vector3();
+    const put = (spc, p, v, speed, vertical, school) => {
       const m = this.meshes[spc.id];
       if (!m) return;
-      const hv = Math.hypot(v.x, v.z);
+      // vissen in een school kijken grotendeels dezelfde kant op als de school
+      dir.copy(v);
+      if (school && school.vel.lengthSq() > 1e-4) dir.multiplyScalar(0.35).addScaledVector(school.vel, 1.6);
+      const hv = Math.hypot(dir.x, dir.z);
       tmp.position.copy(p);
-      if (hv > 0.02 || Math.abs(v.y) > 0.02) {
-        const yaw = Math.atan2(-v.z, v.x);
-        const pitch = Math.max(-0.6, Math.min(0.6, Math.atan2(v.y, hv)));
+      if (hv > 0.02 || Math.abs(dir.y) > 0.02) {
+        const yaw = Math.atan2(-dir.z, dir.x);
+        const pitch = Math.max(-0.6, Math.min(0.6, Math.atan2(dir.y, hv)));
         tmp.rotation.set(0, yaw, vertical ? 1.25 : pitch);
       } else if (vertical) tmp.rotation.z = 1.25;
       tmp.scale.setScalar(1);
       tmp.updateMatrix();
-      m.mesh.setMatrixAt(m.i, tmp.matrix);
-      m.mesh.geometry.attributes.aSp.array[m.i] = Math.min(1, speed / (m.L * 1.5 + 0.2));
-      m.i++;
+      const useFar = m.far && cam && p.distanceToSquared(cam) > lod2;
+      const mesh = useFar ? m.far : m.mesh;
+      const k = useFar ? m.j++ : m.i++;
+      mesh.setMatrixAt(k, tmp.matrix);
+      mesh.geometry.attributes.aSp.array[k] = Math.min(1, speed / (m.L * 1.5 + 0.2));
+      if (sh && m.L > 0.12) sh.add(p.x, p.y, p.z, m.L * 0.35, m.L * 0.9, tmp.rotation.y + Math.PI / 2, Math.min(0.5, 0.18 + m.L * 0.25));
     };
-    this.schools.forEach((s) => s.members.forEach((f) => put(s.spc, f.p, f.v, f.speed || 0, false)));
+    this.schools.forEach((s) => s.members.forEach((f) => put(s.spc, f.p, f.v, f.speed || 0, false, s)));
     this.solos.forEach((s) => put(s.spc, s.p, s.v, s.speed2 || 0, s.vertical));
     Object.values(this.meshes).forEach((m) => {
       m.mesh.count = m.i;
       m.mesh.instanceMatrix.needsUpdate = true;
       m.mesh.geometry.attributes.aSp.needsUpdate = true;
+      if (m.far) {
+        m.far.count = m.j;
+        m.far.instanceMatrix.needsUpdate = true;
+        m.far.geometry.attributes.aSp.needsUpdate = true;
+      }
     });
     // schildpadden: grazen op de bodem en af en toe naar boven om adem te halen
     this.turtles.forEach((tu) => {
@@ -563,6 +590,7 @@ export class Fauna {
       if (tu.v.lengthSq() > 0.0004) tu.m.rotation.y = Math.atan2(-tu.v.x, -tu.v.z);
       tu.m.rotation.x = Math.max(-0.5, Math.min(0.5, tu.v.y * 1.5));
       tu.ph += dt * (0.8 + tu.v.length() * 3);
+      if (sh) sh.add(p.x, p.y, p.z, tu.L * 0.9, tu.L * 1.1, tu.m.rotation.y, 0.55);
       if (tu.m.userData.uPh) tu.m.userData.uPh.value = tu.ph;
       tu.m.userData.flippers.forEach((f) => {
         f.piv.rotation.z = f.s * (Math.sin(tu.ph + (f.front ? 0 : 1)) * (f.front ? 0.5 : 0.25));
@@ -579,14 +607,15 @@ export class Fauna {
       const v = np.clone().sub(r.m.position);
       r.m.position.copy(np);
       if (v.lengthSq() > 1e-6) r.m.rotation.y = Math.atan2(-v.z, v.x);
+      if (sh) sh.add(x, y, z, 2.0, 1.4, r.m.rotation.y, 0.5);
     }
   }
   // alles wat gespot kan worden, met positie
   spottables() {
     const out = [];
-    this.schools.forEach((s) => { if (s.spc.log) out.push({ spc: s.spc, p: s.members[0].p, L: s.spc.size }); });
-    this.solos.forEach((s) => { if (s.spc.log) out.push({ spc: s.spc, p: s.p, L: s.spc.size }); });
-    this.turtles.forEach((t) => out.push({ spc: t.spc, p: t.m.position, L: t.L }));
+    this.schools.forEach((s) => { if (s.spc.log) out.push({ spc: s.spc, p: s.members[0].p, L: s.spc.size, v: s.members[0].v }); });
+    this.solos.forEach((s) => { if (s.spc.log) out.push({ spc: s.spc, p: s.p, L: s.spc.size, v: s.v }); });
+    this.turtles.forEach((t) => out.push({ spc: t.spc, p: t.m.position, L: t.L, v: t.v }));
     this.frogs.forEach((f) => out.push({ spc: f.spc, p: f.m.position, L: f.L, hidden: true }));
     (this.lurkers || []).forEach((f) => { if (f.spc) out.push({ spc: f.spc, p: f.m.position, L: f.L, hidden: true }); });
     if (this.ray) out.push({ spc: this.ray.spc, p: this.ray.m.position, L: 2.2 });

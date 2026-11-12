@@ -263,6 +263,10 @@ export function makeSurface() {
           float sun = pow(max(dot(refract(v, -n, 1.33), uSun), 0.0), 60.0);
           vec3 tir = mix(uWaterDeep, uWaterTop, 0.55) * 0.8;
           vec3 col = mix(tir, sky + sun * 2.0, win);
+          // fonkelende zonnestipjes op kleine golfjes binnen het venster van Snellius
+          vec3 n2 = rippleN(vW.xz * 2.6 + vec2(13.0, 7.0));
+          float spark = pow(max(dot(refract(v, -n2, 1.33), uSun), 0.0), 900.0);
+          col += vec3(1.0, 0.97, 0.88) * spark * 9.0 * win;
           col += vec3(0.6, 0.8, 0.9) * pow(max(0.0, n.x * 4.0 + n.z * 3.0), 2.0) * 0.4;
           float camD = -cameraPosition.y;
           vec3 T = exp(-uAbs * dist);
@@ -444,10 +448,16 @@ export function updateBubbles(b, dt) {
     if (q.delay > 0) { q.delay -= dt; continue; }
     const r = q.r0 * Math.cbrt((q.d0 + 10) / (Math.max(0, -q.y) + 10));
     q.y += (0.5 + r * 14) * dt;
-    q.wob += dt * 8;
-    q.x += Math.sin(q.wob) * 0.1 * dt;
-    q.z += Math.cos(q.wob * 0.8) * 0.08 * dt;
+    q.wob += dt * (8 - Math.min(5, r * 120));
+    // grote bellen slingeren meer en vallen onderweg uiteen in kleinere
+    const amp = 0.1 + r * 6;
+    q.x += Math.sin(q.wob) * amp * dt;
+    q.z += Math.cos(q.wob * 0.8) * amp * 0.8 * dt;
     if (q.y > -0.05) { L.splice(i, 1); continue; }
+    if (r > 0.02 && L.length < b.userData.max - 1 && Math.random() < dt * 0.7) {
+      q.r0 /= 1.26;
+      L.push({ x: q.x + (Math.random() - 0.5) * 0.05, y: q.y - 0.02, z: q.z + (Math.random() - 0.5) * 0.05, r0: q.r0, d0: q.d0, wob: q.wob + 2, delay: 0 });
+    }
   }
   for (const q of L) {
     if (q.delay > 0) continue;

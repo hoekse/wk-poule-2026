@@ -11,6 +11,10 @@ De Zoutpier is de eerste duikstek in 3D: vrij rondzwemmen volgens de echte duikr
 - **Duikers:** jij en je buddy zijn echte 3D-modellen met een skelet (gemaakt in Magnific van foto naar 3D). Ze liggen horizontaal in trim, doen een flutter kick met de benen, houden de handen voor de borst en kijken vooruit. Met camera en lamp als je die gehuurd hebt.
 - **Dieren:** alle dieren zijn echte 3D-modellen (Magnific): knorvisscholen, sergeant-majoors, blauwe doktersvissen, chromissen, tarpons, barracuda, keizersvissen, papegaaivissen, koffervissen en trompetvissen. Verder groene en karetschildpadden in het zeegras aan de noordkant, kikvorsvissen op de pijlers, murenen aan de voet van de pijlers, soms een octopus tussen het puin en soms een adelaarsrog.
 - **Rif en bodem:** fotorealistisch zand met ribbels en schelpgruis (naadloze textuur met reliëf), 3D-hersenkoralen, sterkoralen, gele buisponzen, vaasponzen, tonsponzen en echte zeewaaiers.
+- **Beeld:** zachte schaduwen op de bodem onder duikers en dieren, fonkelende zon aan het wateroppervlak, bellen die onderweg naar boven uiteenvallen, pijlers met reliëf en 3D-aangroei (korstsponzen en oranje bekerkoralen), en grote scholen zilvervisjes onder de pier waar de tarpons doorheen jagen. De vinkleur uit de winkel komt op je eigen duiker.
+- **Snel op telefoon en tablet:** vissen op afstand gebruiken een eenvoudiger model en de resolutie past zich automatisch aan als het toestel het niet bijhoudt.
+- **Geluid (Magnific):** ademhaling door de automaat en uitademingsbellen in het ritme van je ademhaling, knappende garnalen op het rif, golven aan de oppervlakte, trimvest, camera met flitser, knagende papegaaivissen en af en toe een boot in de verte.
+- **Fotochallenges:** elke foto krijgt 1–5 sterren op vulling, compositie, scherpte, kleur en backscatter, met een tip. Bij de Zoutpier zijn er 9 challenges (tarpon, schildpad, kikvorsvis, knorvissen, murene, octopus, barracuda, buddy-portret en een perfecte foto). Je ziet ze in de briefing en in het fotoalbum in je logboek.
 - **Duikregels:**
   - trimmen met trimvest, ademhaling, 3 mm-pak, 10 kg lood en een aluminium fles;
   - decompressie volgens Bühlmann ZHL-16C met GF 40/85;
@@ -55,7 +59,8 @@ Op GitHub Pages of Vercel werkt het direct.
 - `js/`: menu's, winkel, wereldkaart, logboek en de 2D-duikstekken
 - `js3d/`: de 3D-duik (Three.js): water, bodem, pier, dieren, duiker, 3D-modellen laden, fysica, decompressie, besturing en HUD
 - `vendor/three/`: Three.js 0.186.1 (MIT-licentie)
-- `models/`: 3D-modellen (glTF) uit Magnific: `duiker.glb` en `buddy.glb` met skelet, `vis/`, `dier/` en `rif/`
+- `models/`: 3D-modellen (glTF) uit Magnific: `duiker.glb` en `buddy.glb` met skelet, `vis/` (met `-ver`-versies voor op afstand), `dier/` en `rif/`
+- `audio/`: geluiden uit Magnific
 - `img/`: winkelfoto's en logo van De Tuimelaar, foto's van Bonaire, pijler- en zandtextuur, zeewaaier, `vis/` met de vissenfoto's (reserve als een 3D-model niet laadt)
 
 Fan-project in samenwerking met Duikcentrum De Tuimelaar Zwolle. Sommige referentiefoto's van internet zijn alleen als voorbeeld gebruikt en zitten niet in het spel.

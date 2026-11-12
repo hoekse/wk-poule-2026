@@ -1,7 +1,7 @@
 /* Diepblauw 3D — de duik bij de Zoutpier (Bonaire): vrij zwemmen in 3D met echte duikregels */
 import * as THREE from 'three';
 import { UW, makeCausticTexture, makeDome, makeSurface, makeRays, updateRays, makeParticles, makeBubbles, spawnBubbles, updateBubbles } from './water.js';
-import { makeSeabed, makeReef, seabed, loadSandTextures } from './terrain.js';
+import { makeSeabed, makeReef, makePillarGrowth, seabed, loadSandTextures } from './terrain.js';
 import { loadModels } from './models.js';
 import { makePier, pillarAt } from './pier.js';
 import { Fauna, preloadFishPhotos, preloadFaunaModels } from './creatures3d.js';
@@ -9,6 +9,9 @@ import { buildDiver, animateDiver, preloadDivers } from './diver3d.js';
 import { Deco, noFlyHours } from './deco.js';
 import { Controls } from './controls.js';
 import { Hud } from './hud.js';
+import { Sound3D } from './sound3d.js';
+import { gradePhoto, checkChallenges } from './photo.js';
+import { BlobShadows } from './shadows.js';
 
 const DG = window.DG;
 const UI = DG.UI;
@@ -69,26 +72,34 @@ export async function runZoutpier(site) {
   const parts = makeParticles(q === 'laag' ? 700 : 1600); scene.add(parts);
   parts.material.uniforms.uPx.value = pr;
   const bubbles = makeBubbles(600); scene.add(bubbles);
+  const shadows = new BlobShadows(scene, q === 'laag' ? 300 : 700);
   bubbles.material.uniforms.uPx.value = pr;
 
   await loading('Bodem en rif…');
-  const [sandTex] = await Promise.all([loadSandTextures(), loadModels(['hersenkoraal', 'sterkoraal', 'buisspons', 'vaasspons', 'tonspons'])]);
+  const [sandTex] = await Promise.all([loadSandTextures(), loadModels(['hersenkoraal', 'sterkoraal', 'buisspons', 'vaasspons', 'tonspons', 'bekerkoraal', 'korstspons'])]);
   scene.add(makeSeabed(q, sandTex));
   await loading('De pijlers van de Zoutpier…');
   const pier = makePier(scene, q);
   const pTex = new THREE.TextureLoader().load(q === 'laag' ? 'img/tex-pijler-laag.jpg' : 'img/tex-pijler.jpg', (t) => {
     t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(1, 1.2); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4;
-    pier.mesh.material.map = t; pier.mesh.material.bumpMap = t; pier.mesh.material.bumpScale = 1.6; pier.mesh.material.needsUpdate = true;
+    pier.mesh.material.map = t; pier.mesh.material.needsUpdate = true;
+    // reliëf van sponzen, koralen en zeepokken (normaalkaart uit dezelfde textuur)
+    new THREE.TextureLoader().load(q === 'laag' ? 'img/tex-pijler-laag-n.jpg' : 'img/tex-pijler-n.jpg', (n) => {
+      n.wrapS = n.wrapT = THREE.RepeatWrapping; n.repeat.set(1, 1.2);
+      pier.mesh.material.normalMap = n; pier.mesh.material.normalScale = new THREE.Vector2(1.2, 1.2); pier.mesh.material.needsUpdate = true;
+    }, undefined, () => { pier.mesh.material.bumpMap = t; pier.mesh.material.bumpScale = 1.6; pier.mesh.material.needsUpdate = true; });
   });
   void pTex;
   makeReef(scene, q, pier.pillars);
+  makePillarGrowth(scene, q, pier.pillars, pillarAt);
   await loading('Vissen, tarpons en schildpadden…');
   await Promise.all([preloadFishPhotos(), preloadFaunaModels()]);
   const fauna = new Fauna(scene, q);
   fauna.placeFrogs(pier.pillars);
 
-  await loading('Duikers…');
-  await preloadDivers();
+  await loading('Duikers en geluid…');
+  const snd = new Sound3D();
+  await Promise.all([preloadDivers(), snd.load()]);
   const lo = DG.Save.loadout();
   const look = Object.assign({}, lo.look);
   const me = buildDiver({ model: 'duiker', suit: 0x16171a, bcd: 0x141518, accent: 0xf2c21a, fin: hex(look.fin, 0xf2c21a), tank: 0xc8cdd2, lamp: lo.lamp ? look.lamp || 'compact' : null, cam: lo.camera ? look.cam : null, reg: look.reg ? hex(look.reg) : null });
@@ -112,7 +123,7 @@ export async function runZoutpier(site) {
     stop: 0, stopDone: false, needStop: false, asc: 0, fastT: 0, fastCount: 0, inFast: false,
     ceilViol: 0, decoViol: false, wasDeco: false, limitViol: 0, inLimit: false,
     touches: 0, reefTouch: 0, touchCool: 0,
-    spotted: {}, newSp: [], photos: [], prof: [[0, 0]], profT: 0,
+    spotted: {}, newSp: [], photos: [], chDone: [], prof: [[0, 0]], profT: 0,
     lamp: false, view: sv.set3d.view, ts: sv.set3d.ts, assist: sv.set3d.assist,
     buddy: { p: new THREE.Vector3(-4.5, -0.3, 10), v: new THREE.Vector3(), yaw: Math.PI / 2, br: 0 },
     sig: null, sigT: 0, nextOk: 240, nextAir: 600, missed: 0, warned: {}, sepT: 0, ooa: false,
@@ -173,13 +184,14 @@ export async function runZoutpier(site) {
     if (wantPhoto) return;
     const fwd = new THREE.Vector3(); camera.getWorldDirection(fwd);
     let best = null, bs = 0;
-    for (const s of fauna.spottables()) {
+    const cands = fauna.spottables().concat([{ spc: { id: 'buddy', name: 'Je buddy' }, p: D.buddy.p, L: 1.8, v: D.buddy.v, buddy: true }]);
+    for (const s of cands) {
       const to = s.p.clone().sub(camera.position);
       const d = to.length();
       if (d > lo.camera.bereik + s.L * 1.5 + 2) continue;
       const ang = Math.acos(Math.max(-1, Math.min(1, to.normalize().dot(fwd))));
       if (ang > 0.45) continue;
-      const sc = (1 - ang / 0.45) * 0.5 + (1 - d / (lo.camera.bereik + 4)) * 0.5;
+      const sc = (1 - ang / 0.45) * 0.5 + (1 - d / (lo.camera.bereik + 4)) * 0.5 - (s.buddy ? 0.15 : 0);
       if (sc > bs) { bs = sc; best = { s, d, ang }; }
     }
     wantPhoto = best || { none: true };
@@ -189,22 +201,32 @@ export async function runZoutpier(site) {
     const src = renderer.domElement;
     const w = src.width, h = src.height;
     const cw = Math.min(w, h * 4 / 3) * 0.7, ch = cw * 0.75;
-    const c = document.createElement('canvas'); c.width = 320; c.height = 240;
-    c.getContext('2d').drawImage(src, (w - cw) / 2, (h - ch) / 2, cw, ch, 0, 0, 320, 240);
-    let stars = 1;
+    const c = document.createElement('canvas'); c.width = 400; c.height = 300;
+    c.getContext('2d').drawImage(src, (w - cw) / 2, (h - ch) / 2, cw, ch, 0, 0, 400, 300);
+    let g = { stars: 1, note: 'Sfeerfoto: richt op een dier of je buddy voor een challenge.' };
     if (!ph.none) {
-      const ideal = Math.max(1, ph.s.L * 2);
-      const q = 1 - Math.min(1, Math.abs(ph.d - ideal) / (ideal + 1));
-      const light = lo.camera.flits ? 1 : D.lamp ? 0.85 : Math.max(0.3, 1 + D.p.y / 20);
-      const sc = q * 0.45 + (1 - ph.ang / 0.45) * 0.25 + light * 0.3;
-      stars = sc > 0.74 ? 3 : sc > 0.5 ? 2 : 1;
+      g = gradePhoto({
+        L: ph.s.L, d: ph.d, ang: ph.ang, vfov: camera.fov * Math.PI / 180, aspect: camera.aspect, depth: Math.max(0, -D.p.y),
+        diverSpeed: D.v.length(), turn: D.turnRate || 0, subjSpeed: ph.s.v ? ph.s.v.length() : 0, strobe: !!lo.camera.flits, lamp: !!D.lamp,
+      });
     }
-    const photo = { sp: ph.none ? null : ph.s.spc.id, stars, url: c.toDataURL('image/jpeg', 0.75), site: 'saltpier', date: Date.now(), depth: Math.round(-D.p.y * 10) / 10 };
+    const spId = ph.none ? null : ph.s.spc.id;
+    const photo = { sp: ph.none || ph.s.buddy ? null : spId, title: ph.none ? 'Sfeerfoto' : ph.s.buddy ? 'Je buddy' : null, stars: g.stars, max: 5, note: g.note, url: c.toDataURL('image/jpeg', 0.78), site: 'saltpier', date: Date.now(), depth: Math.round(-D.p.y * 10) / 10, ch: [] };
+    // fotochallenges
+    sv.challenges = sv.challenges || {};
+    checkChallenges((DG.PHOTO_CHALLENGES || {}).saltpier, sv.challenges, spId, g.stars).forEach((ch) => {
+      const t = document.createElement('canvas'); t.width = 160; t.height = 120;
+      t.getContext('2d').drawImage(c, 0, 0, 160, 120);
+      sv.challenges[ch.id] = { stars: g.stars, date: Date.now(), thumb: t.toDataURL('image/jpeg', 0.7) };
+      photo.ch.push(ch.id);
+      D.chDone.push(ch.id);
+      setTimeout(() => { DG.Audio.newSpecies(); hud.msg('🏆 Fotochallenge gehaald: ' + ch.title + '!', 4000); }, 700);
+    });
     D.photos.push(photo);
-    DG.Audio.shutter(); if (lo.camera.flits) DG.Audio.strobe();
+    if (snd.ok) snd.camera(); else { DG.Audio.shutter(); if (lo.camera.flits) DG.Audio.strobe(); }
     flash.style.opacity = lo.camera.flits ? 0.85 : 0.5;
     setTimeout(() => (flash.style.opacity = 0), 90);
-    UI.photoToast(photo, ph.none ? null : ph.s.spc);
+    UI.photoToast(photo, ph.none || ph.s.buddy ? null : ph.s.spc);
   }
   const flash = document.createElement('div');
   flash.className = 'd3-flash';
@@ -222,11 +244,23 @@ export async function runZoutpier(site) {
   /* ---------------- hoofdlus ---------------- */
   let last = performance.now();
   let hudT = 0, spotT = 0, breathOut = false;
+  // dynamische resolutie: lager als het toestel het niet bijhoudt, weer hoger als het kan
+  let drT = 0, drN = 0, curPR = pr;
+  function dynRes(real) {
+    drT += real; drN++;
+    if (drT < 2) return;
+    const fps = drN / drT; drT = 0; drN = 0;
+    const minPR = Math.max(0.5, pr * 0.55);
+    if (fps < 28 && curPR > minPR) { curPR = Math.max(minPR, curPR - 0.1); renderer.setPixelRatio(curPR); }
+    else if (fps > 52 && curPR < pr) { curPR = Math.min(pr, curPR + 0.05); renderer.setPixelRatio(curPR); }
+  }
   function loop(now) {
     if (D.ended) return;
     requestAnimationFrame(loop);
-    const dt = Math.min(0.05, (now - last) / 1000);
+    const real = Math.max(0, (now - last) / 1000);
+    const dt = Math.min(0.05, real);
     last = now;
+    if (real > 0 && real < 1) dynRes(real);
     if (!D.paused) step(dt);
     render(dt);
   }
@@ -236,7 +270,9 @@ export async function runZoutpier(site) {
     UW.uTime.value = D.t;
     const inp = D.ooa ? { fwd: 0, side: 0, turn: 0, lookX: 0, lookY: 0, bcdIn: false, bcdOut: false, breath: false, exhale: false, hard: false } : D.forceInp || ctl.read();
     // kijken
+    const prevYaw = D.lookYaw;
     D.lookYaw -= inp.lookX * 0.0045 + inp.turn * dt * 1.3;
+    D.turnRate = (D.turnRate || 0) * 0.8 + (Math.abs(D.lookYaw - prevYaw) / Math.max(dt, 1e-3)) * 0.2;
     D.lookPitch = Math.max(-1.35, Math.min(1.35, D.lookPitch - inp.lookY * 0.0038));
     // lichaam volgt kijkrichting; trimt horizontaal als je niet zwemt
     let dy = D.lookYaw - D.yaw;
@@ -254,6 +290,11 @@ export async function runZoutpier(site) {
     let bcdVol = Math.min(BCD_CAP, D.bcdN / amb);
     if (inp.bcdIn && D.gas > 0) { const dn = 1.3 * amb * dt; D.bcdN += dn; D.gas -= dn; }
     if (inp.bcdOut) D.bcdN = Math.max(0, D.bcdN - 3.2 * amb * dt);
+    // geluid van de inflator / ontluchter zolang de knop ingedrukt is
+    if ((inp.bcdIn && D.gas > 0) || (inp.bcdOut && D.bcdN > 0.05)) {
+      D.vestSndT = (D.vestSndT || 0) - dt;
+      if (D.vestSndT <= 0) { D.vestSndT = 1.7; if (!D.forceInp) inp.bcdIn ? snd.vestIn() : snd.vestOut(); }
+    } else D.vestSndT = 0;
     if (D.bcdN / amb > BCD_CAP) D.bcdN = BCD_CAP * amb; // overdrukventiel
     // ademhaling (longvolume rond het gemiddelde)
     D.lungPh += dt / 4.6;
@@ -340,8 +381,8 @@ export async function runZoutpier(site) {
     }
     // ademhaling: bellen en geluid
     const ph = D.lungPh % 1;
-    if (!holding && ph > 0.55 && !breathOut) { breathOut = true; if (dNow > 0.7) { const mp = me.userData.mouth.getWorldPosition(tmpV); spawnBubbles(bubbles, mp.x, mp.y, mp.z, 12, false); DG.Audio.breathOut(0.8); } }
-    if (ph < 0.55 && breathOut) { breathOut = false; if (dNow > 0.7) DG.Audio.breathIn(0.8); }
+    if (!holding && ph > 0.55 && !breathOut) { breathOut = true; if (dNow > 0.7) { const mp = me.userData.mouth.getWorldPosition(tmpV); spawnBubbles(bubbles, mp.x, mp.y, mp.z, 10, false); spawnBubbles(bubbles, mp.x, mp.y, mp.z, 4, true); if (!D.forceInp) { if (snd.ok) snd.exhale(dNow); else DG.Audio.breathOut(0.8); } } }
+    if (ph < 0.55 && breathOut) { breathOut = false; if (dNow > 0.7 && !D.forceInp) { if (snd.ok) snd.inhale(dNow); else DG.Audio.breathIn(0.8); } }
     if (D.holdT > 3 && D.v.y > 0.05 && !D.warned.hold) { D.warned.hold = 1; hud.msg('Nooit je adem inhouden tijdens het opstijgen: je longen zetten uit. Adem rustig door!', 5000); }
     // klaren
     if (dNow < D.lastEq) D.lastEq = dNow;
@@ -392,8 +433,22 @@ export async function runZoutpier(site) {
     updateBuddy(dt, f, r);
 
     /* ---- dieren ---- */
-    const env = { diver: D.p, nearPillars: nearP };
+    const env = { diver: D.p, nearPillars: nearP, cam: camera.position, shadows };
+    shadows.begin(camera.position);
+    shadows.add(D.p.x, D.p.y, D.p.z, 0.75, 2.0, D.yaw, 0.75);
+    shadows.add(D.buddy.p.x, D.buddy.p.y, D.buddy.p.z, 0.75, 2.0, D.buddy.yaw || 0, 0.75);
     fauna.update(dt, env, D.t);
+    shadows.end();
+    // geluid: diepte, en de dichtstbijzijnde papegaaivis (knagen op koraal)
+    if (snd.ok && !D.forceInp) {
+      let pd = 99, pp = 0;
+      for (const s of fauna.solos) {
+        if (s.spc.id !== 'stoplicht_papegaai') continue;
+        const dd = s.p.distanceTo(D.p);
+        if (dd < pd) { pd = dd; const rx = Math.cos(D.lookYaw), rz = -Math.sin(D.lookYaw); pp = ((s.p.x - D.p.x) * rx + (s.p.z - D.p.z) * rz) / Math.max(1, dd); }
+      }
+      snd.update(dt, { depth: dNow, parrotDist: pd, parrotPan: pp });
+    }
     spotT -= dt;
     if (spotT <= 0) { spotT = 0.25; checkSpots(); }
 
@@ -536,6 +591,7 @@ export async function runZoutpier(site) {
   function cleanup() {
     D.ended = true;
     DG.Audio.ambience(false);
+    snd.stop();
     ctl.destroy();
     window.removeEventListener('resize', onResize);
     renderer.dispose();
@@ -554,7 +610,7 @@ export async function runZoutpier(site) {
     if (D.newSp.length) xp.push(['Nieuwe soorten', D.newSp.length]);
     const res = {
       site: 'saltpier', date: Date.now(), minutes, maxD: D.maxD, avgD: D.gt > 0 ? D.sumD / D.gt : 0, temp: 28, bar,
-      species: Object.keys(D.spotted), newSpecies: D.newSp.slice(), photos: D.photos, needStop: D.needStop, safetyDone: D.stopDone,
+      species: Object.keys(D.spotted), newSpecies: D.newSp.slice(), photos: D.photos, challenges: D.chDone.slice(), needStop: D.needStop, safetyDone: D.stopDone,
       ascentWarnings: D.fastCount, ooa: !!ooa, decoViolation: D.decoViol || D.ceilViol > 0, cold: 0, gas: lo.gas, tankL: TANK_L,
       profile: D.prof.concat([[minutes, 0]]), lines, earned: 0, xp, three: true,
       rules: { touches: D.touches, reef: D.reefTouch, missed: D.missed, limit: D.limitViol, deco: D.wasDeco, ceil: D.ceilViol },
@@ -582,14 +638,14 @@ export async function runZoutpier(site) {
     resolveRun(res);
   }
 
-  DG.Audio.ambience(true);
+  if (snd.ok) snd.startLoops(); else DG.Audio.ambience(true);
   DG.Audio.splash();
   hud.msg(D.cur.length() > 0.01 ? 'Je ligt aan de oppervlakte bij de gele steen. Er staat lichte stroming: ' + plan.curTxt + '. Laat lucht uit je vest (▼ of F) om af te dalen.' : 'Je ligt aan de oppervlakte bij de gele steen. Laat lucht uit je trimvest (▼ of F) om af te dalen, en vergeet niet te klaren.', 7000);
   updateNear();
   requestAnimationFrame((t) => { last = t; loop(t); });
   // testhaakje: simulatie vooruitspoelen zonder beeld
   window.__d3 = {
-    D, deco, camera, scene, renderer, action, fauna, camPos,
+    D, deco, camera, scene, renderer, action, fauna, camPos, shadows, snd,
     sim(sec, inp) {
       D.forceInp = Object.assign({ fwd: 0, side: 0, turn: 0, lookX: 0, lookY: 0, bcdIn: false, bcdOut: false, breath: false, exhale: false, hard: false }, inp || {});
       for (let t = 0; t < sec && !D.ended; t += 0.05) step(0.05);
@@ -639,6 +695,12 @@ async function preDive(site) {
   const go = await ask(
     '<div class="b3-photos"><img src="img/bonaire-zoutpier-lucht.jpg" alt="Luchtfoto van de Zoutpier"><img src="img/bonaire-zoutpier-steen.jpg" alt="De gele steen Salt Pier"><img src="img/bonaire-zoutpier-knorvissen.jpg" alt="Knorvissen tussen de pijlers"></div>' +
     '<h2>Briefing · Zoutpier, Bonaire</h2>' +
+    (() => {
+      const list = (DG.PHOTO_CHALLENGES || {}).saltpier || [], done = DG.Save.data.challenges || {};
+      const n = list.filter((c) => done[c.id]).length, next = list.find((c) => !done[c.id]);
+      if (!DG.Save.loadout().camera) return '<p class="b3-ch">📷 Huur een camera bij De Tuimelaar voor de ' + list.length + ' fotochallenges van de Zoutpier.</p>';
+      return '<p class="b3-ch">🏆 Fotochallenges: ' + n + '/' + list.length + (next ? ' · volgende: <b>' + next.title + '</b> (minimaal ' + next.min + '★). ' + next.tip : ' · alles gehaald!') + '</p>';
+    })() +
     '<div class="brief-grid">' +
     '<div><small>Water</small>28 °C · zicht ±50 m</div><div><small>Ingang</small>Kantduik bij de gele steen</div>' +
     '<div><small>Stroming vandaag</small>' + curTxt + '</div><div><small>Diepte</small>pier 3–12 m · rif tot 40 m</div>' +

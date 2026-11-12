@@ -78,7 +78,8 @@
   };
   UI.photoToast = function (photo, spc) {
     const img = new Image(); img.src = photo.url; img.width = 64; img.height = 48;
-    UI.toast('<div class="t-title">📸 ' + (spc ? esc(spc.name) : 'Sfeerfoto van het rif') + '</div><div class="stars">' + '★'.repeat(photo.stars) + '<span style="opacity:.3">' + '★'.repeat(3 - photo.stars) + '</span></div>', '', 2600, img);
+    const max = photo.max || 3;
+    UI.toast('<div class="t-title">📸 ' + (spc ? esc(spc.name) : esc(photo.title || 'Sfeerfoto van het rif')) + '</div><div class="stars">' + '★'.repeat(photo.stars) + '<span style="opacity:.3">' + '★'.repeat(Math.max(0, max - photo.stars)) + '</span></div>' + (photo.note ? '<div class="t-sub">' + esc(photo.note) + '</div>' : ''), '', photo.note ? 4200 : 2600, img);
   };
   let hintTimer = null;
   UI.hint = function (text) {
@@ -812,6 +813,7 @@
       '<div class="sum-cols"><div><h3>Duikveiligheid</h3><ul class="sum-checks">' + checks.map((k) => '<li>' + k[0] + ' ' + esc(k[1]) + '</li>').join('') + '</ul></div>' +
       '<div>' + rightCol + '</div></div>' +
       '<h3>Gespot (' + res.species.length + ')</h3><div class="species-row" id="sum-species">' + (res.species.length ? '' : '<span class="t-sub">Nog niets gespot. Zwem eens wat dichter naar de dieren toe!</span>') + '</div>' +
+      (res.challenges && res.challenges.length ? '<h3>🏆 Fotochallenges gehaald</h3><ul class="sum-checks">' + res.challenges.map((id) => { const ch = UI.challengeById(id); return ch ? '<li>✅ ' + esc(ch.title) + '</li>' : ''; }).join('') + '</ul>' : '') +
       (res.photos.length ? '<h3>Foto’s (' + res.photos.length + ')</h3><div class="photo-row" id="sum-photos"></div>' : '') +
       '<div class="modal-actions"><button class="btn ghost" data-a="shop">Naar De Tuimelaar</button><button class="btn ghost" data-a="again">Nog een duik hier</button><button class="btn primary" data-a="map">Naar de wereldkaart</button></div>');
     UI.drawProfile($('sum-profile'), res.profile, true);
@@ -826,7 +828,7 @@
     });
     const ph = $('sum-photos');
     if (ph) res.photos.forEach((p) => {
-      const f = U.el('figure', '', '<img alt="">' + '<figcaption>' + esc(p.sp ? DG.SPECIES[p.sp].name : 'Sfeerfoto') + ' <span class="stars">' + '★'.repeat(p.stars) + '</span></figcaption>');
+      const f = U.el('figure', '', '<img alt="">' + '<figcaption>' + esc(UI.photoTitle(p)) + ' <span class="stars">' + '★'.repeat(p.stars) + (p.max ? '<span style="opacity:.3">' + '★'.repeat(p.max - p.stars) + '</span>' : '') + '</span>' + (p.note ? '<br><small>' + esc(p.note) + '</small>' : '') + '</figcaption>');
       f.querySelector('img').src = p.url;
       ph.appendChild(f);
     });
@@ -913,16 +915,41 @@
       });
     } else {
       if (!sv.photos.length) { body.innerHTML = '<p class="empty">Nog geen foto’s. Koop een camera bij De Tuimelaar en druk onder water op spatie (of 📷).</p>'; return; }
+      body.appendChild(UI.challengeList());
       const al = U.el('div', 'album');
       sv.photos.slice().reverse().forEach((p, i) => {
         const s = DG.siteById(p.site);
-        const f = U.el('figure', '', '<img alt=""><figcaption><span><b>' + esc(p.sp ? DG.SPECIES[p.sp].name : 'Sfeerfoto') + '</b><br><small>' + esc(s ? s.name : '') + ' · ' + p.depth + ' m</small></span><span class="stars">' + '★'.repeat(p.stars) + '</span></figcaption>');
+        const f = U.el('figure', '', '<img alt=""><figcaption><span><b>' + esc(UI.photoTitle(p)) + (p.ch && p.ch.length ? ' 🏆' : '') + '</b><br><small>' + esc(s ? s.name : '') + ' · ' + p.depth + ' m' + (p.note ? ' · ' + esc(p.note) : '') + '</small></span><span class="stars">' + '★'.repeat(p.stars) + (p.max ? '<span style="opacity:.3">' + '★'.repeat(p.max - p.stars) + '</span>' : '') + '</span></figcaption>');
         f.style.setProperty('--rot', ((i * 37) % 7 - 3) * 0.6 + 'deg');
         f.querySelector('img').src = p.url;
         al.appendChild(f);
       });
       body.appendChild(al);
     }
+  };
+  UI.photoTitle = (p) => p.title || (p.sp && DG.SPECIES[p.sp] ? DG.SPECIES[p.sp].name : 'Sfeerfoto');
+  UI.challengeById = function (id) {
+    const all = DG.PHOTO_CHALLENGES || {};
+    for (const k in all) { const c = all[k].find((x) => x.id === id); if (c) return c; }
+    return null;
+  };
+  // overzicht van de fotochallenges per duikstek (in het fotoalbum)
+  UI.challengeList = function () {
+    const sv = DG.Save.data, done = sv.challenges || {};
+    const box = U.el('div', 'ch-list');
+    Object.keys(DG.PHOTO_CHALLENGES || {}).forEach((site) => {
+      const list = DG.PHOTO_CHALLENGES[site], s = DG.siteById(site);
+      const n = list.filter((c) => done[c.id]).length;
+      box.appendChild(U.el('h3', '', '🏆 Fotochallenges · ' + esc(s ? s.name : site) + ' <small>(' + n + '/' + list.length + ')</small>'));
+      const ul = U.el('ul', 'ch-items');
+      list.forEach((c) => {
+        const d = done[c.id];
+        const li = U.el('li', d ? 'done' : '', (d && d.thumb ? '<img alt="" src="' + d.thumb + '">' : '<span class="ch-box">' + (d ? '✅' : '📷') + '</span>') + '<span><b>' + esc(c.title) + '</b> <small>' + (d ? '★'.repeat(d.stars) + ' gehaald' : 'minimaal ' + c.min + '★') + '</small><br><small>' + esc(c.tip || '') + '</small></span>');
+        ul.appendChild(li);
+      });
+      box.appendChild(ul);
+    });
+    return box;
   };
   UI.speciesDetail = function (spc) {
     const info = DG.Save.data.species[spc.id];

@@ -158,12 +158,38 @@ const AX = { x: new THREE.Vector3(1, 0, 0), y: new THREE.Vector3(0, 1, 0), z: ne
 
 function buildFromGltf(gltf, look) {
   const model = SkeletonUtils.clone(gltf.scene);
+  // vinkleur uit de winkel: alleen de gele delen van de vinnen (onderste 8,5% van het model) kleuren mee
+  const finOn = look.model === 'duiker' && look.fin != null && look.fin !== 0xf2c21a;
   model.traverse((o) => {
     if (o.isMesh) {
       const old = o.material;
-      const m = new THREE.MeshStandardMaterial({ map: old.map, roughness: 0.72, metalness: 0.0 });
+      const m = new THREE.MeshStandardMaterial({ map: old.map, roughness: 0.75, metalness: 0.0 });
+      m.color.setScalar(0.9);
       if (m.map) { m.map.colorSpace = THREE.SRGBColorSpace; m.map.anisotropy = 4; }
-      o.material = uw(m, { caus: true, key: 'diverSk' });
+      const opts = { caus: true, key: 'diverSk' };
+      if (finOn) {
+        const g = o.geometry;
+        if (!g.attributes.aFin) {
+          g.computeBoundingBox();
+          const pos = g.attributes.position, y0 = g.boundingBox.min.y, h = g.boundingBox.max.y - y0;
+          const a = new Float32Array(pos.count);
+          for (let i = 0; i < pos.count; i++) a[i] = pos.getY(i) < y0 + h * 0.085 ? 1 : 0;
+          g.setAttribute('aFin', new THREE.BufferAttribute(a, 1));
+        }
+        Object.assign(opts, {
+          key: 'diverSkF',
+          uniforms: { uFin: { value: new THREE.Color(look.fin) } },
+          vertexPars: 'attribute float aFin; varying float vFin;\n',
+          vertexBegin: 'vFin = aFin;',
+          fragmentPars: 'varying float vFin; uniform vec3 uFin;\n',
+          fragmentColor: `{
+            vec3 c = diffuseColor.rgb;
+            float yel = smoothstep(0.08, 0.25, c.r) * step(0.3, c.g / max(c.r, 0.01)) * (1.0 - smoothstep(0.2, 0.45, c.b / max(c.g, 0.01)));
+            diffuseColor.rgb = mix(c, uFin * (max(c.r, c.g) / 0.8), clamp(vFin * yel, 0.0, 1.0));
+          }`,
+        });
+      }
+      o.material = uw(m, opts);
       o.frustumCulled = false;
     }
   });

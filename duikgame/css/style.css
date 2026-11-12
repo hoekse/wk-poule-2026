@@ -419,3 +419,13 @@ kbd {
 @media (prefers-reduced-motion: reduce) {
   .shop-hero img, .pin .ring, .hotspot i { animation: none; }
 }
+
+/* fotochallenges */
+.ch-list { margin: 0 0 18px; }
+.ch-list h3 small { color: var(--muted, #8aa); font-weight: 500; }
+.ch-items { list-style: none; padding: 0; margin: 8px 0 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 8px; }
+.ch-items li { display: flex; gap: 10px; align-items: center; padding: 8px 10px; border-radius: 12px; background: rgba(255, 255, 255, 0.06); }
+.ch-items li.done { background: rgba(255, 200, 60, 0.14); }
+.ch-items img { width: 64px; height: 48px; object-fit: cover; border-radius: 6px; flex: none; }
+.ch-items .ch-box { width: 64px; height: 48px; display: grid; place-items: center; font-size: 1.4rem; border-radius: 6px; background: rgba(0, 0, 0, 0.2); flex: none; }
+.ch-items small { color: var(--muted, #9bb); }
