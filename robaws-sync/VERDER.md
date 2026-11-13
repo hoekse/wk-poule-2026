@@ -26,3 +26,21 @@ doc_id = bestandsnaam zonder `robawsimport-` en `.json`). De Werkplaats verwerkt
 
 Let op: een nieuwe soort pakket pas meesturen nadat de Werkplaats hem kan verwerken, anders ruimt de pagina hem
 onverwerkt op.
+
+## Normen uit Casadata (13 november)
+
+De posten in de Werkplaats komen uit Casadata; Casadata is leidend. De norm en het materiaal per post staan in de
+calculatieregels achter de Robaws-offertes:
+
+- `/api/v2/offer-line-items`: de offerteregel; `description` is de postnaam (bijv. `OSD56- muurwerk-m²`, de derde
+  kolom van `POSTEN` in de Werkplaats), `extendedDescription` de lange omschrijving (vierde kolom).
+- `/api/v2/offer-calculation-line-items`: per offerteregel (`offerLineItemId`) een regel `WORK` (aantal = uren per
+  eenheid) en regels `ARTICLE` (aantal per eenheid × `costPrice` = materiaal per eenheid, inkoop).
+- Koppelen op postnaam; delen meerdere posten dezelfde naam (houtrotmaten, OHD02 ramen), dan moet de lange
+  omschrijving precies één post aanwijzen, anders overslaan. Bij verschillende normen: de vaakst gebruikte.
+- In de Werkplaats staat dat in `prijzen/<postId>` als `norm` en `mat`. Bij 9 posten is de vaste prijs vervangen
+  door de norm; de oude prijs staat in `prijsRobaws`. Opslag materiaal: 25% (`instellingen/kantoor`).
+
+Volgende stap: materiaalprijzen indexeren met recente inkoopfacturen. De materialen per post (artikel, aantal per
+eenheid, inkoopprijs) komen uit dezelfde calculatieregels; nieuwe inkoopprijs per artikel → `mat` per post opnieuw
+uitrekenen.
