@@ -162,6 +162,41 @@ def map_project(p, klantnamen):
     })
 
 
+# Robaws-status van een factuur -> status in de Werkplaats; vervallen berekent de Werkplaats zelf uit de vervaldatum
+FACTUUR_STATUS = {'betaald': 'betaald', 'gecrediteerd': 'gecrediteerd', 'opmaak': 'opmaak'}
+
+
+def _getal(v):
+    return int(v) if isinstance(v, (int, float)) and float(v).is_integer() else v
+
+
+def map_factuur(f, klantnamen, btw_pct):
+    """SalesInvoiceReadDTO (met include=lineItems) -> factuur in de Werkplaats, opgebouwd zoals de eerste import.
+    Alleen LINE- en TEXT-regels: hoofdstukregels (CHAPTER1) dragen een subtotaal en zouden dubbel tellen.
+    Een factuur die de Werkplaats al heeft, krijgt status, openstaand bedrag, datums en bedragen bij (zie de Werkplaats)."""
+    if f.get('deletedAt') or not f.get('logicId'):
+        return None
+    # volgorde zoals Robaws ze geeft: lineNumber is een label ('1.2', '3W'), geen volgnummer
+    lijn = [l for l in (f.get('lineItems') or []) if l.get('type') in ('LINE', 'TEXT') and not l.get('deletedAt')]
+    bekend = [btw_pct[l['vatTariffId']] for l in lijn if l.get('vatTariffId') in btw_pct]
+    standaard = max(set(bekend), key=bekend.count) if bekend else 21
+    excl, incl = f.get('totalExclVat') or 0, f.get('totalInclVat') or 0
+    status = str(f.get('status') or '').lower()
+    return {
+        'robawsId': str(f['id']), 'nr': f['logicId'],
+        'datum': f.get('date') or '', 'vervaldatum': f.get('expireDate') or '',
+        'status': FACTUUR_STATUS.get(status, 'verzonden'), 'robawsStatus': status,
+        'openstaand': round(f.get('openTotal') or 0, 2),
+        'type': 'credit' if f.get('type') == 'CREDIT_NOTE' else 'factuur',
+        'totaalExcl': round(excl, 2), 'totaalIncl': round(incl, 2), 'btwTot': round(incl - excl, 2),
+        'klantRobawsId': str(f.get('clientId') or ''), 'klantNaam': klantnamen.get(str(f.get('clientId')), ''),
+        'ref': (f.get('clientReference') or '').strip(), 'betaalref': (f.get('paymentInstruction') or '').strip(),
+        'regels': [{'aantal': _getal(l.get('quantity') or 0), 'btw': _getal(btw_pct.get(l.get('vatTariffId'), standaard)),
+                    'code': '', 'eh': l.get('unitType') or '', 'oms': l.get('description') or '',
+                    'prijs': _getal(l.get('price') or 0)} for l in lijn],
+    }
+
+
 # ---------- pakketten ----------
 
 def pakketten(soort, records, run, max_bytes=MAX_PAKKET):
@@ -221,8 +256,10 @@ def cmd_export(args):
     klanten = [k for k in (map_klant(c) for c in alles('/api/v2/clients', {'include': KLANT_INCLUDE})) if k]
     namen = {k['robawsId']: k['naam'] for k in klanten}
     projecten = [p for p in (map_project(x, namen) for x in alles('/api/v2/projects')) if p]
-    pak = pakketten('klanten', klanten, run) + pakketten('projecten', projecten, run)
-    print(f'Klanten: {len(klanten)}, projecten: {len(projecten)}, pakketten: {len(pak)}')
+    btw_pct = {t['id']: t.get('percentage') for t in alles('/api/v2/vat-tariffs') if t.get('percentage') is not None}
+    facturen = [f for f in (map_factuur(x, namen, btw_pct) for x in alles('/api/v2/sales-invoices', {'include': 'lineItems'})) if f]
+    pak = pakketten('klanten', klanten, run) + pakketten('projecten', projecten, run) + pakketten('facturen', facturen, run)
+    print(f'Klanten: {len(klanten)}, projecten: {len(projecten)}, facturen: {len(facturen)}, pakketten: {len(pak)}')
     if '--droog' in args:
         return
     for pad in schrijf(pak):

@@ -76,6 +76,36 @@ class TestVertaling(unittest.TestCase):
         self.assertEqual(rs.map_project(dict(p, clientId='999', planningName='', siteAddress={}), namen)['naam'], 'P260042')
 
 
+class TestFactuur(unittest.TestCase):
+    FACTUUR = {
+        'id': '700', 'logicId': 'F260150', 'date': '2026-11-01', 'expireDate': '2026-12-01', 'status': '1e herinnering',
+        'type': 'INVOICE', 'totalExclVat': 200.0, 'totalInclVat': 242.0, 'openTotal': 242.0, 'clientId': '501',
+        'clientReference': 'Kozijnen voorgevel ', 'paymentInstruction': '123456789012',
+        'lineItems': [
+            {'lineNumber': 1, 'type': 'CHAPTER1', 'quantity': 1.0, 'price': 200.0, 'description': 'Buitenschilderwerk'},
+            {'lineNumber': 2, 'type': 'LINE', 'quantity': 4.0, 'price': 50.0, 'unitType': 'uur', 'description': 'Schilderen', 'vatTariffId': '1'},
+            {'lineNumber': 3, 'type': 'TEXT', 'quantity': 1.0, 'price': 0.0, 'description': 'Inclusief materiaal'},
+        ],
+    }
+
+    def test_factuur(self):
+        f = rs.map_factuur(self.FACTUUR, {'501': 'Testbedrijf Alfa'}, {'1': 21.0, '49': 9.0})
+        self.assertEqual(f['status'], 'verzonden')  # herinnering = nog open; vervallen rekent de Werkplaats zelf
+        self.assertEqual(f['robawsStatus'], '1e herinnering')
+        self.assertEqual(f['btwTot'], 42.0)
+        self.assertEqual(f['klantNaam'], 'Testbedrijf Alfa')
+        self.assertEqual(f['ref'], 'Kozijnen voorgevel')  # Robaws zet er vaak een spatie achter
+        self.assertEqual([r['oms'] for r in f['regels']], ['Schilderen', 'Inclusief materiaal'])  # hoofdstukregel telt niet
+        self.assertEqual(sum(r['aantal'] * r['prijs'] for r in f['regels']), f['totaalExcl'])
+        self.assertEqual(f['regels'][1]['btw'], 21)  # regel zonder tarief krijgt het tarief van de factuur
+
+    def test_status_en_credit(self):
+        f = rs.map_factuur(dict(self.FACTUUR, status='betaald', openTotal=0.0, type='CREDIT_NOTE'), {}, {})
+        self.assertEqual((f['status'], f['type'], f['openstaand']), ('betaald', 'credit', 0.0))
+        self.assertEqual(rs.map_factuur(dict(self.FACTUUR, status='gecrediteerd'), {}, {})['status'], 'gecrediteerd')
+        self.assertIsNone(rs.map_factuur(dict(self.FACTUUR, logicId=''), {}, {}))
+
+
 class TestLijst(unittest.TestCase):
     def test_vormen(self):
         self.assertEqual(rs.lijst_uit([1, 2]), ([1, 2], None))

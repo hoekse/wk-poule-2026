@@ -14,10 +14,15 @@ Stand 13 november 2026:
   een bestaand project staan.
 - Proef op 13 november (echte verwerking op een kopie): 3 nieuwe klanten, 11 bijgewerkt (e-mail, contactpersonen,
   rechtsvorm), 1 project kreeg een referentie, niets verwijderd.
+- Facturen (vanaf Werkplaats-versie 1794598247-1eef): `map_factuur` neemt alleen regels van type LINE en TEXT
+  (hoofdstukregels dragen subtotalen), in de volgorde van Robaws (`lineNumber` is een label). Status: betaald,
+  gecrediteerd en opmaak blijven, al het andere wordt `verzonden`; de Robaws-status staat in `robawsStatus`.
+  Proef: 18 nieuwe facturen, 17 bijgewerkt (9 alsnog betaald), één concept wacht tot het verzonden is.
+- De nachtelijke routine `Robaws → Werkplaats (elke nacht)` draait om 05:13 en zet alles uit `uit/` in `robawsimport`.
 
-Nog te doen:
+Handmatig bijwerken: `python3 robaws_sync.py export` en elk bestand uit `uit/` als document in de collectie
+`robawsimport` van https://claude.ai/artifact/WNbtbE9m4VAsEt9WNSSmPW zetten (ArtifactData batch, `set`,
+doc_id = bestandsnaam zonder `robawsimport-` en `.json`). De Werkplaats verwerkt ze zodra de eigenaar hem opent.
 
-1. Met akkoord van de eigenaar: `python3 robaws_sync.py export` en elk bestand uit `uit/` als document in de
-   collectie `robawsimport` van https://claude.ai/artifact/WNbtbE9m4VAsEt9WNSSmPW zetten (ArtifactData batch,
-   `set`, doc_id = bestandsnaam zonder `robawsimport-` en `.json`). De Werkplaats verwerkt ze zodra de eigenaar hem opent.
-2. Een routine die stap 1 elke nacht doet vanaf branch `claude/robaws-api-integration-sax58k` en alleen bij fouten meldt.
+Let op: een nieuwe soort pakket pas meesturen nadat de Werkplaats hem kan verwerken, anders ruimt de pagina hem
+onverwerkt op.
