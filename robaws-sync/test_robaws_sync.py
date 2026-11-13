@@ -33,6 +33,49 @@ class TestPakketten(unittest.TestCase):
             self.assertNotIn('id', doc)
 
 
+KLANT = {
+    'id': '501', 'name': ' Testbedrijf Alfa ', 'status': 'klant', 'title': 'Fam.', 'tel': '0201234567', 'email': 'a@test.invalid',
+    'invoiceEmail': '', 'vatIdNumber': 'NL000000000B01', 'kvk': '12345678',
+    'address': {'addressLine1': 'Teststraat 1', 'postalCode': '1111 AA', 'city': 'Teststad', 'country': 'NL'},
+    'legalForm': {'name': 'BV'}, 'vatTariff': {'percentage': 21.0}, 'paymentCondition': {'name': '30 dagen na datum'},
+    'contacts': [{'title': 'Dhr.', 'name': 'Jan', 'surname': 'Test', 'position': 'Inkoop', 'email': 'j@test.invalid', 'tel': '', 'gsm': '0612345678'},
+                 {'name': 'Weg', 'deletedAt': '2026-01-01T00:00:00Z'}],
+}
+
+
+class TestVertaling(unittest.TestCase):
+    def test_klant(self):
+        k = rs.map_klant(KLANT)
+        self.assertEqual(k['robawsId'], '501')
+        self.assertEqual(k['naam'], 'Testbedrijf Alfa')
+        self.assertEqual(k['type'], 'zakelijk')
+        self.assertEqual(k['land'], 'Nederland')
+        self.assertEqual(k['btw'], 21)
+        self.assertEqual(k['rechtsvorm'], 'BV')
+        self.assertEqual(k['betaalvoorwaarde'], '30 dagen na datum')
+        self.assertNotIn('factuurEmail', k)  # leeg in Robaws: niet meesturen, de Werkplaats laat het staan
+        self.assertEqual(k['contacten'], [{'email': 'j@test.invalid', 'functie': 'Inkoop', 'naam': 'Dhr. Jan Test', 'tel': '0612345678'}])
+        self.assertEqual(list(k['contacten'][0]), sorted(k['contacten'][0]))
+
+    def test_particulier_en_verwijderd(self):
+        self.assertEqual(rs.map_klant(dict(KLANT, legalForm={'name': 'Particulier'}))['type'], 'particulier')
+        self.assertIsNone(rs.map_klant(dict(KLANT, deletedAt='2026-01-01T00:00:00Z')))
+        self.assertIsNone(rs.map_klant(dict(KLANT, name='  ')))
+
+    def test_project(self):
+        namen = {'501': 'Testbedrijf Alfa'}
+        p = {'id': '9001', 'logicId': 'P260042', 'clientId': '501', 'status': 'afgewerkt', 'planningName': 'Kantoor',
+             'siteAddress': {'addressLine1': 'Werkweg 2', 'postalCode': '2222 BB', 'city': 'Werkstad'}}
+        r = rs.map_project(p, namen)
+        self.assertEqual(r['naam'], 'Testbedrijf Alfa - Kantoor')
+        self.assertEqual(r['status'], 'afgerond')
+        self.assertEqual(r['robawsNr'], 'P260042')
+        self.assertEqual(r['klantRobawsId'], '501')
+        self.assertEqual(rs.map_project(dict(p, planningName='', status='voorbereiding'), namen)['naam'], 'Testbedrijf Alfa - Werkstad')
+        self.assertEqual(rs.map_project(dict(p, status='iets nieuws'), namen)['status'], 'actief')
+        self.assertEqual(rs.map_project(dict(p, clientId='999', planningName='', siteAddress={}), namen)['naam'], 'P260042')
+
+
 class TestLijst(unittest.TestCase):
     def test_vormen(self):
         self.assertEqual(rs.lijst_uit([1, 2]), ([1, 2], None))

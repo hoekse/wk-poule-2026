@@ -1,22 +1,23 @@
 # Verder met de Robaws-koppeling
 
-Stand: de Werkplaats-kant (verwerken van `robawsimport`, toegangsregel, kaart bij Instellingen) staat live
-in versie 22 van het artifact. Wijzig de Werkplaats altijd vanaf de live versie (Artifact read), niet vanaf een oude kopie.
-Dit script kan verbinden, pagineren en pakketten maken. Nog te doen, zodra `ROBAWS_KEY`, `ROBAWS_SECRET`
-en netwerktoegang tot `app.robaws.com` er zijn:
+Stand 13 november 2026:
 
-1. `python3 robaws_sync.py check`: sleutel en verbinding.
-2. `python3 robaws_sync.py spec`: velden van klanten (met adres en contactpersonen) en projecten bekijken.
-   Vul `map_klant` en `map_project` in met de echte veldnamen (zie de opsomming boven die functies).
-   Gebruik zo nodig `include=` voor adressen en contactpersonen. Zet de projectstatus om naar
-   `voorbereiding`, `actief` of `afgerond`.
-3. Controleer of de bestaande klanten in de Werkplaats (ids `r1`..`r256`, `bron: robaws`) Robaws-ids zijn:
-   vergelijk een paar namen met `/api/v2/clients/<nummer>`. De Werkplaats koppelt nu op naam en postcode;
-   blijken het Robaws-ids, dan kan `robawsId` eenmalig op die documenten gezet worden.
-4. `python3 robaws_sync.py export --droog`, laat de aantallen aan de eigenaar zien en vraag akkoord.
-5. `python3 robaws_sync.py export` en zet elk bestand uit `uit/` als document in de collectie
-   `robawsimport` van https://claude.ai/artifact/WNbtbE9m4VAsEt9WNSSmPW (ArtifactData batch, `set`,
-   doc_id = bestandsnaam zonder `robawsimport-` en `.json`, `file_path` naar het bestand).
-6. Laat de eigenaar de Werkplaats openen; controleer `instellingen/robaws` en een paar klanten en projecten.
-7. Maak een routine (create_trigger, nieuwe sessie per keer, bijvoorbeeld `CRON_TZ=Europe/Amsterdam 43 5 * * *`)
-   die stap 5 elke nacht uitvoert vanaf deze branch, en alleen bij fouten meldt.
+- Verbinding werkt. De sleutel staat als netwerkgeheim voor `app.robaws.com` in de omgeving (de proxy zet hem
+  erbij); `ROBAWS_KEY`/`ROBAWS_SECRET` als omgevingsvariabelen mag ook.
+- De API-beschrijving staat op `/api-docs/robaws` (JSON). `/public/api-docs/robaws` is alleen de leespagina.
+- `map_klant` en `map_project` zijn ingevuld en getest. Klanten: aanhef + voornaam + achternaam voor contactpersonen,
+  btw uit vatTariff, rechtsvorm en betaalvoorwaarde uit include. Projecten: naam "klant - planningsnaam" of
+  "klant - plaats", status afgewerkt -> afgerond.
+- De bestaande klanten `r<N>` in de Werkplaats zijn Robaws-klant N; ze hebben sinds de eerste import
+  (2 november) een `robawsId`. Nieuwe klanten en projecten krijgen id `rb<robawsId>`.
+- De Werkplaats (vanaf versie 1794597137-fbbd) vergelijkt velden zonder op volgorde te letten en laat de naam van
+  een bestaand project staan.
+- Proef op 13 november (echte verwerking op een kopie): 3 nieuwe klanten, 11 bijgewerkt (e-mail, contactpersonen,
+  rechtsvorm), 1 project kreeg een referentie, niets verwijderd.
+
+Nog te doen:
+
+1. Met akkoord van de eigenaar: `python3 robaws_sync.py export` en elk bestand uit `uit/` als document in de
+   collectie `robawsimport` van https://claude.ai/artifact/WNbtbE9m4VAsEt9WNSSmPW zetten (ArtifactData batch,
+   `set`, doc_id = bestandsnaam zonder `robawsimport-` en `.json`). De Werkplaats verwerkt ze zodra de eigenaar hem opent.
+2. Een routine die stap 1 elke nacht doet vanaf branch `claude/robaws-api-integration-sax58k` en alleen bij fouten meldt.

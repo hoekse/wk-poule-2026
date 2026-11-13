@@ -22,7 +22,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 BASE = os.environ.get('ROBAWS_BASE', 'https://app.robaws.com').rstrip('/')
-SPEC_URL = BASE + '/public/api-docs/robaws'
+SPEC_URL = BASE + '/api-docs/robaws'  # /public/api-docs/robaws is de leespagina, dit is de JSON erachter
 HIER = Path(__file__).resolve().parent
 UIT = HIER / 'uit'
 MAX_PAKKET = 200_000  # een document in de Werkplaats mag maximaal 256 KiB zijn
@@ -96,12 +96,70 @@ def alles(pad, params=None, grootte=100):
 # straat, postcode, plaats, info.
 # Lege of ontbrekende velden laat de Werkplaats staan, dus alleen vullen wat Robaws echt heeft.
 
+KLANT_INCLUDE = 'contacts,vatTariff,legalForm,paymentCondition'
+LANDEN = {'NL': 'Nederland', 'BE': 'België', 'DE': 'Duitsland'}
+# Robaws-status van een project -> status in de Werkplaats; onbekend telt als lopend
+PROJECT_STATUS = {'afgewerkt': 'afgerond', 'afgerond': 'afgerond', 'voorbereiding': 'voorbereiding', 'actief': 'actief'}
+
+
+def _samen(*delen):
+    return ' '.join(str(d).strip() for d in delen if d is not None and str(d).strip())
+
+
+def _zonder_leeg(r):
+    return {k: v for k, v in r.items() if v not in ('', None, [])}
+
+
 def map_klant(c):
-    raise RobawsFout('Vertaling klanten nog niet ingevuld: eerst "spec" draaien en de velden van Robaws overnemen.')
+    """ClientReadDTO (met include=KLANT_INCLUDE) -> klant in de Werkplaats."""
+    if c.get('deletedAt') or not _samen(c.get('name')):
+        return None
+    a = c.get('address') or {}
+    vorm = (c.get('legalForm') or {}).get('name') or ''
+    btw = (c.get('vatTariff') or {}).get('percentage')
+    return _zonder_leeg({
+        'robawsId': str(c['id']),
+        'naam': _samen(c.get('name')),
+        'type': 'particulier' if vorm.lower() == 'particulier' else 'zakelijk',
+        'status': c.get('status') if c.get('status') in ('klant', 'prospect') else '',
+        'straat': _samen(a.get('addressLine1'), a.get('addressLine2')),
+        'postcode': a.get('postalCode') or '',
+        'plaats': a.get('city') or '',
+        'land': LANDEN.get(a.get('country'), a.get('country') or ''),
+        'tel': c.get('tel') or '', 'gsm': c.get('gsm') or '',
+        'email': c.get('email') or '', 'factuurEmail': c.get('invoiceEmail') or '',
+        'btwnr': c.get('vatIdNumber') or '', 'kvk': c.get('kvk') or '', 'website': c.get('website') or '',
+        'rechtsvorm': vorm, 'titel': c.get('title') or '',
+        'betaalvoorwaarde': (c.get('paymentCondition') or {}).get('name') or '',
+        'btw': int(btw) if isinstance(btw, (int, float)) and float(btw).is_integer() else btw,
+        # sleutels op alfabet, zoals de Werkplaats ze opslaat, zodat een ongewijzigde lijst ook gelijk telt
+        'contacten': [{'email': x.get('email') or '', 'functie': x.get('position') or '',
+                       'naam': _samen(x.get('title'), x.get('name'), x.get('surname')), 'tel': x.get('tel') or x.get('gsm') or ''}
+                      for x in (c.get('contacts') or []) if not x.get('deletedAt')],
+    })
 
 
-def map_project(p):
-    raise RobawsFout('Vertaling projecten nog niet ingevuld: eerst "spec" draaien en de velden van Robaws overnemen.')
+def map_project(p, klantnamen):
+    """ProjectReadDTO -> project in de Werkplaats. Naam zoals bij de eerste import: 'klant - planningsnaam' of
+    'klant - plaats'. De Werkplaats gebruikt de naam alleen voor nieuwe projecten; een eigen naam blijft staan."""
+    if p.get('deletedAt'):
+        return None
+    a = p.get('siteAddress') or {}
+    klant = klantnamen.get(str(p.get('clientId'))) or ''
+    naam = ' - '.join(d for d in (klant, _samen(p.get('planningName')) or _samen(a.get('city'))) if d) or p.get('logicId')
+    if not naam:
+        return None
+    return _zonder_leeg({
+        'robawsId': str(p['id']),
+        'robawsNr': p.get('logicId') or '',
+        'naam': naam,
+        'klantRobawsId': str(p['clientId']) if p.get('clientId') else '',
+        'status': PROJECT_STATUS.get(str(p.get('status') or '').lower(), 'actief'),
+        'straat': _samen(a.get('addressLine1'), a.get('addressLine2')),
+        'postcode': a.get('postalCode') or '',
+        'plaats': a.get('city') or '',
+        'info': _samen(p.get('clientReference')),
+    })
 
 
 # ---------- pakketten ----------
@@ -160,8 +218,9 @@ def cmd_spec(_):
 
 def cmd_export(args):
     run = datetime.now(timezone.utc).strftime('%Y%m%d%H%M')
-    klanten = [k for k in (map_klant(c) for c in alles('/api/v2/clients')) if k]
-    projecten = [p for p in (map_project(x) for x in alles('/api/v2/projects')) if p]
+    klanten = [k for k in (map_klant(c) for c in alles('/api/v2/clients', {'include': KLANT_INCLUDE})) if k]
+    namen = {k['robawsId']: k['naam'] for k in klanten}
+    projecten = [p for p in (map_project(x, namen) for x in alles('/api/v2/projects')) if p]
     pak = pakketten('klanten', klanten, run) + pakketten('projecten', projecten, run)
     print(f'Klanten: {len(klanten)}, projecten: {len(projecten)}, pakketten: {len(pak)}')
     if '--droog' in args:
