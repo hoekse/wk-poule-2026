@@ -1,0 +1,19 @@
+{
+  "headers": [
+    {
+      "source": "/models/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=604800" },
+        { "key": "Access-Control-Allow-Origin", "value": "*" }
+      ]
+    },
+    {
+      "source": "/(img|vendor)/(.*)",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=604800" }]
+    },
+    {
+      "source": "/(.*)\\.glb",
+      "headers": [{ "key": "Content-Type", "value": "model/gltf-binary" }]
+    }
+  ]
+}

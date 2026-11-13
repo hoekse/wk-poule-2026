@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Diepblauw — duikreis rond de wereld</title>
+<meta name="description" content="Duikgame: kies je uitrusting bij Duikcentrum De Tuimelaar in Zwolle en duik bij de Zoutpier op Bonaire, Raja Ampat, Tulamben en meer.">
+<meta name="theme-color" content="#06263f">
+<link rel="icon" type="image/png" href="img/favicon.png">
+<link rel="apple-touch-icon" href="img/icoon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700;6..12,800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/dive3d.css">
+<script type="importmap">{ "imports": { "three": "./vendor/three/three.module.min.js" } }</script>
+</head>
+<body>
+<canvas id="sea" aria-hidden="true"></canvas>
+
+<div id="app">
+  <!-- Bovenbalk (winkel / kaart / logboek) -->
+  <header id="topbar" hidden>
+    <button class="brand" data-go="title" aria-label="Naar het startscherm">
+      <span class="brand-mark" aria-hidden="true"></span><span class="brand-name">Diepblauw</span>
+    </button>
+    <nav class="nav" aria-label="Hoofdmenu">
+      <button data-go="shop" class="nav-btn"><span aria-hidden="true">🏪</span><span class="lbl">De Tuimelaar</span></button>
+      <button data-go="map" class="nav-btn"><span aria-hidden="true">🗺️</span><span class="lbl">Wereldkaart</span></button>
+      <button data-go="log" class="nav-btn"><span aria-hidden="true">📖</span><span class="lbl">Logboek</span></button>
+    </nav>
+    <div class="pills">
+      <span class="pill budget" title="Gelogde duiken: daarmee speel je spullen en cursussen vrij bij De Tuimelaar"><span aria-hidden="true">🤿</span> <b id="budget">0 duiken</b></span>
+      <span class="pill brevet" id="brevet-pill" title="Je brevet">Open Water · 18 m</span>
+      <button class="icon-btn" id="btn-sound" aria-label="Geluid aan/uit" title="Geluid">🔊</button>
+    </div>
+  </header>
+
+  <!-- Titelscherm -->
+  <section id="scr-title" class="screen on">
+    <div class="title-wrap">
+      <p class="eyebrow">Een duikreis rond de wereld</p>
+      <h1 class="game-title">Diep<span>blauw</span></h1>
+      <p class="title-sub">Stel je uitrusting samen bij <b>Duikcentrum De Tuimelaar</b> in Zwolle, kies je favoriete duikstek op de wereldkaart en ontdek koralen, schildpadden, haaien en manta’s.</p>
+      <div class="title-actions">
+        <button class="btn big primary" id="btn-start">Start je duikreis</button>
+        <button class="btn ghost" id="btn-new" hidden>Opnieuw beginnen</button>
+      </div>
+      <div class="title-sites" id="title-sites"></div>
+      <div class="title-shop">
+        <img src="img/tuimelaar-logo.png" alt="Logo Duikcentrum De Tuimelaar Zwolle" width="56" height="56">
+        <span>Je duikavontuur begint in de winkel van Duikcentrum De Tuimelaar in Zwolle</span>
+      </div>
+    </div>
+    <p class="title-foot">Zet je geluid aan voor ademhaling, bellen en knisperende riffen 🔊</p>
+  </section>
+
+  <!-- Winkel -->
+  <section id="scr-shop" class="screen shop">
+    <div class="shop-head">
+      <button class="shop-front" id="shop-front" title="Bekijk de winkel van buiten">
+        <img src="img/winkel-pui-en-bus.jpg" alt="Winkelpui van Duikcentrum De Tuimelaar met de bus ervoor">
+      </button>
+      <img class="shop-logo" src="img/tuimelaar-logo.png" alt="Logo Duikcentrum De Tuimelaar" width="64" height="64">
+      <div class="shop-title">
+        <h2>Duikcentrum De Tuimelaar</h2>
+        <p>Duik- en snorkelwinkel · Vulstation · Opleidingen · Zwolle</p>
+      </div>
+    </div>
+    <div class="shop-body">
+      <div class="shop-main">
+        <div class="cat-tabs" id="cat-tabs" role="tablist" aria-label="Afdelingen"></div>
+        <div class="shop-hero" id="shop-hero">
+          <img id="hero-img" src="img/winkel-overzicht.jpg" alt="">
+          <div class="hotspots" id="hotspots"></div>
+          <div class="hero-text"><h3 id="hero-title">Rondkijken</h3><p id="hero-intro"></p></div>
+          <button class="hero-toggle" id="hero-toggle" type="button">📷 Foto’s</button>
+        </div>
+        <div class="products" id="products"></div>
+        <p class="shop-note">Fan-game: Duikcentrum De Tuimelaar is een echte duikwinkel in Zwolle. Producten en prijzen in dit spel zijn fictief.</p>
+      </div>
+      <aside class="shop-side" id="shop-side">
+        <h3>Jouw uitrusting</h3>
+        <canvas id="diver-preview" width="360" height="200" aria-label="Voorbeeld van je duiker"></canvas>
+        <ul class="kit" id="kit"></ul>
+        <div class="kit-stats" id="kit-stats"></div>
+        <button class="btn primary wide" id="btn-to-map">Naar de wereldkaart ✈</button>
+      </aside>
+    </div>
+  </section>
+
+  <!-- Wereldkaart -->
+  <section id="scr-map" class="screen map">
+    <div class="map-wrap" id="map-wrap">
+      <svg id="worldmap" viewBox="0 40 2000 800" preserveAspectRatio="xMidYMid meet" aria-label="Wereldkaart met duikstekken"></svg>
+    </div>
+    <div class="map-hint" id="map-hint">Kies een duikstek op de kaart</div>
+    <div class="site-list" id="site-list"></div>
+    <aside class="site-card" id="site-card" hidden></aside>
+  </section>
+
+  <!-- Reis -->
+  <section id="scr-travel" class="screen travel">
+    <canvas id="travel-canvas" hidden></canvas>
+    <canvas id="travel-3d" hidden aria-label="De Tuimelaar-bus op de snelweg"></canvas>
+    <div class="trip-photo" id="trip-photo" hidden><img id="trip-img" alt=""></div>
+    <div class="trip-route" id="trip-route" hidden><canvas id="trip-map" aria-label="Route"></canvas><div id="trip-route-txt"></div></div>
+    <canvas class="trip-inset" id="trip-inset" hidden aria-label="Vluchtroute"></canvas>
+    <div class="trip-card" id="trip-card">
+      <div class="trip-steps" id="trip-steps"></div>
+      <p class="trip-time" id="trip-time"></p>
+      <h2 id="trip-title"></h2>
+      <p id="trip-text"></p>
+      <div class="trip-body" id="trip-body"></div>
+      <div class="trip-actions"><button class="btn primary" id="trip-next">Verder ›</button></div>
+    </div>
+    <button class="btn ghost skip" id="btn-skip">Reis overslaan ⏭</button>
+  </section>
+
+  <!-- Duiken -->
+  <section id="scr-dive" class="screen dive">
+    <div id="hud" hidden>
+      <div class="dc" id="dc">
+        <div class="dc-head"><span>DUIKCOMPUTER</span><span id="dc-gas">LUCHT</span></div>
+        <div class="dc-grid">
+          <div class="dc-cell big"><label>Diepte</label><b id="dc-depth">0.0</b><small>m</small></div>
+          <div class="dc-cell"><label>Duiktijd</label><b id="dc-time">0:00</b></div>
+          <div class="dc-cell"><label id="dc-ndl-l">Nultijd</label><b id="dc-ndl">--</b></div>
+          <div class="dc-cell"><label>Max</label><b id="dc-max">0.0</b></div>
+          <div class="dc-cell"><label>Water</label><b id="dc-temp">--°</b></div>
+        </div>
+        <div class="dc-asc" title="Opstijgsnelheid"><i id="dc-asc"></i></div>
+        <div class="dc-stop" id="dc-stop" hidden></div>
+      </div>
+      <div class="gauge" id="gauge">
+        <svg viewBox="0 0 100 100" aria-hidden="true">
+          <circle cx="50" cy="50" r="44" class="g-ring"/>
+          <path d="M 18.9 81.1 A 44 44 0 1 1 81.1 81.1" class="g-track"/>
+          <path d="M 18.9 81.1 A 44 44 0 0 1 9.4 63" class="g-red"/>
+          <line x1="50" y1="50" x2="50" y2="14" id="g-needle"/>
+          <circle cx="50" cy="50" r="5" class="g-hub"/>
+        </svg>
+        <div class="g-read"><b id="g-bar">200</b><small>bar</small></div>
+        <div class="g-rmt" id="g-rmt" hidden></div>
+      </div>
+      <div class="compass" id="compass" hidden><i id="compass-arrow">➜</i><span id="compass-txt">kant</span></div>
+      <div class="cold" id="cold"><label>Warmte</label><span><i id="cold-fill"></i></span></div>
+      <div class="spotbox" id="spotbox"><b id="spot-count">0</b> soorten gespot · <b id="photo-count">0</b> foto’s</div>
+      <div class="warn" id="warn" hidden></div>
+      <div class="hint" id="hint" hidden></div>
+      <div class="keys-help" id="keys-help">
+        <span><kbd>←↑→↓</kbd> / <kbd>WASD</kbd> zwemmen</span><span><kbd>Shift</kbd> sneller</span><span><kbd>Spatie</kbd> foto</span><span><kbd>L</kbd> lamp</span><span><kbd>Esc</kbd> pauze</span>
+      </div>
+      <button class="btn primary end-btn" id="btn-end" hidden>Duik beëindigen <kbd>E</kbd></button>
+      <button class="hud-btn pause-btn" id="btn-pause" aria-label="Pauze">❚❚</button>
+      <div class="touch-btns" id="touch-btns">
+        <button id="t-lamp" aria-label="Lamp aan/uit">🔦</button>
+        <button id="t-turbo" aria-label="Sneller zwemmen">⏩</button>
+        <button id="t-photo" class="big" aria-label="Foto maken">📷</button>
+      </div>
+      <div class="stick" id="stick" hidden><i id="stick-knob"></i></div>
+    </div>
+  </section>
+
+  <!-- Logboek -->
+  <section id="scr-log" class="screen log">
+    <div class="log-wrap">
+      <div class="log-head">
+        <h2>Mijn duiklogboek</h2>
+        <div class="log-stats" id="log-stats"></div>
+      </div>
+      <div class="tabs" id="log-tabs" role="tablist">
+        <button class="tab on" data-tab="dives" role="tab">Duiken</button>
+        <button class="tab" data-tab="species" role="tab">Soortengids</button>
+        <button class="tab" data-tab="photos" role="tab">Fotoalbum</button>
+      </div>
+      <div class="log-body" id="log-body"></div>
+      <p class="log-foot"><button class="linkish" id="btn-reset">Spel wissen en opnieuw beginnen</button></p>
+    </div>
+  </section>
+</div>
+
+<div id="modal" class="modal" hidden><div class="modal-card" id="modal-card" role="dialog" aria-modal="true"></div></div>
+<div id="toasts" aria-live="polite"></div>
+
+<script src="js/util.js"></script>
+<script src="js/data.js"></script>
+<script src="js/worldmap.js"></script>
+<script src="js/save.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/art.js"></script>
+<script src="js/art-env.js"></script>
+<script src="js/world.js"></script>
+<script src="js/creatures.js"></script>
+<script src="js/dive.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
