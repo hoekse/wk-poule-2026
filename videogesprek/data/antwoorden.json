@@ -1,0 +1,35 @@
+[
+  {
+    "id": "1",
+    "clip": "1.mp4",
+    "vragen": [
+      "Hey, hoe is het met je?",
+      "Hoe gaat het?",
+      "Alles goed met je?",
+      "Hoe is het?"
+    ],
+    "antwoordtekst": "Ja, giet weer."
+  },
+  {
+    "id": "2",
+    "clip": "2.mp4",
+    "vragen": [
+      "Heb je een leuke dag?",
+      "Is het een leuke dag?",
+      "Heb je het een beetje naar je zin vandaag?",
+      "Hoe is je dag?"
+    ],
+    "antwoordtekst": "Ja, weer."
+  },
+  {
+    "id": "3",
+    "clip": "3.mp4",
+    "vragen": [
+      "Vind je het spannend?",
+      "Is het spannend?",
+      "Ben je zenuwachtig?",
+      "Vind je het eng?"
+    ],
+    "antwoordtekst": "Oh."
+  }
+]
