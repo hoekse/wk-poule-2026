@@ -11,7 +11,7 @@ Een web-app voor je telefoon die aanvoelt als een videogesprek met Rick. Je tikt
 2. **Bellen.** Na de tik hoor je de Nederlandse kiestoon (425 Hz). Na ruim vier seconden neemt hij op, of later als de clips nog niet binnen zijn.
 3. **Begroeting.** `begroeting.mp4` speelt af. Daarna draait `idle.mp4` in een lus: hij luistert.
 4. **Jouw vraag.** De microfoon staat open. De app merkt zelf wanneer je begint te praten en stopt na ongeveer 0,7 seconde stilte.
-5. **Verstaan.** De opname gaat naar de server. OpenAI zet hem om in tekst (`gpt-transcribe`), Claude Haiku (`claude-haiku-5-5`) kiest het best passende antwoord uit `data/antwoorden.json`.
+5. **Verstaan.** De opname gaat naar de server. OpenAI zet hem om in tekst (`gpt-transcribe`), Claude Haiku 5.5 kiest het best passende antwoord uit `data/antwoorden.json`. Beide lopen via de **Vercel AI Gateway**: geen eigen API-sleutels nodig, de kosten gaan van het AI Gateway-tegoed van het Vercel-team.
 6. **Antwoord.** De gekozen clip speelt af, met een crossfade van 150 ms vanuit de luisterlus. Bij twijfel (zekerheid onder 0,6) speelt `onbekend.mp4`. Bij ruis of een kuchje gebeurt er niets en luistert hij verder.
 7. **Ophangen** met de rode knop.
 
@@ -97,15 +97,17 @@ Bij **Settings › Environment Variables** van het project:
 | Variabele | Waarvoor |
 | --- | --- |
 | `TOEGANGSCODE` | De code die je één keer per telefoon invult. Staat al ingesteld. **Zonder code is de app in productie dicht.** |
-| `OPENAI_API_KEY` | Spraak naar tekst. Zelf toevoegen. |
-| `ANTHROPIC_API_KEY` | Het juiste antwoord kiezen. Zelf toevoegen. |
+| `OPENAI_API_KEY` | Optioneel. Zonder deze sleutel loopt de spraakherkenning via de Vercel AI Gateway. |
+| `ANTHROPIC_API_KEY` | Optioneel. Zonder deze sleutel loopt Claude via de Vercel AI Gateway. |
 | `ZEKERHEID_DREMPEL` | Optioneel, standaard `0.6`. Hoger = sneller "nog een keer vragen". |
 | `OPENAI_TRANSCRIPTIE_MODEL` | Optioneel, standaard `gpt-transcribe`. Weigert dat model een verzoek, dan probeert de app het met `gpt-4o-mini-transcribe`. |
 | `MEDIA_PRIVE_SLEUTEL` | Ontsleutelt de foto en clips tijdens de build. Staat al ingesteld, gevoelig. Niet aankomen. |
 
 Na het toevoegen of wijzigen van een variabele: **Deployments › (laatste) › Redeploy**. Pas dan werkt hij.
 
-Zonder `OPENAI_API_KEY` gebruikt de app de spraakherkenning van de browser. Die is op iPhone onbetrouwbaar. Zonder `ANTHROPIC_API_KEY` vergelijkt de app de tekst zelf met de vragenlijst. Dat werkt als je de vraag ongeveer zo stelt als in de lijst.
+**AI Gateway.** Op Vercel logt de app automatisch in bij de AI Gateway (OIDC), dus er hoeft geen sleutel ingesteld te worden. Per vraag kost het een fractie van een cent, afgeschreven van het AI Gateway-tegoed (**Vercel › AI Gateway**). Is het tegoed op, dan valt de app terug: zonder spraakherkenning hoor je steeds "nog een keer vragen". Een eigen `OPENAI_API_KEY` of `ANTHROPIC_API_KEY` gaat altijd voor op de Gateway.
+
+**Status controleren.** Open `/api/status` (na het invullen van de code, of met `?code=<toegangscode>`). Je ziet of de spraakherkenning en Claude werken, hoe snel, en hoeveel Gateway-tegoed er nog is.
 
 **Nieuwe versie online zetten.** Zodra de app in een eigen privé-repository staat: koppel die bij **Settings › Git** aan het project (Root Directory leeg maken). Daarna zet elke push naar `main` de nieuwe versie automatisch online. Tot die tijd kan Claude een nieuwe versie voor je deployen.
 
@@ -154,7 +156,7 @@ De microfoon werkt alleen via `localhost` of `https`. Wil je lokaal op je telefo
 
 ## Kosten
 
-Per vraag kost het een fractie van een cent: een paar seconden audio bij OpenAI en een korte aanvraag bij Claude Haiku. Letterlijk gestelde vragen gaan niet naar Claude.
+Per vraag kost het een fractie van een cent: een paar seconden audio bij OpenAI (ongeveer $0,0004 voor 5 seconden) en een korte aanvraag bij Claude Haiku 5.5 (ongeveer $0,0002). Letterlijk gestelde vragen gaan niet naar Claude. Via de AI Gateway gaat dit van het Vercel-tegoed af.
 
 ## Structuur
 
@@ -167,6 +169,7 @@ public/foto.jpg             grijze placeholder-foto voor lokaal ontwikkelen
 app/page.tsx                hoofdpagina
 app/api/vraag/route.ts      opname -> tekst (OpenAI) -> antwoord (Claude)
 app/api/kies/route.ts       tekst -> antwoord (voor de browser-spraakherkenning)
+app/api/status/route.ts     test spraakherkenning, Claude en Gateway-tegoed
 app/toegang/                pagina voor de toegangscode
 proxy.ts                    controleert de toegangscode bij elke aanvraag
 components/Videogesprek.tsx belscherm en gespreksscherm
@@ -176,6 +179,7 @@ lib/client/videolaag.ts     twee video's boven elkaar met crossfade
 lib/client/beltoon.ts       kiestoon
 lib/server/kies.ts          antwoord kiezen (snel, Claude, of zelf vergelijken)
 lib/server/transcribeer.ts  spraak naar tekst
+lib/server/gateway.ts       inloggen bij de Vercel AI Gateway (OIDC)
 scripts/controleer.mjs      controleert clips en json vóór elke build
 scripts/maak-placeholders.sh placeholders en iconen maken
 scripts/maak-fotoclips.sh   tijdelijke clips van een foto, direct versleuteld

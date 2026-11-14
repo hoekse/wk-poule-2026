@@ -1,19 +1,15 @@
 import 'server-only';
+import { createGateway, transcribe } from 'ai';
 import OpenAI, { toFile } from 'openai';
 import { ITEMS, NAAM } from '@/lib/antwoorden';
+import { gatewayMogelijk, gatewaySleutel } from './gateway';
 
 const MODEL = process.env.OPENAI_TRANSCRIPTIE_MODEL || 'gpt-transcribe';
 /** Reserve als het hoofdmodel het verzoek weigert (werkt tot februari 2027). */
 const RESERVE_MODEL = 'gpt-4o-mini-transcribe';
 
-let client: OpenAI | null = null;
-function openai(): OpenAI | null {
-  if (!process.env.OPENAI_API_KEY) return null;
-  client ??= new OpenAI({ timeout: 10_000, maxRetries: 1 });
-  return client;
-}
-
-export const spraakApiBeschikbaar = () => Boolean(process.env.OPENAI_API_KEY);
+/** Met eigen OPENAI_API_KEY rechtstreeks, anders via de Vercel AI Gateway. */
+export const spraakApiBeschikbaar = () => Boolean(process.env.OPENAI_API_KEY) || gatewayMogelijk();
 
 // De vragen als hint helpen de herkenning bij namen, dialect en korte zinnen.
 const VOORBEELDEN = ITEMS.slice(0, 30).map((item) => item.vragen[0]);
@@ -34,26 +30,46 @@ function opties(model: string) {
     : { language: 'nl', prompt: CONTEXT };
 }
 
-/** Zet een opname om in tekst. Geeft null als er geen sleutel is ingesteld. */
-export async function transcribeer(audio: Blob): Promise<string | null> {
-  const api = openai();
-  if (!api) return null;
+let direct: OpenAI | null = null;
 
+async function viaOpenAI(data: Buffer, mime: string, model: string): Promise<string> {
+  direct ??= new OpenAI({ timeout: 10_000, maxRetries: 1 });
+  const file = await toFile(data, `vraag.${extensie(mime)}`, { type: mime.split(';')[0] });
+  const resultaat = await direct.audio.transcriptions.create({ file, model, ...opties(model) });
+  return resultaat.text ?? '';
+}
+
+async function viaGateway(data: Buffer, sleutel: string, model: string): Promise<string> {
+  const gateway = createGateway({ apiKey: sleutel });
+  const resultaat = await transcribe({
+    model: gateway.transcriptionModel(`openai/${model}`),
+    audio: new Uint8Array(data),
+    providerOptions: { openai: opties(model) },
+    maxRetries: 1,
+    abortSignal: AbortSignal.timeout(10_000),
+  });
+  return resultaat.text ?? '';
+}
+
+/** Zet een opname om in tekst. Geeft null als er geen spraak-API beschikbaar is. */
+export async function transcribeer(audio: Blob): Promise<string | null> {
   const mime = audio.type || 'audio/webm';
   const data = Buffer.from(await audio.arrayBuffer());
-  const bestand = () => toFile(data, `vraag.${extensie(mime)}`, { type: mime.split(';')[0] });
+
+  let poging: (model: string) => Promise<string>;
+  if (process.env.OPENAI_API_KEY) {
+    poging = (model) => viaOpenAI(data, mime, model);
+  } else {
+    const sleutel = await gatewaySleutel();
+    if (!sleutel) return null;
+    poging = (model) => viaGateway(data, sleutel, model);
+  }
 
   try {
-    const resultaat = await api.audio.transcriptions.create({ file: await bestand(), model: MODEL, ...opties(MODEL) });
-    return resultaat.text ?? '';
+    return await poging(MODEL);
   } catch (fout) {
-    if (!(fout instanceof OpenAI.BadRequestError) || MODEL === RESERVE_MODEL) throw fout;
-    console.warn(`Transcriptie met ${MODEL} geweigerd (${fout.message}); opnieuw met ${RESERVE_MODEL}.`);
-    const resultaat = await api.audio.transcriptions.create({
-      file: await bestand(),
-      model: RESERVE_MODEL,
-      ...opties(RESERVE_MODEL),
-    });
-    return resultaat.text ?? '';
+    if (MODEL === RESERVE_MODEL) throw fout;
+    console.warn(`Transcriptie met ${MODEL} mislukt (${(fout as Error).message}); opnieuw met ${RESERVE_MODEL}.`);
+    return await poging(RESERVE_MODEL);
   }
 }

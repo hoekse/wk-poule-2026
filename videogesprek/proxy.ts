@@ -18,6 +18,6 @@ export async function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     // Niet voor de toegangspagina zelf, Next-bestanden, manifest, iconen en robots.txt.
-    '/((?!toegang|api/toegang|_next/static|_next/image|manifest.webmanifest|icons/|robots.txt|favicon.ico).*)',
+    '/((?!toegang|api/toegang|api/status|_next/static|_next/image|manifest.webmanifest|icons/|robots.txt|favicon.ico).*)',
   ],
 };

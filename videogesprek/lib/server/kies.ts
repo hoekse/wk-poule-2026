@@ -4,8 +4,11 @@ import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
 import { z } from 'zod';
 import { ITEMS, NAAM, type Keuze, type KeuzeAntwoord } from '@/lib/antwoorden';
 import { besteLokaal, normaliseer } from '@/lib/vergelijk';
+import { GATEWAY_URL, gatewaySleutel } from './gateway';
 
 const MODEL = 'claude-haiku-5-5';
+/** Hetzelfde model via de Vercel AI Gateway. */
+const GATEWAY_MODEL = 'anthropic/claude-haiku-5.5';
 
 /** Onder deze zekerheid speelt onbekend.mp4. */
 export const DREMPEL = (() => {
@@ -16,11 +19,20 @@ export const DREMPEL = (() => {
 /** Vanaf deze lokale gelijkenis is de vraag (bijna) letterlijk gesteld: geen taalmodel nodig. */
 const SNEL_GENOEG = 0.9;
 
-let client: Anthropic | null = null;
-function anthropic(): Anthropic | null {
-  if (!process.env.ANTHROPIC_API_KEY) return null;
-  client ??= new Anthropic({ timeout: 8_000, maxRetries: 1 });
-  return client;
+let direct: Anthropic | null = null;
+/** Eigen ANTHROPIC_API_KEY gaat voor; anders via de Vercel AI Gateway. */
+async function anthropic(): Promise<{ api: Anthropic; model: string } | null> {
+  if (process.env.ANTHROPIC_API_KEY) {
+    direct ??= new Anthropic({ timeout: 8_000, maxRetries: 1 });
+    return { api: direct, model: MODEL };
+  }
+  // Het OIDC-token wisselt per verzoek, dus elke keer een nieuwe client.
+  const sleutel = await gatewaySleutel();
+  if (!sleutel) return null;
+  return {
+    api: new Anthropic({ apiKey: sleutel, baseURL: GATEWAY_URL, timeout: 8_000, maxRetries: 1 }),
+    model: GATEWAY_MODEL,
+  };
 }
 
 // De lijst verandert alleen bij een nieuwe deploy, dus de systeemprompt is per
@@ -50,11 +62,11 @@ const KeuzeSchema = z.object({
 });
 
 async function vraagClaude(tekst: string): Promise<Keuze | null> {
-  const api = anthropic();
-  if (!api) return null;
+  const verbinding = await anthropic();
+  if (!verbinding) return null;
 
-  const response = await api.messages.parse({
-    model: MODEL,
+  const response = await verbinding.api.messages.parse({
+    model: verbinding.model,
     max_tokens: 1024,
     // Eenvoudige keuze uit een korte lijst: lage effort houdt de vertraging klein.
     output_config: { effort: 'low', format: zodOutputFormat(KeuzeSchema) },
@@ -107,4 +119,15 @@ export async function kies(tekst: string, start = Date.now()): Promise<KeuzeAntw
     }
   }
   return klaar(lokaal(schoon), 'lokaal');
+}
+
+/** Voor /api/status: roept Claude rechtstreeks aan en meldt fouten in plaats van ze te verbergen. */
+export async function testClaude(tekst: string) {
+  const start = Date.now();
+  try {
+    const keuze = await vraagClaude(tekst);
+    return keuze ? { ok: true, keuze, ms: Date.now() - start } : { ok: false, fout: 'geen verbinding of geen antwoord' };
+  } catch (fout) {
+    return { ok: false, fout: fout instanceof Error ? fout.message : String(fout), ms: Date.now() - start };
+  }
 }
