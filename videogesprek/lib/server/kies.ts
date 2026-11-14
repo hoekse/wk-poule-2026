@@ -4,7 +4,10 @@ import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
 import { z } from 'zod';
 import { ITEMS, NAAM, type Keuze, type KeuzeAntwoord } from '@/lib/antwoorden';
 import { besteLokaal, normaliseer } from '@/lib/vergelijk';
-import { GATEWAY_URL, gatewaySleutel } from './gateway';
+import { GATEWAY_URL, gatewaySleutel, geweigerd } from './gateway';
+
+/** Na een weigering (bijv. geen tegoed) een minuut niet naar Claude, dat scheelt wachttijd. */
+let geweigerdTot = 0;
 
 const MODEL = 'claude-haiku-5-5';
 /** Hetzelfde model via de Vercel AI Gateway. */
@@ -62,6 +65,7 @@ const KeuzeSchema = z.object({
 });
 
 async function vraagClaude(tekst: string): Promise<Keuze | null> {
+  if (Date.now() < geweigerdTot) return null;
   const verbinding = await anthropic();
   if (!verbinding) return null;
 
@@ -112,6 +116,7 @@ export async function kies(tekst: string, start = Date.now()): Promise<KeuzeAntw
     const keuze = await vraagClaude(schoon);
     if (keuze) return klaar(keuze, 'claude');
   } catch (fout) {
+    if (geweigerd(fout)) geweigerdTot = Date.now() + 60_000;
     if (fout instanceof Anthropic.APIError) {
       console.error(`Claude-fout ${fout.status}:`, fout.message);
     } else {
@@ -123,6 +128,7 @@ export async function kies(tekst: string, start = Date.now()): Promise<KeuzeAntw
 
 /** Voor /api/status: roept Claude rechtstreeks aan en meldt fouten in plaats van ze te verbergen. */
 export async function testClaude(tekst: string) {
+  geweigerdTot = 0;
   const start = Date.now();
   try {
     const keuze = await vraagClaude(tekst);

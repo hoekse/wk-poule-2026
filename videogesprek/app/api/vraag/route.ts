@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import type { KeuzeAntwoord } from '@/lib/antwoorden';
 import { kies } from '@/lib/server/kies';
-import { transcribeer } from '@/lib/server/transcribeer';
+import { SpraakNietBeschikbaar, transcribeer } from '@/lib/server/transcribeer';
 
 export const maxDuration = 30;
 
@@ -23,6 +23,11 @@ export async function POST(request: Request) {
   try {
     tekst = await transcribeer(audio);
   } catch (fout) {
+    // Geweigerd (bijv. geen AI Gateway-tegoed): de app stapt over op de spraakherkenning van de browser.
+    if (fout instanceof SpraakNietBeschikbaar) {
+      console.error('Spraak-API weigert:', fout.message);
+      return NextResponse.json({ fout: 'spraak-API weigert' }, { status: 503 });
+    }
     if (fout instanceof OpenAI.APIError) console.error(`OpenAI-fout ${fout.status}:`, fout.message);
     else console.error('Transcriptiefout:', fout);
     const antwoord: KeuzeAntwoord = { soort: 'onbekend', zekerheid: 0, tekst: '', bron: 'fout', ms: Date.now() - start };

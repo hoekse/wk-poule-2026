@@ -18,3 +18,10 @@ export async function gatewaySleutel(): Promise<string | null> {
 }
 
 export const gatewayMogelijk = () => Boolean(process.env.AI_GATEWAY_API_KEY || process.env.VERCEL);
+
+/** Weigert de dienst ons (geen tegoed, geen creditcard, geen toegang)? Dan heeft opnieuw proberen geen zin. */
+export function geweigerd(fout: unknown): boolean {
+  const f = fout as { statusCode?: number; status?: number } | null;
+  const code = f?.statusCode ?? f?.status;
+  return code === 401 || code === 402 || code === 403;
+}

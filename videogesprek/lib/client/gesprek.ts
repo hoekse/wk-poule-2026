@@ -223,7 +223,8 @@ export class Gesprek {
         () => this.afbreken('Geef de app toegang tot je microfoon en spraakherkenning en bel opnieuw.'),
       );
       this.zet({ modus: 'browser' });
-      this.luister();
+      // Deze vraag is niet verstaan: laat hem vragen of je het nog een keer zegt.
+      await this.speel(this.clips.onbekend, generatie);
       return;
     }
     await this.reageer(res, generatie);

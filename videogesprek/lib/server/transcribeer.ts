@@ -2,7 +2,10 @@ import 'server-only';
 import { createGateway, transcribe } from 'ai';
 import OpenAI, { toFile } from 'openai';
 import { ITEMS, NAAM } from '@/lib/antwoorden';
-import { gatewayMogelijk, gatewaySleutel } from './gateway';
+import { gatewayMogelijk, gatewaySleutel, geweigerd } from './gateway';
+
+/** De spraak-API weigert (bijv. geen Gateway-tegoed): de app stapt over op de browser. */
+export class SpraakNietBeschikbaar extends Error {}
 
 const MODEL = process.env.OPENAI_TRANSCRIPTIE_MODEL || 'gpt-transcribe';
 /** Reserve als het hoofdmodel het verzoek weigert (werkt tot februari 2027). */
@@ -65,11 +68,17 @@ export async function transcribeer(audio: Blob): Promise<string | null> {
     poging = (model) => viaGateway(data, sleutel, model);
   }
 
+  const weigering = (fout: unknown) =>
+    geweigerd(fout) ? new SpraakNietBeschikbaar((fout as Error).message) : fout;
   try {
     return await poging(MODEL);
   } catch (fout) {
-    if (MODEL === RESERVE_MODEL) throw fout;
+    if (MODEL === RESERVE_MODEL || geweigerd(fout)) throw weigering(fout);
     console.warn(`Transcriptie met ${MODEL} mislukt (${(fout as Error).message}); opnieuw met ${RESERVE_MODEL}.`);
-    return await poging(RESERVE_MODEL);
+    try {
+      return await poging(RESERVE_MODEL);
+    } catch (fout2) {
+      throw weigering(fout2);
+    }
   }
 }
