@@ -28,6 +28,8 @@ export type Staat = {
   laatste: KeuzeAntwoord | null;
   niveau: Niveau | null;
   modus: Modus | null;
+  /** Eigen camerabeeld zichtbaar (rechtsboven tijdens het gesprek). */
+  eigenBeeld: boolean;
 };
 
 type Modus = 'server' | 'browser';
@@ -44,6 +46,12 @@ const MICROFOON: MediaTrackConstraints = {
   autoGainControl: false,
 };
 
+const CAMERA: MediaTrackConstraints = {
+  facingMode: 'user',
+  width: { ideal: 720 },
+  height: { ideal: 1280 },
+};
+
 const BEGIN: Staat = {
   fase: 'klaar',
   status: 'verbinden',
@@ -54,6 +62,7 @@ const BEGIN: Staat = {
   laatste: null,
   niveau: null,
   modus: null,
+  eigenBeeld: false,
 };
 
 const wacht = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -76,7 +85,7 @@ export class Gesprek {
   constructor(
     private clips: Clips,
     private spraakApi: boolean,
-    private videos: { idle: HTMLVideoElement; antwoord: HTMLVideoElement },
+    private videos: { idle: HTMLVideoElement; antwoord: HTMLVideoElement; eigen: HTMLVideoElement },
     private onStaat: (s: Staat) => void,
     private debug = false,
   ) {
@@ -130,7 +139,7 @@ export class Gesprek {
 
     if (modus === 'server') {
       try {
-        this.stream = await navigator.mediaDevices.getUserMedia({ audio: MICROFOON });
+        this.stream = await this.vraagMedia(true);
       } catch (fout) {
         if (generatie !== this.generatie) return;
         const naam = (fout as Error).name;
@@ -142,8 +151,15 @@ export class Gesprek {
         return;
       }
       if (generatie !== this.generatie) return this.stopStream();
+      this.toonEigenBeeld();
       this.maakLuisteraar(generatie);
     } else {
+      // Spraakherkenning van de browser luistert zelf; hier alleen de camera.
+      void this.vraagMedia(false).then((stream) => {
+        if (generatie !== this.generatie) return stream?.getTracks().forEach((t) => t.stop());
+        this.stream = stream;
+        this.toonEigenBeeld();
+      });
       this.webspraak = new WebSpraak(
         (tekst) => void this.verwerkTekst(tekst, generatie),
         () => this.afbreken('Geef de app toegang tot je microfoon en spraakherkenning en bel opnieuw.'),
@@ -162,10 +178,36 @@ export class Gesprek {
     await this.speel(this.clips.begroeting, generatie);
   }
 
+  /** Camera en (optioneel) microfoon. Geen camera of geweigerd: dan alleen de microfoon. */
+  private async vraagMedia(microfoon: boolean): Promise<MediaStream | null> {
+    try {
+      return await navigator.mediaDevices.getUserMedia({ audio: microfoon ? MICROFOON : false, video: CAMERA });
+    } catch {
+      if (!microfoon) return null;
+      // Geen camera, of alleen de camera geweigerd: dan zonder eigen beeld verder.
+      return await navigator.mediaDevices.getUserMedia({ audio: MICROFOON });
+    }
+  }
+
+  private toonEigenBeeld() {
+    const beeld = this.stream?.getVideoTracks() ?? [];
+    const { eigen } = this.videos;
+    if (beeld.length === 0) {
+      eigen.srcObject = null;
+      this.zet({ eigenBeeld: false });
+      return;
+    }
+    eigen.srcObject = new MediaStream(beeld);
+    eigen.play().catch(() => {});
+    this.zet({ eigenBeeld: true });
+  }
+
   private maakLuisteraar(generatie: number) {
-    if (!this.stream || !this.ctx) return;
+    const geluid = this.stream?.getAudioTracks() ?? [];
+    if (geluid.length === 0 || !this.ctx) return;
     this.luisteraar?.sluit();
-    this.luisteraar = new Luisteraar(this.stream, this.ctx, {
+    // Alleen het geluid: de opname mag geen camerabeeld bevatten.
+    this.luisteraar = new Luisteraar(new MediaStream(geluid), this.ctx, {
       onVraag: (opname) => void this.verwerkOpname(opname, generatie),
       onNiveau: this.debug ? (n) => this.toonNiveau(n) : undefined,
     });
@@ -216,7 +258,11 @@ export class Gesprek {
     if (res === 'geen-spraak-api' && webSpraakBeschikbaar()) {
       this.luisteraar?.sluit();
       this.luisteraar = null;
-      this.stopStream();
+      // Microfoon vrijgeven voor de browser-spraakherkenning; camera blijft aan.
+      this.stream?.getAudioTracks().forEach((t) => {
+        t.stop();
+        this.stream?.removeTrack(t);
+      });
       this.modus = 'browser';
       this.webspraak = new WebSpraak(
         (tekst) => void this.verwerkTekst(tekst, generatie),
@@ -332,6 +378,8 @@ export class Gesprek {
   private stopStream() {
     this.stream?.getTracks().forEach((t) => t.stop());
     this.stream = null;
+    this.videos.eigen.srcObject = null;
+    if (this.staat.eigenBeeld) this.zet({ eigenBeeld: false });
   }
 
   private async houdScherminAan() {
@@ -357,13 +405,17 @@ export class Gesprek {
     this.videos.idle.play().catch(() => {});
     void this.houdScherminAan();
 
-    // iOS kan de microfoon stoppen als de app op de achtergrond staat.
-    if (this.modus === 'server' && this.stream?.getAudioTracks().every((t) => t.readyState === 'ended')) {
+    // iOS stopt camera en microfoon als de app op de achtergrond staat.
+    const gestopt = !this.stream || this.stream.getTracks().every((t) => t.readyState === 'ended');
+    if (gestopt) {
       try {
-        this.stream = await navigator.mediaDevices.getUserMedia({ audio: MICROFOON });
+        const oud = this.stream;
+        this.stream = await this.vraagMedia(this.modus === 'server');
+        oud?.getTracks().forEach((t) => t.stop());
         if (generatie !== this.generatie) return this.stopStream();
-        this.stream.getAudioTracks().forEach((t) => (t.enabled = !this.staat.gedempt));
-        this.maakLuisteraar(generatie);
+        this.stream?.getAudioTracks().forEach((t) => (t.enabled = !this.staat.gedempt));
+        this.toonEigenBeeld();
+        if (this.modus === 'server') this.maakLuisteraar(generatie);
       } catch {
         this.afbreken('De microfoon is gestopt. Bel opnieuw.');
         return;

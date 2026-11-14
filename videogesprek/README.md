@@ -15,13 +15,24 @@ Een web-app voor je telefoon die aanvoelt als een videogesprek met Rick. Je tikt
 6. **Antwoord.** De gekozen clip speelt af, met een crossfade van 150 ms vanuit de luisterlus. Bij twijfel (zekerheid onder 0,6) speelt `onbekend.mp4`. Bij ruis of een kuchje gebeurt er niets en luistert hij verder.
 7. **Ophangen** met de rode knop.
 
+Jijzelf staat ook in beeld: tijdens het bellen schermvullend (voorcamera, gespiegeld), tijdens het gesprek klein rechtsboven. Weiger je de camera, dan gaat het gesprek gewoon door zonder eigen beeld.
+
 Tijdens het afspelen luistert de microfoon niet, zodat hij zichzelf niet hoort. In beeld staan alleen de naam, de gesprekstimer, de dempknop en de ophangknop. Na vijf seconden verdwijnen de knoppen. Tik op het scherm om ze terug te halen.
 
 Wordt een vraag (bijna) letterlijk gesteld zoals in de lijst, dan kiest de app zelf het antwoord, zonder Claude. Dat is sneller en gratis.
 
+## Zo zijn de clips gemaakt
+
+- **Antwoorden, begroeting en "niet verstaan":** de foto van Rick plus jouw ingesproken antwoord, door **OmniHuman** in Magnific (pratend hoofd met lipsynchronisatie). Per antwoord alleen het stuk waarin Rick praat, met 0,4 s stilte ervoor en 0,6 s erna, zodat hij met dichte mond begint en eindigt. Kosten: ongeveer 170 credits per seconde.
+- **Prompt die werkt:** "Front-camera close-up of a man lying on a couch, looking into the camera. Only his face, neck and shoulders are in the frame; his hands stay out of the frame and no phone is visible. …" Zonder die zin tekent het model soms een hand met een telefoon in beeld.
+- **Luisterlus (`idle.mp4`):** **Kling 2.5** in Magnific, 10 s, 1080p, met de foto als eerste én laatste beeld. Daardoor loopt hij naadloos rond. Prompt: stil luisteren, mond dicht, rustig ademen, langzaam knipperen.
+- Daarna omgezet naar 720×1280 en versleuteld met `npm run versleutel`.
+
+Stuur nieuwe opnames gerust naar Claude: die knipt Ricks deel eruit, laat de clip maken, controleert hem en zet hem online.
+
 ## Een antwoord toevoegen
 
-1. **Maak de clip** van foto plus jouw ingesproken antwoord. Zorg dat hij begint en eindigt in dezelfde neutrale houding als `idle.mp4`.
+1. **Maak de clip** van foto plus jouw ingesproken antwoord (zie hierboven). Zorg dat hij begint en eindigt in dezelfde neutrale houding als `idle.mp4`.
 2. **Zet hem in het juiste formaat** (staand, 720×1280, H.264 met AAC-geluid), bijvoorbeeld met [ffmpeg](https://ffmpeg.org):
 
    ```bash

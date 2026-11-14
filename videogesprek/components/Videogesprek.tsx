@@ -25,6 +25,7 @@ function Timer({ sinds }: { sinds: number }) {
 export default function Videogesprek({ naam, foto, clips, spraakApi }: Props) {
   const idleRef = useRef<HTMLVideoElement>(null);
   const antwoordRef = useRef<HTMLVideoElement>(null);
+  const eigenRef = useRef<HTMLVideoElement>(null);
   const gesprekRef = useRef<Gesprek | null>(null);
   const [staat, setStaat] = useState<Staat | null>(null);
   const [debug, setDebug] = useState(false);
@@ -37,7 +38,7 @@ export default function Videogesprek({ naam, foto, clips, spraakApi }: Props) {
     const gesprek = new Gesprek(
       clips,
       spraakApi,
-      { idle: idleRef.current!, antwoord: antwoordRef.current! },
+      { idle: idleRef.current!, antwoord: antwoordRef.current!, eigen: eigenRef.current! },
       setStaat,
       metDebug,
     );
@@ -72,6 +73,10 @@ export default function Videogesprek({ naam, foto, clips, spraakApi }: Props) {
       setKnoppen(false);
     } else toonKnoppen();
   };
+
+  // Eigen camerabeeld: tijdens het bellen schermvullend, tijdens het gesprek klein rechtsboven.
+  const eigenZichtbaar = Boolean(staat?.eigenBeeld) && (fase === 'bellen' || inGesprek);
+  const klein = inGesprek;
 
   const statusTekst =
     fase === 'bellen' ? 'Bellen…' : fase === 'opgehangen' ? `Gesprek beëindigd · ${tijd(staat?.duur ?? 0)}` : 'Videogesprek';
@@ -132,14 +137,41 @@ export default function Videogesprek({ naam, foto, clips, spraakApi }: Props) {
         </div>
       </div>
 
+      {/* Eigen camerabeeld, gespiegeld zoals bij een videogesprek */}
+      <video
+        ref={eigenRef}
+        playsInline
+        muted
+        autoPlay
+        aria-hidden
+        className="absolute object-cover transition-all duration-500 ease-out"
+        style={{
+          transform: 'scaleX(-1)',
+          opacity: eigenZichtbaar ? 1 : 0,
+          top: klein ? 'calc(env(safe-area-inset-top) + 12px)' : 0,
+          right: klein ? 12 : 0,
+          width: klein ? 104 : '100%',
+          height: klein ? 156 : '100%',
+          borderRadius: klein ? 16 : 0,
+          boxShadow: klein ? '0 4px 18px rgba(0,0,0,0.45)' : 'none',
+        }}
+      />
+
       {/* Belscherm: voor, tijdens en na het bellen */}
       <div
         className={`absolute inset-0 flex flex-col items-center justify-between transition-opacity duration-500 ${
           inGesprek ? 'pointer-events-none opacity-0' : 'opacity-100'
         }`}
       >
-        <img src={foto} alt="" className="laag scale-110 blur-2xl" draggable={false} />
-        <div className="absolute inset-0 bg-black/55" />
+        {fase === 'bellen' && staat?.eigenBeeld ? (
+          // Tijdens het bellen zie je jezelf, iets gedimd.
+          <div className="absolute inset-0 bg-black/35" />
+        ) : (
+          <>
+            <img src={foto} alt="" className="laag scale-110 blur-2xl" draggable={false} />
+            <div className="absolute inset-0 bg-black/55" />
+          </>
+        )}
 
         <div className="relative flex flex-col items-center px-8" style={{ marginTop: 'calc(env(safe-area-inset-top) + 14vh)' }}>
           <img

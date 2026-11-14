@@ -3,23 +3,24 @@
     "id": "1",
     "clip": "1.mp4",
     "vragen": [
+      "Hee, hoe gaat het met je?",
       "Hey, hoe is het met je?",
       "Hoe gaat het?",
       "Alles goed met je?",
       "Hoe is het?"
     ],
-    "antwoordtekst": "Ja, giet weer."
+    "antwoordtekst": "Ja, giet wel."
   },
   {
     "id": "2",
     "clip": "2.mp4",
     "vragen": [
+      "Heb je een fijne avond?",
       "Heb je een leuke dag?",
-      "Is het een leuke dag?",
-      "Heb je het een beetje naar je zin vandaag?",
-      "Hoe is je dag?"
+      "Heb je het naar je zin?",
+      "Is het een beetje gezellig?"
     ],
-    "antwoordtekst": "Ja, weer."
+    "antwoordtekst": "Jawel."
   },
   {
     "id": "3",
@@ -30,6 +31,6 @@
       "Ben je zenuwachtig?",
       "Vind je het eng?"
     ],
-    "antwoordtekst": "Oh."
+    "antwoordtekst": "Oeh, oh, jawel, oeh..."
   }
 ]
