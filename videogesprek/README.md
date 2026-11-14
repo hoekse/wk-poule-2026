@@ -3,7 +3,7 @@
 Een web-app voor je telefoon die aanvoelt als een videogesprek met Rick. Je tikt op de groene knop, hoort de kiestoon, hij neemt op en zegt hallo. Daarna stel je hardop een vraag en hij antwoordt met een clip die jij vooraf hebt laten maken. Hij zegt nooit iets wat jij niet hebt opgenomen.
 
 > **Let op: de GitHub-repository `hoekse/wk-poule-2026` is openbaar.**
-> Iedereen kan alles zien wat erin staat. Zet de echte foto en de echte clips van Rick daarom **niet** in deze repository. Er staan nu alleen placeholders in. Verhuis de map `videogesprek` eerst naar een eigen **privé**-repository (zie [Naar een privé-repository](#naar-een-privé-repository)) en zet de echte bestanden pas daar.
+> Iedereen kan alles zien wat erin staat. Zet de echte foto en clips van Rick daarom **nooit onversleuteld** in deze repository. Ze horen versleuteld in `media/` (zie [Foto en clips versleuteld toevoegen](#foto-en-clips-versleuteld-toevoegen)). Alleen Vercel kan ze ontsleutelen.
 
 ## Zo werkt het
 
@@ -29,10 +29,16 @@ Wordt een vraag (bijna) letterlijk gesteld zoals in de lijst, dan kiest de app z
      -vf "scale=720:1280:force_original_aspect_ratio=increase,crop=720:1280" \
      -c:v libx264 -profile:v high -crf 20 -pix_fmt yuv420p \
      -c:a aac -b:a 128k -movflags +faststart \
-     public/clips/4.mp4
+     antwoord4.mp4
    ```
 
-3. **Zet de clip** in `public/clips/`. Bestandsnaam = nummer van de vraag, bijvoorbeeld `4.mp4`.
+3. **Versleutel hem** naar `media/`. Bestandsnaam = nummer van de vraag:
+
+   ```bash
+   npm run versleutel -- antwoord4.mp4 clips/4.mp4
+   ```
+
+   Dit maakt `media/clips/4.mp4.enc`. Zet het onversleutelde bestand **niet** in de repository.
 4. **Voeg een regel toe** aan `data/antwoorden.json`:
 
    ```json
@@ -52,7 +58,18 @@ Wordt een vraag (bijna) letterlijk gesteld zoals in de lijst, dan kiest de app z
    ```
 
    Dit meldt ontbrekende clips, dubbele id's en clips die nergens gebruikt worden.
-6. **Opnieuw deployen:** commit en push. Vercel bouwt en zet de nieuwe versie automatisch online. Ontbreekt er een clip, dan stopt de build met een duidelijke melding, zodat je dat niet pas tijdens een gesprek merkt.
+6. **Opnieuw deployen** (zie [Online zetten op Vercel](#online-zetten-op-vercel)). Ontbreekt er een clip, dan stopt de build met een duidelijke melding, zodat je dat niet pas tijdens een gesprek merkt.
+
+Liever niet zelf doen? Stuur de clips naar Claude, dan worden ze versleuteld, toegevoegd en online gezet.
+
+### Foto en clips versleuteld toevoegen
+
+- `media/publieke-sleutel.txt` is de publieke sleutel. Daarmee kan iedereen bestanden **versleutelen**: `npm run versleutel -- <bestand> <pad in public/>`.
+- **Ontsleutelen** kan alleen met de geheime sleutel `MEDIA_PRIVE_SLEUTEL`. Die staat alleen in Vercel, als gevoelige variabele die niemand kan teruglezen.
+- Tijdens de build op Vercel worden alle bestanden in `media/` ontsleuteld naar `public/` (`media/clips/1.mp4.enc` wordt `public/clips/1.mp4`). Een versleuteld bestand gaat dan vóór de placeholder met dezelfde naam.
+- Lokaal wordt niets ontsleuteld. Je ziet daar de grijze placeholders, zodat er nooit per ongeluk een onversleutelde foto in git belandt.
+- Is de geheime sleutel kwijt (bijvoorbeeld omdat het Vercel-project is verwijderd)? Maak dan met `node -e "import('./scripts/media-crypto.mjs').then(m => console.log(m.maakSleutelpaar()))"` een nieuw paar, zet `publiek` in `media/publieke-sleutel.txt` en `prive` als gevoelige variabele `MEDIA_PRIVE_SLEUTEL` in Vercel, en versleutel de originele bestanden opnieuw.
+- **Nu in `media/`:** de foto van Rick en tijdelijke clips die van die foto zijn gemaakt (licht ademend beeld, zoemtoon, klein label onderin). `npm run fotoclips -- <foto.jpg>` maakt ze opnieuw van een betere foto. De echte clips vervangen ze.
 
 ### De vaste clips
 
@@ -64,12 +81,12 @@ Wordt een vraag (bijna) letterlijk gesteld zoals in de lijst, dan kiest de app z
 
 ### Foto en naam
 
-- **Foto** voor het belscherm en als ondergrond van de video: `public/foto.jpg`, staand. Gebruik dezelfde foto waarvan de clips gemaakt zijn, dan klopt de uitsnede.
+- **Foto** voor het belscherm en als ondergrond van de video: versleuteld als `media/foto.jpg.enc` (`npm run versleutel -- foto.jpg foto.jpg`), staand. Gebruik dezelfde foto waarvan de clips gemaakt zijn, dan klopt de uitsnede.
 - **Naam**: `data/instellingen.json`.
 
 ### Placeholders opnieuw maken
 
-`npm run placeholders` maakt de tijdelijke clips, de placeholder-foto en de app-iconen opnieuw (ffmpeg en ImageMagick nodig). De iconen tonen bewust geen gezicht, omdat iconen voor iedereen op te vragen zijn.
+`npm run placeholders` maakt de grijze placeholders in `public/` (voor lokaal ontwikkelen) en de app-iconen opnieuw (ffmpeg en ImageMagick nodig). De iconen tonen bewust geen gezicht, omdat iconen voor iedereen op te vragen zijn.
 
 ## Online zetten op Vercel
 
@@ -84,6 +101,7 @@ Bij **Settings › Environment Variables** van het project:
 | `ANTHROPIC_API_KEY` | Het juiste antwoord kiezen. Zelf toevoegen. |
 | `ZEKERHEID_DREMPEL` | Optioneel, standaard `0.6`. Hoger = sneller "nog een keer vragen". |
 | `OPENAI_TRANSCRIPTIE_MODEL` | Optioneel, standaard `gpt-transcribe`. Weigert dat model een verzoek, dan probeert de app het met `gpt-4o-mini-transcribe`. |
+| `MEDIA_PRIVE_SLEUTEL` | Ontsleutelt de foto en clips tijdens de build. Staat al ingesteld, gevoelig. Niet aankomen. |
 
 Na het toevoegen of wijzigen van een variabele: **Deployments › (laatste) › Redeploy**. Pas dan werkt hij.
 
@@ -118,7 +136,7 @@ Open de link in Safari, vul de code in, tik op **Deel › Zet op beginscherm**. 
 1. Maak op GitHub een nieuwe **privé**-repository, bijvoorbeeld `videogesprek-rick`.
 2. Kopieer de inhoud van de map `videogesprek` naar die repository en push.
 3. Koppel die repository aan het Vercel-project `videogesprek` (**Settings › Git**, Root Directory leeg).
-4. Zet pas daarna de echte foto en clips erin.
+4. Daar mogen foto en clips ook onversleuteld in `public/`, maar versleuteld werkt net zo goed.
 5. Verwijder `videogesprek` uit `wk-poule-2026`.
 
 ## Lokaal ontwikkelen
@@ -143,8 +161,9 @@ Per vraag kost het een fractie van een cent: een paar seconden audio bij OpenAI 
 ```
 data/antwoorden.json        vragen en antwoorden (dit pas je aan)
 data/instellingen.json      naam en foto
-public/clips/               de clips (nu placeholders)
-public/foto.jpg             foto voor het belscherm (nu placeholder)
+media/                      foto en clips van Rick, versleuteld (+ publieke sleutel)
+public/clips/               grijze placeholder-clips voor lokaal ontwikkelen
+public/foto.jpg             grijze placeholder-foto voor lokaal ontwikkelen
 app/page.tsx                hoofdpagina
 app/api/vraag/route.ts      opname -> tekst (OpenAI) -> antwoord (Claude)
 app/api/kies/route.ts       tekst -> antwoord (voor de browser-spraakherkenning)
@@ -159,4 +178,7 @@ lib/server/kies.ts          antwoord kiezen (snel, Claude, of zelf vergelijken)
 lib/server/transcribeer.ts  spraak naar tekst
 scripts/controleer.mjs      controleert clips en json vóór elke build
 scripts/maak-placeholders.sh placeholders en iconen maken
+scripts/maak-fotoclips.sh   tijdelijke clips van een foto, direct versleuteld
+scripts/versleutel-media.mjs bestand versleutelen naar media/
+scripts/ontsleutel-media.mjs ontsleutelen tijdens de build op Vercel
 ```

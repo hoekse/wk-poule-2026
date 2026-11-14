@@ -9,6 +9,8 @@ import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const clipsMap = join(root, 'public', 'clips');
+// Een bestand telt als aanwezig als het in public/ staat of versleuteld in media/.
+const aanwezig = (pad) => existsSync(join(root, 'public', pad)) || existsSync(join(root, 'media', `${pad}.enc`));
 const fouten = [];
 const waarschuwingen = [];
 
@@ -34,7 +36,7 @@ for (const [i, item] of (items ?? []).entries()) {
   if (typeof item?.clip !== 'string' || !item.clip.endsWith('.mp4')) fouten.push(`${waar}: "clip" moet een .mp4-bestandsnaam zijn.`);
   else {
     gebruikt.add(item.clip);
-    if (!existsSync(join(clipsMap, item.clip))) fouten.push(`${waar}: clip public/clips/${item.clip} bestaat niet.`);
+    if (!aanwezig(`clips/${item.clip}`)) fouten.push(`${waar}: clip public/clips/${item.clip} (of media/clips/${item.clip}.enc) bestaat niet.`);
   }
   if (!Array.isArray(item?.vragen) || item.vragen.length === 0 || item.vragen.some((v) => typeof v !== 'string' || !v.trim()))
     fouten.push(`${waar}: "vragen" moet een lijst met minstens één vraag zijn.`);
@@ -42,9 +44,9 @@ for (const [i, item] of (items ?? []).entries()) {
 }
 
 for (const vast of ['idle.mp4', 'begroeting.mp4', 'onbekend.mp4']) {
-  if (!existsSync(join(clipsMap, vast))) fouten.push(`Vaste clip public/clips/${vast} ontbreekt.`);
+  if (!aanwezig(`clips/${vast}`)) fouten.push(`Vaste clip public/clips/${vast} ontbreekt.`);
 }
-if (!existsSync(join(root, 'public', instellingen.foto))) fouten.push(`Foto public/${instellingen.foto} ontbreekt (zie data/instellingen.json).`);
+if (!aanwezig(instellingen.foto)) fouten.push(`Foto public/${instellingen.foto} ontbreekt (zie data/instellingen.json).`);
 
 if (existsSync(clipsMap)) {
   for (const bestand of readdirSync(clipsMap)) {

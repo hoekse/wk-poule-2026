@@ -4,12 +4,14 @@
   "description": "Mobiele web-app die aanvoelt als een videogesprek, met vooraf opgenomen antwoordclips.",
   "scripts": {
     "dev": "next dev",
-    "prebuild": "node scripts/controleer.mjs",
+    "prebuild": "node scripts/ontsleutel-media.mjs && node scripts/controleer.mjs",
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "controleer": "node scripts/controleer.mjs",
-    "placeholders": "bash scripts/maak-placeholders.sh"
+    "placeholders": "bash scripts/maak-placeholders.sh",
+    "versleutel": "node scripts/versleutel-media.mjs",
+    "fotoclips": "bash scripts/maak-fotoclips.sh"
   },
   "engines": {
     "node": "24.x"
