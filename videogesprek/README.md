@@ -73,23 +73,25 @@ Wordt een vraag (bijna) letterlijk gesteld zoals in de lijst, dan kiest de app z
 
 ## Online zetten op Vercel
 
-1. Maak in Vercel een **nieuw project** voor de repository waar `videogesprek` in staat.
-2. **Root Directory**: `videogesprek` (staat de app in een eigen repository, dan leeg laten). Framework: Next.js.
-3. Zet bij **Settings › Environment Variables**:
+De app staat online op **https://videogesprek.vercel.app** (Vercel-project `videogesprek`). Het project is bewust **niet** aan deze openbare GitHub-repository gekoppeld. Een push zet dus niet vanzelf een nieuwe versie online.
 
-   | Variabele | Waarvoor |
-   | --- | --- |
-   | `TOEGANGSCODE` | De code die je één keer per telefoon invult. **Zonder code is de app in productie dicht.** |
-   | `OPENAI_API_KEY` | Spraak naar tekst. |
-   | `ANTHROPIC_API_KEY` | Het juiste antwoord kiezen. |
-   | `ZEKERHEID_DREMPEL` | Optioneel, standaard `0.6`. Hoger = sneller "nog een keer vragen". |
-   | `OPENAI_TRANSCRIPTIE_MODEL` | Optioneel, standaard `gpt-transcribe`. Weigert dat model een verzoek, dan probeert de app het met `gpt-4o-mini-transcribe`. |
+Bij **Settings › Environment Variables** van het project:
 
-4. **Deploy.** Na het wijzigen van een variabele moet je opnieuw deployen voordat hij werkt.
+| Variabele | Waarvoor |
+| --- | --- |
+| `TOEGANGSCODE` | De code die je één keer per telefoon invult. Staat al ingesteld. **Zonder code is de app in productie dicht.** |
+| `OPENAI_API_KEY` | Spraak naar tekst. Zelf toevoegen. |
+| `ANTHROPIC_API_KEY` | Het juiste antwoord kiezen. Zelf toevoegen. |
+| `ZEKERHEID_DREMPEL` | Optioneel, standaard `0.6`. Hoger = sneller "nog een keer vragen". |
+| `OPENAI_TRANSCRIPTIE_MODEL` | Optioneel, standaard `gpt-transcribe`. Weigert dat model een verzoek, dan probeert de app het met `gpt-4o-mini-transcribe`. |
+
+Na het toevoegen of wijzigen van een variabele: **Deployments › (laatste) › Redeploy**. Pas dan werkt hij.
 
 Zonder `OPENAI_API_KEY` gebruikt de app de spraakherkenning van de browser. Die is op iPhone onbetrouwbaar. Zonder `ANTHROPIC_API_KEY` vergelijkt de app de tekst zelf met de vragenlijst. Dat werkt als je de vraag ongeveer zo stelt als in de lijst.
 
-**Privé houden.** Alles staat achter de toegangscode, ook de clips en de foto. Zoekmachines worden geweerd (`noindex` en `robots.txt`). Deel de link en de code niet.
+**Nieuwe versie online zetten.** Zodra de app in een eigen privé-repository staat: koppel die bij **Settings › Git** aan het project (Root Directory leeg maken). Daarna zet elke push naar `main` de nieuwe versie automatisch online. Tot die tijd kan Claude een nieuwe versie voor je deployen.
+
+**Privé houden.** Alles staat achter de toegangscode, ook de clips en de foto. Vercels eigen login beschermt alleen de preview-versies. Zoekmachines worden geweerd (`noindex` en `robots.txt`). Deel de link en de code niet.
 
 ### Op je telefoon zetten
 
@@ -115,7 +117,7 @@ Open de link in Safari, vul de code in, tik op **Deel › Zet op beginscherm**. 
 
 1. Maak op GitHub een nieuwe **privé**-repository, bijvoorbeeld `videogesprek-rick`.
 2. Kopieer de inhoud van de map `videogesprek` naar die repository en push.
-3. Koppel die repository in Vercel (Root Directory leeg).
+3. Koppel die repository aan het Vercel-project `videogesprek` (**Settings › Git**, Root Directory leeg).
 4. Zet pas daarna de echte foto en clips erin.
 5. Verwijder `videogesprek` uit `wk-poule-2026`.
 
