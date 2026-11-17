@@ -2,7 +2,7 @@ import { Kop } from '../components/Basis';
 import { LijnGrafiek } from '../components/Grafiek';
 import { dagDatum } from '../lib/datum';
 import { APPARATUUR, beschikbaar, gewichtLabel, repLabel, SPIERNAMEN, zoekOefening } from '../lib/oefeningen';
-import { e1rm, e1rmReeks, fmtKg, geschiedenis, werkSets } from '../lib/progressie';
+import { e1rm, e1rmReeks, fmtKg, geschiedenis, setTekst, werkSets } from '../lib/progressie';
 import { useNav, useWinkel } from '../lib/winkel';
 
 export function OefeningDetail({ id }: { id: string }) {
@@ -69,7 +69,7 @@ export function OefeningDetail({ id }: { id: string }) {
                 <div className="groei">
                   <div className="titel getal">
                     {werkSets(log)
-                      .map((x) => `${fmtKg(x.gewicht)}×${x.reps}${sec ? 's' : ''}`)
+                      .map((x) => setTekst(x, oef))
                       .join(' · ')}
                   </div>
                   <div className="dun klein">

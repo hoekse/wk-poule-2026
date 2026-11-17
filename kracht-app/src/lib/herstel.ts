@@ -2,7 +2,7 @@ import { plusDagen } from './datum';
 import type { Aanpassing, Dagdata, Datum, Staat } from './types';
 
 export interface Onderdeel {
-  sleutel: 'slaap' | 'cpap' | 'hrv' | 'rusthartslag' | 'gevoel';
+  sleutel: 'slaap' | 'cpap' | 'zuurstof' | 'hrv' | 'rusthartslag' | 'gevoel';
   naam: string;
   score: number;
   gewicht: number;
@@ -44,6 +44,22 @@ export function cpapGebruikScore(uren: number): number {
   return klem((uren / 4) * 70, 5);
 }
 
+/** Laagste zuurstof: 92% of hoger is goed, onder de 85% slecht. */
+export function spo2MinScore(min: number): number {
+  if (min >= 92) return 100;
+  if (min >= 88) return 70 + ((min - 88) / 4) * 30;
+  if (min >= 84) return 40 + ((min - 84) / 4) * 30;
+  return klem(40 - (84 - min) * 5, 10);
+}
+
+/** Zuurstofdips per uur: zelf gemeten (O2Ring-bestand) of uitgerekend uit het aantal dips en de slaapduur. */
+export function odiVan(d: Partial<Dagdata>): number | undefined {
+  if (typeof d.odi === 'number') return d.odi;
+  const uren = d.slaapUren ?? d.cpapUren;
+  if (typeof d.dips === 'number' && uren) return Math.round((d.dips / uren) * 10) / 10;
+  return undefined;
+}
+
 export function berekenHerstel(staat: Staat, datum: Datum): Herstel {
   const d: Partial<Dagdata> = staat.dagdata[datum] ?? {};
   const doel = staat.instellingen.slaapDoel;
@@ -76,6 +92,27 @@ export function berekenHerstel(staat: Staat, datum: Datum): Herstel {
       if (d.cpapUren < 4) waarschuwingen.push('Minder dan 4 uur CPAP vannacht. Een korte nacht met apneus kost herstel: houd het vandaag rustiger.');
     }
     onderdelen.push({ sleutel: 'cpap', naam: 'CPAP', score: Math.min(...delen) * 0.6 + gem(delen) * 0.4, gewicht: 25, toelichting: tekst.join(', ') });
+  }
+
+  const odi = odiVan(d);
+  if (odi != null || typeof d.spo2Min === 'number') {
+    const delen: number[] = [];
+    const tekst: string[] = [];
+    if (typeof d.spo2Min === 'number') {
+      delen.push(spo2MinScore(d.spo2Min));
+      tekst.push(`laagste ${Math.round(d.spo2Min)}%`);
+      if (d.spo2Min < 85) waarschuwingen.push(`Je zuurstof zakte vannacht tot ${Math.round(d.spo2Min)}%. Zat het masker goed? Gebeurt dit vaker, bespreek het met je slaapcentrum.`);
+    }
+    if (odi != null) {
+      delen.push(ahiScore(odi));
+      tekst.push(`${fmt1(odi)} dips per uur`);
+      if (odi > 10) waarschuwingen.push(`Veel zuurstofdips (${fmt1(odi)} per uur). Vergelijk met je AHI; blijft het hoog, overleg met je slaapcentrum.`);
+    }
+    if (typeof d.onder90 === 'number' && d.onder90 > 0) {
+      delen.push(d.onder90 <= 5 ? 100 : klem(100 - (d.onder90 - 5) * 2, 10));
+      tekst.push(`${Math.round(d.onder90)} min < 90%`);
+    }
+    onderdelen.push({ sleutel: 'zuurstof', naam: 'Zuurstof (O2Ring)', score: Math.min(...delen) * 0.6 + gem(delen) * 0.4, gewicht: 15, toelichting: tekst.join(', ') });
   }
 
   if (typeof d.hrv === 'number') {

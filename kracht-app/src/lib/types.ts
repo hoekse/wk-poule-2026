@@ -13,7 +13,8 @@ export type Spiergroep =
   | 'kuiten'
   | 'romp'
   | 'onderrug'
-  | 'grip';
+  | 'grip'
+  | 'conditie';
 
 export type ApparaatId =
   | 'stang'
@@ -36,10 +37,11 @@ export type ApparaatId =
   | 'optrekstang'
   | 'rugstrekbank'
   | 'kuitmachine'
-  | 'kettlebell';
+  | 'kettlebell'
+  | 'cardio';
 
 /** Hoe het gewicht van een oefening wordt genoteerd. */
-export type GewichtType = 'totaal' | 'per-hand' | 'stapel' | 'lichaamsgewicht';
+export type GewichtType = 'totaal' | 'per-hand' | 'stapel' | 'lichaamsgewicht' | 'geen';
 
 export interface Oefening {
   id: string;
@@ -159,7 +161,7 @@ export interface Training {
   notitie?: string;
 }
 
-export type Bron = 'apple' | 'hae' | 'sleephq' | 'prisma' | 'csv' | 'handmatig';
+export type Bron = 'apple' | 'hae' | 'sleephq' | 'prisma' | 'o2ring' | 'csv' | 'handmatig';
 
 export interface Dagdata {
   /** Ochtend waarop je wakker werd. */
@@ -183,6 +185,16 @@ export interface Dagdata {
   ahi?: number;
   lekkage?: number;
   druk?: number;
+  // Zuurstof 's nachts (O2Ring, of Apple Watch via Apple Health)
+  spo2Gem?: number;
+  spo2Min?: number;
+  /** Zuurstofdips (≥ 4%) per uur. */
+  odi?: number;
+  /** Aantal zuurstofdips (≥ 4%) in de nacht, zoals de ViHealth-app ze toont. */
+  dips?: number;
+  /** Minuten onder 90% zuurstof. */
+  onder90?: number;
+  polsNacht?: number;
   // Ochtendcheck
   energie?: number;
   spierpijn?: number;

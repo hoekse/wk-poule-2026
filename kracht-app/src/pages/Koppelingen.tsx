@@ -27,7 +27,7 @@ export function Koppelingen() {
         <IcoonInfo />
         <span>
           Een web-app mag Apple Health niet zelf uitlezen. Daarom gaat het via de app <b>Opdrachten</b> van je iPhone: één tik en je gegevens staan erin. De prisma
-          APP en SleepHQ hebben geen open koppeling op de telefoon; die waarden vul je in bij de ochtendcheck of importeer je als bestand.
+          APP, de O2Ring en SleepHQ hebben geen open koppeling op de telefoon; die waarden vul je in bij de ochtendcheck of importeer je als bestand.
         </span>
       </div>
 
@@ -36,7 +36,7 @@ export function Koppelingen() {
           <h2>Apple Health</h2>
           <span className="pil">{laatst('apple', 'hae')}</span>
         </div>
-        <p className="dun klein">Slaap, hartslagvariabiliteit (HRV), rusthartslag, gewicht en stappen. HRV en rusthartslag heb je alleen met een Apple Watch.</p>
+        <p className="dun klein">Van je Apple Watch: slaap, hartslagvariabiliteit (HRV), rusthartslag, zuurstof en conditie (VO2max). Plus gewicht en stappen.</p>
         <div className="knoprij">
           <button className="knop primair" onClick={() => setImporteer('opdracht')}>
             Nu ophalen
@@ -65,15 +65,19 @@ export function Koppelingen() {
               <b>Startdatum</b> nieuwste eerst, <b>Limiet 1</b>.
             </li>
             <li>
+              <b>Zuurstof</b> (O2Ring of Apple Watch): type <b>Zuurstofsaturatie</b>, laatste <b>12 uur</b> → <b>Bereken statistieken</b> → <b>Minimum</b>.{' '}
+              <b>Conditie</b>: type <b>Cardiofitheid</b> (VO2 max), laatste 30 dagen, nieuwste eerst, limiet 1.
+            </li>
+            <li>
               Voeg <b>Woordenboek</b> toe met deze sleutels (type Tekst) en kies als waarde telkens de uitkomst van de stap erboven:
-              <pre className="code">{'slaap         → Statistieken (som duur)\nhrv           → Statistieken (gemiddelde)\nrusthartslag  → Gezondheidsmonsters\ngewicht       → Gezondheidsmonsters'}</pre>
+              <pre className="code">{'slaap         → Statistieken (som duur)\nhrv           → Statistieken (gemiddelde)\nrusthartslag  → Gezondheidsmonsters\ngewicht       → Gezondheidsmonsters\nspo2_min      → Statistieken (minimum)\nvo2max        → Gezondheidsmonsters'}</pre>
             </li>
             <li>
               Voeg als laatste <b>Kopieer naar klembord</b> toe met het Woordenboek. Klaar.
             </li>
             <li>
               Werkt het? Tik hier op <b>Nu ophalen</b> → <b>Opdracht uitvoeren</b>, ga terug en tik op <b>Plakken</b>. Je ziet meteen wat er binnenkomt. Geen
-              Apple Watch? Laat HRV en rusthartslag dan weg.
+              waarde gevonden (bijv. geen zuurstofmeting)? Dan slaat de app die sleutel gewoon over.
             </li>
           </ol>
           <label className="veld">
@@ -86,14 +90,16 @@ export function Koppelingen() {
             />
           </label>
           <p className="dun mini">
-            Andere sleutels die de app begrijpt: stappen, actieve_energie, vetpercentage, diepe_slaap, rem_slaap, datum (JJJJ-MM-DD), cpap_uren, ahi, lekkage.
+            Andere sleutels die de app begrijpt: stappen, actieve_energie, vetpercentage, diepe_slaap, rem_slaap, spo2 (gemiddelde zuurstof), dips, datum
+            (JJJJ-MM-DD), cpap_uren, ahi, lekkage.
           </p>
         </details>
         <details className="uitklap">
           <summary>Liever volledig automatisch? Health Auto Export</summary>
           <p className="dun klein">
             De app <b>Health Auto Export</b> (App Store) maakt dagelijks een JSON-bestand van je gezondheidsgegevens. Kies bij Export: formaat <b>JSON</b>,
-            aggregatie per <b>dag</b>, de metingen Sleep Analysis, Heart Rate Variability, Resting Heart Rate, Weight, Step Count en Active Energy, en bewaar in
+            aggregatie per <b>dag</b>, de metingen Sleep Analysis, Heart Rate Variability, Resting Heart Rate, Weight, Step Count, Active Energy, Blood Oxygen
+            Saturation en VO2 Max, en bewaar in
             Bestanden. Importeer het bestand hier met <b>Bestand</b>. Ook handig om in één keer je hele geschiedenis binnen te halen.
           </p>
           <button className="knop" onClick={() => setImporteer('bestand')}>
@@ -114,6 +120,36 @@ export function Koppelingen() {
         <button className="knop primair" onClick={() => setCheck(true)}>
           Ochtendcheck invullen
         </button>
+      </section>
+
+      <section className="kaart" aria-label="O2Ring">
+        <div className="rij tussen">
+          <h2>O2Ring</h2>
+          <span className="pil">{laatst('o2ring')}</span>
+        </div>
+        <p className="dun klein">
+          De O2Ring meet 's nachts je zuurstof en polsslag: de controle of je CPAP goed werkt. Telt mee in je herstelscore (laagste zuurstof en dips per uur).
+        </p>
+        <ol className="stappen klein">
+          <li>
+            <b>Snel, elke ochtend:</b> neem in de ochtendcheck de <b>laagste zuurstof</b> en het <b>aantal dips (≥ 4%)</b> over uit de ViHealth-app.
+          </li>
+          <li>
+            <b>Volledig:</b> deel of exporteer de nacht in ViHealth als <b>CSV-bestand</b> en importeer het hier. De app berekent gemiddelde en laagste zuurstof, dips
+            per uur, minuten onder 90% en je polsslag.
+          </li>
+          <li>
+            Zet ViHealth je metingen in Apple Health? Dan haalt de opdracht de laagste zuurstof mee (sleutel <code>spo2_min</code>).
+          </li>
+        </ol>
+        <div className="knoprij">
+          <button className="knop primair" onClick={() => setCheck(true)}>
+            Ochtendcheck
+          </button>
+          <button className="knop" onClick={() => setImporteer('bestand')}>
+            CSV importeren
+          </button>
+        </div>
       </section>
 
       <section className="kaart" aria-label="SleepHQ">

@@ -4,7 +4,7 @@
 
 - PWA (Vite + React + TypeScript), werkt offline, installeerbaar op het iPhone-beginscherm, licht en donker thema.
 - Kennismaking: naam, 3 of 4 trainingen per week, trainingsdagen, apparatuur bij FitButiq, dumbbellstap.
-- Twee schema's: 3× volledig lichaam (A/B/C) en 4× boven/onder; per plek een voorkeurslijst van oefeningen met alternatieven (57 oefeningen).
+- Twee schema's: 3× volledig lichaam (A/B/C) en 4× boven/onder; per plek een voorkeurslijst van oefeningen met alternatieven (59 oefeningen).
 - Blokken van 6 weken (instap, opbouw, zwaarste week, lichte week); handmatig nieuw blok of lichte week starten.
 - Trainingslogger: gewicht/herhalingen/RIR, vorige prestatie, rusttimer met piep en scherm-aan, schijvencalculator, opwarmsets,
   oefening wisselen (eenmalig of voortaan), notities, sets toevoegen/verwijderen, overslaan, afronden met zwaarte en records,
@@ -17,7 +17,18 @@
 - Lichaam: metingen met grafieken.
 - Imports: iOS-opdracht (klembord of plakken), Health Auto Export (JSON), SleepHQ/OSCAR/eigen CSV. Handmatige waarden worden nooit door een import overschreven.
 - Back-up (deelmenu → iCloud Drive), terugzetten, CSV-export voor Excel.
-- Tests: 25 unit-tests op de rekenlogica en een Playwright-rondgang op iPhone-formaat (kennismaking → ochtendcheck → import → training → afronden → alle schermen → herladen).
+- Tests: unit-tests op de rekenlogica (32 in versie 1.1) en een Playwright-rondgang op iPhone-formaat (kennismaking → ochtendcheck → import → training → afronden → alle schermen → herladen).
+
+## Af (versie 1.1, na antwoorden van Dennis)
+
+Dennis: ervaren, geen blessures, doel sterker + slanker + fitter, draagt een Apple Watch en 's nachts een O2Ring.
+
+- Schema's voor gevorderden: basisoefeningen 4×4-6 (deadlift 3×3-5), hulpoefeningen 8-15, conditie-intervallen (6×20-30 s) als finisher.
+  Apparaat "Hometrainer, roeiergometer of airbike" toegevoegd; zonder dat apparaat worden het kettlebell swing-intervallen.
+- O2Ring: CSV-import uit ViHealth (gemiddelde/laagste zuurstof, dips per uur, minuten onder 90%, polsslag), velden in de ochtendcheck,
+  15% van de herstelscore, waarschuwingen en grafieken bij Herstel.
+- Apple Watch: zuurstof en VO2max via de opdracht en Health Auto Export; conditiegrafiek (VO2max) en intervalminuten bij Voortgang.
+- Aftrainen: gewichtstempo (lijn door 4 weken metingen) met oordeel, eiwitrichtlijn, rustdagadvies met stappen.
 
 ## Gemaakte keuzes
 
@@ -33,10 +44,8 @@
 
 ## Open vragen
 
-1. Klopt de apparatuur bij FitButiq? (Aanpassen in de app kan altijd.)
-2. Ervaring, blessures of beperkingen (rug, schouders, knieën)? Dan pas ik de oefeningkeuze en startgewichten aan.
-3. Doel: vooral sterker, meer spiermassa, of afvallen/fitter? Nu een mix (kracht op de basisoefeningen, spiermassa op de rest).
-4. Heb je een Apple Watch? Zonder Watch zijn er geen HRV en rusthartslag; de herstelscore gebruikt dan slaap, CPAP en de ochtendcheck.
+1. Klopt de apparatuur bij FitButiq? (Aanpassen in de app kan altijd.) Staat er een hometrainer, roeier of airbike voor de intervallen?
+2. Exporteert jouw versie van de ViHealth-app een nacht als CSV? Zo niet: dan de ochtendcheck gebruiken, of een voorbeeldbestand sturen zodat ik de import erop afstem.
 
 ## Volgende stap (fase 2, optioneel)
 

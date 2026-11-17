@@ -1,14 +1,14 @@
 import { useState } from 'react';
 import { Blad, Kop } from '../components/Basis';
 import { LijnGrafiek } from '../components/Grafiek';
-import { IcoonPlus, IcoonPrullenbak } from '../components/Iconen';
+import { IcoonPlus, IcoonPrullenbak, IcoonWeegschaal } from '../components/Iconen';
 import { kortDatum, vandaag } from '../lib/datum';
 import { fmt1 } from '../lib/herstel';
 import { getal } from '../lib/importeren';
+import { eiwitAdvies, gewichtReeks, gewichtsTempo } from '../lib/lichaam';
 import { nieuweMeting } from '../lib/staat';
 import type { Meting } from '../lib/types';
 import { useWinkel } from '../lib/winkel';
-import { gewichtReeks } from './Voortgang';
 
 const VELDEN: { k: keyof Meting; naam: string; eenheid: string }[] = [
   { k: 'gewicht', naam: 'Gewicht', eenheid: 'kg' },
@@ -25,6 +25,8 @@ export function Lichaam() {
   const [bewerk, setBewerk] = useState<Meting | null>(null);
   const metingen = [...staat.metingen].sort((a, b) => b.datum.localeCompare(a.datum));
   const gewicht = gewichtReeks(staat);
+  const tempo = gewichtsTempo(staat, vandaag());
+  const eiwit = gewicht.length ? eiwitAdvies(gewicht[gewicht.length - 1].y) : null;
   const taille = staat.metingen.filter((m) => m.taille).sort((a, b) => a.datum.localeCompare(b.datum)).map((m) => ({ x: m.datum, y: m.taille! }));
   const vet = [
     ...Object.values(staat.dagdata).filter((d) => d.vetPct).map((d) => ({ x: d.datum, y: d.vetPct! })),
@@ -47,6 +49,12 @@ export function Lichaam() {
         {gewicht.length ? (
           <>
             <LijnGrafiek label="Lichaamsgewicht" punten={gewicht} eenheid="kg" />
+            {tempo && (
+              <div className={`melding${tempo.oordeel === 'goed' ? ' blauw' : ''}`}>
+                <IcoonWeegschaal />
+                <span>{tempo.tekst}</span>
+              </div>
+            )}
             {gewicht.length >= 2 && (
               <p className="klein dun">
                 {(() => {
@@ -60,6 +68,22 @@ export function Lichaam() {
           <p className="dun klein">Weeg jezelf bij voorkeur 's ochtends na het opstaan. Gewicht uit Apple Health komt hier vanzelf bij.</p>
         )}
       </section>
+      {eiwit && (
+        <section className="kaart">
+          <h2>Aftrainen en sterker worden</h2>
+          <ul className="stappen klein">
+            <li>
+              Eet <b>
+                {eiwit.van}-{eiwit.tot} gram eiwit
+              </b>{' '}
+              per dag (1,8-2,2 g per kg). Dat houdt je spieren vast terwijl je vet verliest.
+            </li>
+            <li>Mik op 0,25-0,75% lichter per week. Sneller gaat ten koste van je kracht.</li>
+            <li>Taille omlaag en gewichten omhoog = je doet het goed, ook als de weegschaal stilstaat.</li>
+            <li>Rustdagen: 30-45 minuten rustig bewegen en minstens 8.000 stappen.</li>
+          </ul>
+        </section>
+      )}
       {taille.length > 0 && (
         <section className="kaart">
           <h2>Taille</h2>

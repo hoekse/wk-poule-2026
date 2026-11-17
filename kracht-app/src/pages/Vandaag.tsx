@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Ring, Segment, scoreKleur } from '../components/Basis';
 import { IcoonLet, IcoonVink } from '../components/Iconen';
 import { ImportBlad, OchtendCheck } from '../components/Invoer';
-import { DAGEN_KORT, dagenTussen, langDatum, vandaag, weekdag } from '../lib/datum';
+import { DAGEN_KORT, dagenTussen, langDatum, plusDagen, vandaag, weekdag } from '../lib/datum';
 import { berekenHerstel } from '../lib/herstel';
 import { repLabel } from '../lib/oefeningen';
 import { advies, fmtKg } from '../lib/progressie';
@@ -32,6 +32,7 @@ export function Vandaag() {
   const vandaagGedaan = staat.trainingen.filter((t) => t.datum === d && t.status === 'klaar');
   const geplandVandaag = inst.trainingsdagen.includes(weekdag(d));
   const aantalKlaar = staat.trainingen.filter((t) => t.status === 'klaar').length;
+  const stappenGisteren = staat.dagdata[plusDagen(d, -1)]?.stappen;
   const backupOud = aantalKlaar >= 3 && (!inst.laatsteBackup || dagenTussen(inst.laatsteBackup.slice(0, 10), d) > 7);
 
   const start = () => wijzig((s) => ({ ...s, trainingen: [...s.trainingen, maakTraining(s, dag.id, aanpassing)] }));
@@ -134,6 +135,21 @@ export function Vandaag() {
         </button>
         <p className="dun mini">{blok.uitleg}</p>
       </section>
+
+      {!geplandVandaag && !vandaagGedaan.length && (
+        <section className="kaart" aria-label="Rustdag">
+          <h3>Rustdag</h3>
+          <p className="dun klein">
+            Beweeg 30-45 minuten rustig: wandelen of fietsen in een tempo waarin je nog kunt praten. Dat helpt bij aftrainen en herstel, zonder je krachttraining
+            te hinderen.
+          </p>
+          {stappenGisteren != null && (
+            <p className="klein getal">
+              Stappen gisteren: <b>{Math.round(stappenGisteren).toLocaleString('nl-NL')}</b> {stappenGisteren >= 8000 ? '(doel 8.000 gehaald)' : '(doel 8.000)'}
+            </p>
+          )}
+        </section>
+      )}
 
       <section className="sectie" aria-label="Deze week">
         <span className="label">Deze week</span>

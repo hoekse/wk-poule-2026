@@ -22,6 +22,7 @@ export const APPARATUUR: { id: ApparaatId; naam: string; standaard: boolean }[] 
   { id: 'rugstrekbank', naam: 'Rugstrekbank (45°)', standaard: true },
   { id: 'kuitmachine', naam: 'Kuitmachine', standaard: false },
   { id: 'kettlebell', naam: 'Kettlebells', standaard: true },
+  { id: 'cardio', naam: 'Hometrainer, roeiergometer of airbike', standaard: true },
 ];
 
 export const SPIERNAMEN: Record<Spiergroep, string> = {
@@ -37,6 +38,7 @@ export const SPIERNAMEN: Record<Spiergroep, string> = {
   romp: 'Romp',
   onderrug: 'Onderrug',
   grip: 'Grip',
+  conditie: 'Conditie',
 };
 
 type O = Omit<Oefening, 'tips'> & { tips?: string[] };
@@ -174,10 +176,16 @@ export const OEFENINGEN: Oefening[] = [
     tips: ['Ellebogen onder je schouders, lichaam in één lijn.', 'Noteer seconden bij herhalingen.'] }),
   o({ id: 'boerenwandeling', naam: 'Boerenwandeling (seconden)', spieren: ['grip', 'romp', 'schouders'], apparaat: ['dumbbells'], soort: 'romp', gewichtType: 'per-hand', stap: 2,
     tips: ['Zware dumbbell in elke hand, rechtop lopen.', 'Schouders laag, buik aangespannen.', 'Noteer seconden bij herhalingen. Handig voor sjouwen met emmers en ladders.'] }),
+
+  // ── Conditie ──────────────────────────────────────────────
+  o({ id: 'intervallen', naam: 'Intervallen (fiets, roeier of airbike)', spieren: ['conditie'], apparaat: ['cardio'], soort: 'romp', gewichtType: 'geen', stap: 0,
+    tips: ['2-3 minuten rustig inrijden.', 'Elke ronde: de aangegeven seconden voluit, daarna rustig doortrappen of -roeien tot de rusttimer afgaat.', 'Noteer de seconden die je voluit ging. Lukt alles makkelijk: maak de rondes langer of zet de weerstand hoger.', 'Maakt je vetverbranding en conditie beter zonder je krachttraining in de weg te zitten.'] }),
+  o({ id: 'kettlebell-intervallen', naam: 'Kettlebell swing-intervallen', spieren: ['conditie', 'billen', 'hamstrings'], apparaat: ['kettlebell'], soort: 'romp', gewichtType: 'totaal', stap: 4,
+    tips: ['Swings op tempo gedurende de aangegeven seconden, daarna rust tot de timer afgaat.', 'Beweging uit je heupen, rug recht.'] }),
 ];
 
 /** Oefeningen waarbij je seconden noteert in plaats van herhalingen. */
-export const OP_TIJD = new Set(['plank', 'boerenwandeling']);
+export const OP_TIJD = new Set(['plank', 'boerenwandeling', 'intervallen', 'kettlebell-intervallen']);
 
 export function alleOefeningen(eigen: Oefening[]): Oefening[] {
   return [...OEFENINGEN, ...eigen];
@@ -204,6 +212,8 @@ export function gewichtLabel(oef: Oefening): string {
       return 'kg extra';
     case 'stapel':
       return 'kg (stapel)';
+    case 'geen':
+      return '';
     default:
       return 'kg';
   }

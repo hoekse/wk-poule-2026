@@ -2,8 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Blad, fmtInvoer, leesInvoer } from '../components/Basis';
 import { IcoonInfo, IcoonLet, IcoonPlus, IcoonPotlood, IcoonPrullenbak, IcoonVink, IcoonWissel } from '../components/Iconen';
 import { minutenTussen } from '../lib/datum';
-import { APPARATUUR, alleOefeningen, beschikbaar, gewichtLabel, OP_TIJD, repLabel, SPIERNAMEN, zoekOefening } from '../lib/oefeningen';
-import { aantalWerkSets, fmtKg, geschiedenis, opwarmen, recordsIn, tonnage } from '../lib/progressie';
+import { APPARATUUR, alleOefeningen, beschikbaar, gewichtLabel, OP_TIJD, SPIERNAMEN, zoekOefening } from '../lib/oefeningen';
+import { aantalWerkSets, fmtKg, geschiedenis, opwarmen, recordsIn, setTekst, tonnage } from '../lib/progressie';
 import { zoekDag } from '../lib/schema';
 import { wisselOefening } from '../lib/staat';
 import type { Oefening, OefeningLog, SetLog, Training } from '../lib/types';
@@ -307,7 +307,12 @@ export function Sessie({ training }: { training: Training }) {
                   return (
                     <div key={j} className={`setrij${x.klaar ? ' gedaan' : ''}`}>
                       <span className="nr">{j + 1}</span>
-                      <span className="vorig">{v ? `${fmtKg(v.gewicht)}×${v.reps}` : '–'}</span>
+                      <span className="vorig">{v ? setTekst(v, oef) : '–'}</span>
+                      {oef.gewichtType === 'geen' ? (
+                        <span className="vorig" style={{ textAlign: 'center' }} aria-hidden="true">
+                          –
+                        </span>
+                      ) : (
                       <GetalVeld
                         id={`kg-${i}-${j}`}
                         label={`Set ${j + 1} gewicht`}
@@ -315,6 +320,7 @@ export function Sessie({ training }: { training: Training }) {
                         placeholder={log.doel.gewicht != null ? fmtKg(log.doel.gewicht) : 'kg'}
                         zet={(n) => werkSet(i, j, (s) => ({ ...s, gewicht: n }))}
                       />
+                      )}
                       <GetalVeld
                         id={`reps-${i}-${j}`}
                         label={`Set ${j + 1} ${tijd ? 'seconden' : 'herhalingen'}`}
@@ -459,7 +465,7 @@ function OefeningInfo({ oef, sluit }: { oef: Oefening | null; sluit: () => void 
               <div key={training.id} className="lijstitem">
                 <div className="groei">
                   <div className="titel getal">
-                    {log.sets.filter((x) => x.klaar).map((x) => `${fmtKg(x.gewicht)}×${x.reps}${repLabel(oef.id) === 'sec' ? 's' : ''}`).join(' · ')}
+                    {log.sets.filter((x) => x.klaar).map((x) => setTekst(x, oef)).join(' · ')}
                   </div>
                   <div className="dun klein">{training.datum}</div>
                 </div>

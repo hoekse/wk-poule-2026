@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { Kop } from '../components/Basis';
 import { IcoonPotlood, IcoonPrullenbak, IcoonVerder } from '../components/Iconen';
 import { dagDatum, langDatum, minutenTussen, tijd } from '../lib/datum';
-import { gewichtLabel, repLabel, zoekOefening } from '../lib/oefeningen';
-import { aantalWerkSets, fmtKg, recordsIn, tonnage, werkSets } from '../lib/progressie';
+import { gewichtLabel, zoekOefening } from '../lib/oefeningen';
+import { aantalWerkSets, recordsIn, setTekst, tonnage, werkSets } from '../lib/progressie';
 import type { Training } from '../lib/types';
 import { useNav, useWinkel } from '../lib/winkel';
 
@@ -109,9 +109,9 @@ export function TrainingDetail({ id }: { id: string }) {
                 </div>
                 <div className="dun klein getal">
                   {werkSets(l)
-                    .map((x) => `${fmtKg(x.gewicht)}×${x.reps}${repLabel(l.oefeningId) === 'sec' ? 's' : ''}${x.rir != null ? ` @${x.rir}` : ''}`)
+                    .map((x) => `${setTekst(x, oef)}${x.rir != null ? ` @${x.rir}` : ''}`)
                     .join(' · ')}{' '}
-                  {oef ? `(${gewichtLabel(oef)})` : ''}
+                  {oef && gewichtLabel(oef) ? `(${gewichtLabel(oef)})` : ''}
                 </div>
                 {l.notitie && <div className="dun mini">Notitie: {l.notitie}</div>}
               </div>

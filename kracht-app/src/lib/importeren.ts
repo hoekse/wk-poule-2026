@@ -104,7 +104,14 @@ alias('cpapUren', 'cpap', 'cpap_uren', 'cpapuren', 'gebruik', 'gebruiksduur', 'u
 alias('ahi', 'ahi');
 alias('lekkage', 'lekkage', 'leak', 'lek');
 alias('druk', 'druk', 'pressure');
+alias('spo2Gem', 'spo2', 'spo2_gem', 'zuurstof', 'zuurstofsaturatie', 'bloedzuurstof', 'oxygen', 'blood_oxygen', 'oxygen_saturation');
+alias('spo2Min', 'spo2_min', 'spo2min', 'laagste_spo2', 'min_spo2', 'laagste_zuurstof', 'lowest_o2');
+alias('odi', 'odi');
+alias('dips', 'dips', 'zuurstofdips', 'drops');
+alias('onder90', 'onder90', 'onder_90');
+alias('polsNacht', 'pols', 'pols_nacht', 'hartslag_nacht', 'pulse');
 
+const NUL_MOGELIJK = new Set<DagVeld>(['stappen', 'actieveKcal', 'ahi', 'dips', 'odi', 'onder90', 'lekkage', 'ademhalingsstoornissen']);
 const DUUR_VELDEN = new Set<DagVeld>(['slaapUren', 'slaapDiep', 'slaapRem', 'slaapKern', 'slaapWakker', 'cpapUren']);
 
 function invoerUitObject(obj: Record<string, unknown>, standaardDatum: Datum): DagInvoer | null {
@@ -120,8 +127,10 @@ function invoerUitObject(obj: Record<string, unknown>, standaardDatum: Datum): D
     }
     let n = DUUR_VELDEN.has(veld) ? duurInUren(v) : getal(v);
     if (n == null) continue;
-    if (veld === 'vetPct' && n > 0 && n < 1) n *= 100;
+    if ((veld === 'vetPct' || veld === 'spo2Gem' || veld === 'spo2Min') && n > 0 && n <= 1) n *= 100;
     if (n < 0) continue;
+    // Een lege meting komt uit de opdracht vaak als 0: alleen echte nullen bewaren waar 0 kan.
+    if (n === 0 && !NUL_MOGELIJK.has(veld)) continue;
     (dag as Record<string, unknown>)[veld] = Math.round(n * 100) / 100;
     iets = true;
   }
@@ -199,6 +208,14 @@ export function leesHealthAutoExport(data: { data: { metrics: HaeMetric[] } }): 
       else if (naam.includes('body_fat')) voegToe(d, 'vetPct', n < 1 ? n * 100 : n, 'laatst');
       else if (naam.includes('vo2')) voegToe(d, 'vo2max', n, 'laatst');
       else if (naam.includes('breathing_disturb')) voegToe(d, 'ademhalingsstoornissen', n, 'gem');
+      else if (naam.includes('oxygen_saturation') || naam.includes('blood_oxygen')) {
+        const pct = (x: number) => (x <= 1 ? x * 100 : x);
+        voegToe(d, 'spo2Gem', pct(n), 'gem');
+        const laagste = getal(rij.Min ?? rij.min);
+        const x = pct(laagste ?? n);
+        const huidig = pak(d).laatst.spo2Min;
+        if (huidig == null || x < huidig) voegToe(d, 'spo2Min', x, 'laatst');
+      }
     }
   }
 
@@ -304,6 +321,118 @@ export function leesCpapCsv(tekst: string, nachtDatum: boolean): ImportResultaat
   return { bron: 'sleephq', dagen, meldingen, kolommen, kop };
 }
 
+// ── O2Ring (ViHealth-app): zuurstof en polsslag per paar seconden ──
+
+const ZUURSTOF_KOLOM = /oxygen|spo2|sp02|o2\b|zuurstof/i;
+
+export function isO2RingCsv(kop: string[]): boolean {
+  return kop.some((k) => ZUURSTOF_KOLOM.test(k)) && !kop.some((k) => /\bahi\b/i.test(k));
+}
+
+/** Leest een tijdstip als '22:15:04 16/11/2026', '10:15:04 PM Nov 16, 2026' of '2026-11-16 22:15:04'. */
+export function leesTijdstip(v: string): number | undefined {
+  const m = v.match(/(\d{1,2}):(\d{2})(?::(\d{2}))?\s*([AaPp][Mm])?/);
+  if (!m) return undefined;
+  const rest = v.replace(m[0], ' ').replace(/[T,]/g, ' ').trim();
+  const d = leesDatum(rest);
+  if (!d) return undefined;
+  let uur = +m[1];
+  const ampm = m[4]?.toLowerCase();
+  if (ampm === 'pm' && uur < 12) uur += 12;
+  if (ampm === 'am' && uur === 12) uur = 0;
+  const [j, mnd, dag] = d.split('-').map(Number);
+  return new Date(j, mnd - 1, dag, uur, +m[2], +(m[3] ?? 0)).getTime();
+}
+
+export interface ZuurstofNacht {
+  uren: number;
+  spo2Gem: number;
+  spo2Min: number;
+  dips: number;
+  odi: number;
+  onder90: number;
+  polsNacht?: number;
+}
+
+/**
+ * Rekent een nacht zuurstofmetingen om naar samenvattende waarden.
+ * ODI is een schatting: een dip telt als de zuurstof minstens 10 seconden 4% of meer
+ * onder het gemiddelde van de 2 minuten ervoor zakt (zoals 'drops ≥ 4%' in ViHealth).
+ */
+export function vatZuurstofSamen(spo2: number[], interval: number, pols: number[] = []): ZuurstofNacht | null {
+  const n = spo2.length;
+  if (n < 10) return null;
+  const uren = (n * interval) / 3600;
+  const gem = spo2.reduce((a, b) => a + b, 0) / n;
+  // Laagste waarde die minstens twee metingen aanhoudt (losse meetfouten tellen niet).
+  let min = 100;
+  for (let i = 0; i < n - 1; i++) min = Math.min(min, Math.max(spo2[i], spo2[i + 1]));
+  const venster = Math.max(1, Math.round(120 / interval));
+  const minDuur = Math.max(1, Math.ceil(10 / interval));
+  let dips = 0;
+  let i = venster;
+  while (i < n) {
+    let som = 0;
+    for (let k = i - venster; k < i; k++) som += spo2[k];
+    const basis = som / venster;
+    if (spo2[i] <= basis - 4) {
+      let j = i;
+      while (j < n && spo2[j] <= basis - 3) j++;
+      if (j - i >= minDuur) dips++;
+      // Wacht tot de zuurstof hersteld is voordat een nieuwe dip telt.
+      while (j < n && spo2[j] < basis - 1) j++;
+      i = Math.max(j, i + 1);
+    } else i++;
+  }
+  const onder90 = (spo2.filter((x) => x < 90).length * interval) / 60;
+  const geldigePols = pols.filter((p) => p >= 25 && p <= 250);
+  return {
+    uren: Math.round(uren * 100) / 100,
+    spo2Gem: Math.round(gem * 10) / 10,
+    spo2Min: min,
+    dips,
+    odi: Math.round((dips / Math.max(uren, 0.1)) * 10) / 10,
+    onder90: Math.round(onder90),
+    polsNacht: geldigePols.length ? Math.round(geldigePols.reduce((a, b) => a + b, 0) / geldigePols.length) : undefined,
+  };
+}
+
+export function leesO2RingCsv(tekst: string, standaardDatum: Datum): ImportResultaat {
+  const rijen = leesCsv(tekst);
+  const kop = rijen[0] ?? [];
+  const iZ = zoekKolom(kop, /oxygen\s*level|spo2|sp02/i, ZUURSTOF_KOLOM);
+  const iP = zoekKolom(kop, /pulse|pols|\bpr\b|heart|hartslag/i);
+  const iT = zoekKolom(kop, /^(time|tijd|date|datum)/i, /time|tijd/i);
+  if (iZ < 0) return { bron: 'o2ring', dagen: [], meldingen: ['Geen kolom met zuurstofwaarden gevonden.'] };
+  const spo2: number[] = [];
+  const pols: number[] = [];
+  const tijden: number[] = [];
+  for (const rij of rijen.slice(1)) {
+    const z = getal(rij[iZ]);
+    if (z == null || z < 50 || z > 100) continue;
+    spo2.push(z);
+    pols.push(iP >= 0 ? getal(rij[iP]) ?? 0 : 0);
+    const t = iT >= 0 ? leesTijdstip(rij[iT] ?? '') : undefined;
+    if (t != null) tijden.push(t);
+  }
+  let interval = 4;
+  if (tijden.length > 2) {
+    const verschillen = tijden.slice(1).map((t, k) => (t - tijden[k]) / 1000).filter((x) => x > 0 && x < 60).sort((a, b) => a - b);
+    if (verschillen.length) interval = verschillen[Math.floor(verschillen.length / 2)];
+  }
+  const nacht = vatZuurstofSamen(spo2, interval, pols);
+  if (!nacht) return { bron: 'o2ring', dagen: [], meldingen: ['Te weinig geldige zuurstofmetingen in dit bestand.'] };
+  // De nacht hoort bij de ochtend waarop je wakker werd; eindigt de meting vóór middernacht, dan is dat de volgende dag.
+  const eind = tijden.length ? new Date(tijden[tijden.length - 1]) : null;
+  const datum = eind ? (eind.getHours() >= 15 ? plusDagen(naarDatum(eind), 1) : naarDatum(eind)) : standaardDatum;
+  const { uren, ...waarden } = nacht;
+  return {
+    bron: 'o2ring',
+    dagen: [{ datum, ...waarden }],
+    meldingen: [`${String(uren).replace('.', ',')} uur gemeten. Zuurstofdips per uur (ODI) zijn een schatting van de app.`],
+  };
+}
+
 /** Herkent automatisch wat er geplakt of gekozen is. */
 export function leesWillekeurig(tekst: string, standaardDatum: Datum, nachtDatum = true): ImportResultaat {
   const t = tekst.trim();
@@ -312,5 +441,7 @@ export function leesWillekeurig(tekst: string, standaardDatum: Datum, nachtDatum
     if (isHealthAutoExport(data)) return leesHealthAutoExport(data);
     return leesOpdrachtJson(t, standaardDatum);
   }
+  const kop = leesCsv(t.split(/\r?\n/)[0] ?? '')[0] ?? [];
+  if (isO2RingCsv(kop)) return leesO2RingCsv(t, standaardDatum);
   return leesCpapCsv(t, nachtDatum);
 }

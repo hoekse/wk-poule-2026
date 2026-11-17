@@ -97,8 +97,8 @@ export function advies(
   const eenheid = tijd ? 'seconden' : 'herhalingen';
 
   if (!vorige.length) {
-    const uitleg = oef.gewichtType === 'lichaamsgewicht' && stap === 0
-      ? `Eerste keer: doe ${slot.repMin}-${slot.repMax} ${eenheid} met nette techniek.`
+    const uitleg = stap === 0
+      ? `Eerste keer: ${slot.repMin}-${slot.repMax} ${eenheid} per set${oef.gewichtType === 'geen' ? ' voluit' : ' met nette techniek'}.`
       : `Eerste keer: kies een gewicht waarmee je ${slot.repMax} ${eenheid} haalt en er nog ±${rir} over hebt. Begin liever te licht.`;
     return { ...basis, gewicht: null, uitleg: [uitleg, ...extra].join(' ') };
   }
@@ -110,7 +110,7 @@ export function advies(
   const allesMax = opW.length >= Math.min(slot.sets, laatste.doel.sets) && opW.every((x) => (x.reps ?? 0) >= slot.repMax);
   const teZwaar = ws.some((x) => (x.reps ?? 0) < slot.repMin);
   const vorigeOokTeZwaar = vorige[1] ? werkSets(vorige[1].log).some((x) => (x.reps ?? 0) < slot.repMin) : false;
-  const vorigeKeerTekst = `Vorige keer: ${ws.map((x) => `${fmtKg(x.gewicht)}×${x.reps}`).join(', ')}.`;
+  const vorigeKeerTekst = `Vorige keer: ${ws.map((x) => setTekst(x, oef)).join(', ')}.`;
 
   let gewicht = w;
   let uitleg: string;
@@ -150,6 +150,13 @@ export function opwarmen(werkgewicht: number | null, oef: Oefening): { gewicht: 
     if (g < werkgewicht && !uit.some((x) => x.gewicht === g)) uit.push({ gewicht: g, reps });
   }
   return uit;
+}
+
+/** Een set als tekst: '60×8', of '25s' bij intervallen zonder gewicht. */
+export function setTekst(x: SetLog, oef?: Oefening): string {
+  const tijd = oef ? OP_TIJD.has(oef.id) : false;
+  if (oef?.gewichtType === 'geen' || (!x.gewicht && oef?.gewichtType === 'lichaamsgewicht')) return `${x.reps}${tijd ? 's' : '×'}`;
+  return `${fmtKg(x.gewicht)}×${x.reps}${tijd ? 's' : ''}`;
 }
 
 export function fmtKg(n: number | null | undefined): string {

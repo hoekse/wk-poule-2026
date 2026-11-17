@@ -3,7 +3,7 @@
 import { plusDagen, weekdag } from '../src/lib/datum';
 import { volgendeDag } from '../src/lib/schema';
 import { legeStaat, maakTraining, voegDagdataToe } from '../src/lib/staat';
-import { OP_TIJD } from '../src/lib/oefeningen';
+import { OP_TIJD, zoekOefening } from '../src/lib/oefeningen';
 
 let zaad = 7;
 const rnd = () => ((zaad = (zaad * 16807) % 2147483647) / 2147483647);
@@ -12,6 +12,7 @@ const START: Record<string, number> = {
   squat: 60, 'bankdrukken': 50, kabelroeien: 45, beenbuigen: 30, 'zijwaarts-heffen': 6, 'kabel-crunch': 20,
   deadlift: 80, 'db-schouderdrukken': 14, latpulldown: 45, legpress: 100, 'db-curl': 10, 'triceps-pushdown': 17.5,
   'bulgaarse-split-squat': 10, 'schuin-db': 18, 'db-roeien': 20, 'hipthrust-stang': 60, 'face-pull': 15, boerenwandeling: 24,
+  'overhead-press': 40, optrekken: 0, 'schuin-stang': 50, 'stang-roeien': 50, 'knieheffen-hangend': 0,
 };
 
 const vandaag = process.argv[2] ?? '2026-11-17';
@@ -27,6 +28,8 @@ for (let d = plusDagen(vandaag, -56); d < vandaag; d = plusDagen(d, 1)) {
     slaapUren: Math.round((cpap + 0.2 + rnd() * 0.4) * 100) / 100,
     hrv: Math.round(42 + rnd() * 12 - (nacht < 0.12 ? 10 : 0)), rustHartslag: Math.round(56 + rnd() * 4 + (nacht < 0.12 ? 4 : 0)),
     gewicht: Math.round((96 - (dagIndex(d)) * 0.045 + rnd() * 0.6) * 10) / 10, stappen: Math.round(6000 + rnd() * 7000),
+    spo2Min: Math.round(88 + rnd() * 5 - (nacht < 0.12 ? 6 : 0)), odi: Math.round((1 + rnd() * 3 + (nacht < 0.12 ? 8 : 0)) * 10) / 10,
+    ...(dagIndex(d) % 7 === 0 ? { vo2max: Math.round((36.5 + dagIndex(d) * 0.04 + rnd() * 0.6) * 10) / 10 } : {}),
   }], 'apple').staat;
   staat = voegDagdataToe(staat, [{ datum: d, energie: 3 + Math.round(rnd()), spierpijn: 2 + Math.round(rnd()), stress: 2 + Math.round(rnd()) }], 'handmatig').staat;
   if ([1, 3, 5].includes(weekdag(d)) && rnd() > 0.08) {
@@ -37,12 +40,13 @@ for (let d = plusDagen(vandaag, -56); d < vandaag; d = plusDagen(d, 1)) {
     t.status = 'klaar';
     t.zwaarte = 6 + Math.round(rnd() * 2);
     t.oefeningen = t.oefeningen.map((l) => {
-      const g = l.doel.gewicht ?? START[l.oefeningId] ?? 20;
+      const geen = zoekOefening(l.oefeningId)?.gewichtType === 'geen';
+      const g = geen ? null : l.doel.gewicht ?? START[l.oefeningId] ?? 20;
       return {
         ...l,
         sets: l.sets.map((_, j) => {
           const reps = OP_TIJD.has(l.oefeningId)
-            ? 30 + Math.round(rnd() * 15)
+            ? l.doel.repMin + Math.round(rnd() * (l.doel.repMax - l.doel.repMin + 3))
             : Math.min(l.doel.repMax, l.doel.repMin + Math.floor(rnd() * (l.doel.repMax - l.doel.repMin + 4)) - (j === 2 && rnd() < 0.3 ? 1 : 0));
           return { gewicht: g, reps: Math.max(1, reps), rir: 1 + Math.round(rnd() * 2), klaar: true };
         }),
@@ -57,7 +61,7 @@ staat.metingen = [
   { id: 'm3', datum: plusDagen(vandaag, -2), gewicht: 93.6, taille: 100.5, arm: 37 },
 ];
 // Vanochtend: alleen Apple Health, nog geen ochtendcheck.
-staat = voegDagdataToe(staat, [{ datum: vandaag, slaapUren: 6.6, hrv: 41, rustHartslag: 59 }], 'apple').staat;
+staat = voegDagdataToe(staat, [{ datum: vandaag, slaapUren: 6.6, hrv: 41, rustHartslag: 59, spo2Min: 90 }], 'apple').staat;
 staat.instellingen.laatsteBackup = `${plusDagen(vandaag, -3)}T20:00:00.000Z`;
 function dagIndex(d: string) { return Math.round((new Date(d).getTime() - new Date(plusDagen(vandaag, -56)).getTime()) / 86400000); }
 process.stdout.write(JSON.stringify(staat));

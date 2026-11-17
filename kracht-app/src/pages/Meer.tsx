@@ -69,12 +69,21 @@ export function Over() {
       <div className="kaart">
         <h3>Herstelscore</h3>
         <p className="dun">
-          Een score van 0-100 uit: slaapduur (25%), je CPAP-nacht: AHI en uren masker op (25%), hartslagvariabiliteit ten opzichte van je eigen 30-dagengemiddelde
-          (20%), rusthartslag (10%) en je ochtendcheck (20%). Ontbreekt iets, dan telt de rest zwaarder. Vanaf 75 train je volgens schema, 55-74 iets lichter,
+          Een score van 0-100 uit: slaapduur (25%), je CPAP-nacht: AHI en uren masker op (25%), zuurstof van je O2Ring: laagste waarde en dips per uur (15%),
+          hartslagvariabiliteit ten opzichte van je eigen 30-dagengemiddelde (20%), rusthartslag (10%) en je ochtendcheck (20%). Ontbreekt iets, dan telt de rest
+          zwaarder. Vanaf 75 train je volgens schema, 55-74 iets lichter,
           onder de 55 een herstelsessie of rust.
         </p>
         <p className="dun klein">
           De app is geen medisch hulpmiddel. Blijft je AHI hoog of voel je je slecht, neem dan contact op met je slaapcentrum of huisarts.
+        </p>
+      </div>
+      <div className="kaart">
+        <h3>Sterker én slanker</h3>
+        <p className="dun">
+          De basisoefeningen (squat, bankdrukken, deadlift, overhead press) train je zwaar in 3-6 herhalingen: daar word je sterker van. De hulpoefeningen in
+          8-15 herhalingen houden en bouwen spier. De intervallen aan het eind (6 rondes van 20-30 seconden voluit) maken je fitter en helpen bij vetverlies,
+          zonder dat je herstel eronder lijdt. Afvallen doe je vooral met eten; de app laat bij Lichaam zien of je tempo goed is.
         </p>
       </div>
       <div className="kaart">

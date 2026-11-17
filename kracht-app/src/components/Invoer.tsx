@@ -13,6 +13,7 @@ const BRON_NAAM: Record<Bron, string> = {
   hae: 'Health Auto Export',
   sleephq: 'SleepHQ',
   prisma: 'prisma APP',
+  o2ring: 'O2Ring',
   csv: 'CSV',
   handmatig: 'zelf ingevuld',
 };
@@ -30,6 +31,8 @@ export function OchtendCheck({ open, sluit, datum = vandaag() }: { open: boolean
   const [cpap, setCpap] = useState('');
   const [ahi, setAhi] = useState('');
   const [lek, setLek] = useState('');
+  const [spo2Min, setSpo2Min] = useState('');
+  const [dips, setDips] = useState('');
   const [energie, setEnergie] = useState<number | undefined>();
   const [spierpijn, setSpierpijn] = useState<number | undefined>();
   const [stress, setStress] = useState<number | undefined>();
@@ -42,6 +45,8 @@ export function OchtendCheck({ open, sluit, datum = vandaag() }: { open: boolean
     setCpap(oud.cpapUren != null ? uurMin(oud.cpapUren) : '');
     setAhi(oud.ahi != null ? fmt1(oud.ahi) : '');
     setLek(oud.lekkage != null ? fmt1(oud.lekkage) : '');
+    setSpo2Min(oud.spo2Min != null ? fmt1(oud.spo2Min) : '');
+    setDips(oud.dips != null ? String(oud.dips) : '');
     setEnergie(oud.energie);
     setSpierpijn(oud.spierpijn);
     setStress(oud.stress);
@@ -61,22 +66,31 @@ export function OchtendCheck({ open, sluit, datum = vandaag() }: { open: boolean
     zet('cpapUren', r2(cpapU));
     zet('ahi', ahi.trim() ? getal(ahi) : undefined);
     zet('lekkage', lek.trim() ? getal(lek) : undefined);
+    zet('spo2Min', spo2Min.trim() ? getal(spo2Min) : undefined);
+    zet('dips', dips.trim() ? Math.round(getal(dips) ?? 0) : undefined);
     zet('energie', energie);
     zet('spierpijn', spierpijn);
     zet('stress', stress);
     zet('zwareWerkdag', werkdag || undefined);
     zet('pijn', pijn.trim() || undefined);
-    // Waarden uit de prisma APP markeren we als 'prisma', de rest als handmatig.
-    const prismaVelden: DagInvoer = { datum };
-    for (const k of ['cpapUren', 'ahi', 'lekkage'] as const) {
-      if (k in invoer) {
-        (prismaVelden as Record<string, unknown>)[k] = invoer[k];
-        delete invoer[k];
+    // Waarden uit de prisma APP en de O2Ring krijgen hun eigen bron, de rest is handmatig.
+    const apart = (velden: (keyof Dagdata)[]): DagInvoer => {
+      const uit: DagInvoer = { datum };
+      for (const k of velden) {
+        if (k in invoer) {
+          (uit as Record<string, unknown>)[k] = invoer[k];
+          delete invoer[k];
+        }
       }
-    }
+      return uit;
+    };
+    const prismaVelden = apart(['cpapUren', 'ahi', 'lekkage']);
+    const o2Velden = apart(['spo2Min', 'dips']);
+    if ('dips' in o2Velden && oud.odi != null && oud.bronnen?.odi === 'o2ring') (o2Velden as Record<string, unknown>).odi = null;
     wijzig((s) => {
       let st = voegDagdataToe(s, [invoer], 'handmatig').staat;
       if (Object.keys(prismaVelden).length > 1) st = voegDagdataToe(st, [prismaVelden], 'prisma').staat;
+      if (Object.keys(o2Velden).length > 1) st = voegDagdataToe(st, [o2Velden], 'o2ring').staat;
       return st;
     });
     melding('Ochtendcheck opgeslagen');
@@ -101,6 +115,20 @@ export function OchtendCheck({ open, sluit, datum = vandaag() }: { open: boolean
           <label className="veld">
             <span>Lekkage (l/min)</span>
             <input id="oc-lek" className="invoer getal" inputMode="decimal" placeholder="optioneel" value={lek} onChange={(e) => setLek(e.target.value)} />
+          </label>
+        </div>
+      </div>
+
+      <div className="sectie">
+        <span className="label">O2Ring (ViHealth-app)</span>
+        <div className="velden">
+          <label className="veld">
+            <span>Laagste zuurstof (%)</span>
+            <input id="oc-spo2" className="invoer getal" inputMode="decimal" placeholder="bijv. 89" value={spo2Min} onChange={(e) => setSpo2Min(e.target.value)} />
+          </label>
+          <label className="veld">
+            <span>Dips ≥ 4% (aantal)</span>
+            <input id="oc-dips" className="invoer getal" inputMode="numeric" placeholder="bijv. 6" value={dips} onChange={(e) => setDips(e.target.value)} />
           </label>
         </div>
       </div>
@@ -144,6 +172,13 @@ const VELD_NAMEN: Partial<Record<keyof Dagdata, [string, (n: number) => string]>
   vetPct: ['vet', (n) => `${fmt1(n)}%`],
   slaapDiep: ['diep', uurMin],
   slaapRem: ['REM', uurMin],
+  spo2Gem: ['SpO₂', (n) => `${fmt1(n)}%`],
+  spo2Min: ['laagste SpO₂', (n) => `${Math.round(n)}%`],
+  odi: ['dips/uur', fmt1],
+  dips: ['dips', (n) => `${n}`],
+  onder90: ['< 90%', (n) => `${Math.round(n)} min`],
+  polsNacht: ['pols', (n) => `${Math.round(n)}`],
+  vo2max: ['VO2max', fmt1],
 };
 
 export function samenvatting(d: DagInvoer): string {

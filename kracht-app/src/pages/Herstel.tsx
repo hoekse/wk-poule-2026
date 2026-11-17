@@ -4,7 +4,7 @@ import { LijnGrafiek, StaafGrafiek } from '../components/Grafiek';
 import { IcoonKoppeling } from '../components/Iconen';
 import { ImportBlad, OchtendCheck, bronNaam } from '../components/Invoer';
 import { dagDatum, plusDagen, vandaag } from '../lib/datum';
-import { berekenHerstel, fmt1, uurMin } from '../lib/herstel';
+import { berekenHerstel, fmt1, odiVan, uurMin } from '../lib/herstel';
 import type { Dagdata, DagVeld } from '../lib/types';
 import { useNav, useWinkel } from '../lib/winkel';
 
@@ -43,12 +43,19 @@ export function Herstel() {
   const gCpap = gem('cpapUren');
   const gSlaap = gem('slaapUren');
   const nachtenBoven4 = cpap.filter((p) => p.y >= 4).length;
+  const spo2Min = reeks('spo2Min');
+  const odi = dagen.flatMap((x) => {
+    const v = staat.dagdata[x] ? odiVan(staat.dagdata[x]) : undefined;
+    return v == null ? [] : [{ x, y: v }];
+  });
+  const gSpo2Min = spo2Min.length ? spo2Min.reduce((a, p) => a + p.y, 0) / spo2Min.length : null;
+  const gOdi = odi.length ? odi.reduce((a, p) => a + p.y, 0) / odi.length : null;
 
   return (
     <div className="pagina">
       <Kop
         titel="Herstel"
-        sub="Slaap, CPAP en hartslag"
+        sub="Slaap, CPAP, zuurstof en hartslag"
         rechts={
           <button className="icoonknop" aria-label="Koppelingen" onClick={() => nav.ga({ naam: 'koppelingen' })}>
             <IcoonKoppeling />
@@ -86,6 +93,25 @@ export function Herstel() {
           </b>
         </div>
       </div>
+
+      {(gSpo2Min != null || gOdi != null) && (
+        <div className="tegels">
+          <div className="tegel">
+            <span className="label">Gem. laagste SpO₂</span>
+            <b style={{ color: gSpo2Min != null && gSpo2Min < 88 ? 'var(--geel)' : undefined }}>
+              {gSpo2Min != null ? Math.round(gSpo2Min) : '–'}
+              {gSpo2Min != null && <small>%</small>}
+            </b>
+          </div>
+          <div className="tegel">
+            <span className="label">Gem. zuurstofdips</span>
+            <b style={{ color: gOdi != null && gOdi > 5 ? 'var(--geel)' : undefined }}>
+              {gOdi != null ? fmt1(gOdi) : '–'}
+              {gOdi != null && <small>per uur</small>}
+            </b>
+          </div>
+        </div>
+      )}
 
       <div className="knoprij">
         <button className="knop" onClick={() => setCheck(d)}>
@@ -144,6 +170,25 @@ export function Herstel() {
         </section>
       )}
 
+      {(spo2Min.length > 0 || odi.length > 0) && (
+        <section className="kaart" aria-label="Zuurstof 's nachts">
+          <h2>Zuurstof 's nachts</h2>
+          <p className="dun klein">Uit je O2Ring. Met een goed werkende CPAP blijft de laagste waarde boven de 88-90% en heb je minder dan 5 dips per uur.</p>
+          {spo2Min.length > 0 && (
+            <>
+              <span className="label">Laagste zuurstof per nacht</span>
+              <LijnGrafiek label="Laagste zuurstof per nacht" punten={spo2Min} eenheid="%" doel={90} doelLabel="grens 90%" decimalen={0} />
+            </>
+          )}
+          {odi.length > 0 && (
+            <>
+              <span className="label">Zuurstofdips (≥ 4%) per uur</span>
+              <LijnGrafiek label="Zuurstofdips per uur" punten={odi} eenheid="per uur" doel={5} doelLabel="grens 5" vanafNul />
+            </>
+          )}
+        </section>
+      )}
+
       {hrv.length > 0 && (
         <section className="kaart" aria-label="Hartslagvariabiliteit">
           <h2>Hartslagvariabiliteit (HRV)</h2>
@@ -171,6 +216,8 @@ export function Herstel() {
                   <th>Slaap</th>
                   <th>CPAP</th>
                   <th>AHI</th>
+                  <th>SpO₂ min</th>
+                  <th>Dips/u</th>
                   <th>HRV</th>
                   <th>Rust-HS</th>
                   <th>Score</th>
@@ -185,6 +232,8 @@ export function Herstel() {
                       <td title={bronNaam(x.bronnen.slaapUren)}>{x.slaapUren != null ? uurMin(x.slaapUren) : <span className="zacht">–</span>}</td>
                       <td title={bronNaam(x.bronnen.cpapUren)}>{x.cpapUren != null ? uurMin(x.cpapUren) : <span className="zacht">–</span>}</td>
                       <td style={{ color: x.ahi != null && x.ahi > 5 ? 'var(--geel)' : undefined }}>{x.ahi != null ? fmt1(x.ahi) : <span className="zacht">–</span>}</td>
+                      <td style={{ color: x.spo2Min != null && x.spo2Min < 88 ? 'var(--geel)' : undefined }}>{x.spo2Min != null ? `${Math.round(x.spo2Min)}%` : <span className="zacht">–</span>}</td>
+                      <td>{odiVan(x) != null ? fmt1(odiVan(x)!) : <span className="zacht">–</span>}</td>
                       <td>{x.hrv != null ? Math.round(x.hrv) : <span className="zacht">–</span>}</td>
                       <td>{x.rustHartslag != null ? Math.round(x.rustHartslag) : <span className="zacht">–</span>}</td>
                       <td>{s ?? <span className="zacht">–</span>}</td>

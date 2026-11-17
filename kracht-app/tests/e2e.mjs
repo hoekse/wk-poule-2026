@@ -52,12 +52,14 @@ const geenHorizontaleScroll = async (page, waar) => {
   await page.getByRole('button', { name: 'Ochtendcheck' }).click();
   await page.locator('#oc-cpap').fill('7u05');
   await page.locator('#oc-ahi').fill('2,1');
+  await page.locator('#oc-spo2').fill('89');
+  await page.locator('#oc-dips').fill('14');
   await page.getByRole('group', { name: 'Energie' }).getByRole('button', { name: '4' }).click();
   await page.getByRole('group', { name: 'Spierpijn' }).getByRole('button', { name: '2' }).click();
   await page.getByRole('group', { name: 'Stress' }).getByRole('button', { name: '2' }).click();
   await foto(page, 'a2-ochtendcheck');
   await page.getByRole('button', { name: 'Ochtendcheck opslaan' }).click();
-  await page.getByText('Goed hersteld').waitFor();
+  await page.getByText('laagste 89%, 2 dips per uur').waitFor();
 
   // Apple Health-tekst plakken (zoals de opdracht die kopieert)
   await page.getByRole('button', { name: 'Apple Health', exact: true }).click();
@@ -107,6 +109,8 @@ const geenHorizontaleScroll = async (page, waar) => {
   await page.getByRole('button', { name: 'Ja, weggooien' }).click();
 
   // Overige schermen openen
+  await page.getByRole('navigation').getByRole('button', { name: 'Herstel' }).click();
+  await page.getByRole('heading', { name: "Zuurstof 's nachts" }).waitFor();
   for (const [tab, kop] of [['Voortgang', 'Voortgang'], ['Herstel', 'Herstel'], ['Meer', 'Meer']]) {
     await page.getByRole('navigation').getByRole('button', { name: tab }).click();
     await page.getByRole('heading', { level: 1, name: new RegExp(`^${kop}`) }).waitFor();
@@ -148,6 +152,10 @@ if (demo) {
   await page.getByRole('navigation').getByRole('button', { name: 'Herstel' }).click();
   await page.getByRole('heading', { name: 'AHI' }).waitFor();
   await page.screenshot({ path: `${uit}/b3-herstel.png`, fullPage: true });
+  await page.getByRole('navigation').getByRole('button', { name: 'Meer' }).click();
+  await page.getByRole('button', { name: /^Lichaam en metingen/ }).click();
+  await page.getByText(/per week/).first().waitFor();
+  await page.screenshot({ path: `${uit}/b7-lichaam.png`, fullPage: true });
   await page.getByRole('navigation').getByRole('button', { name: 'Schema' }).click();
   await page.screenshot({ path: `${uit}/b4-schema.png`, fullPage: true });
   await page.getByRole('navigation').getByRole('button', { name: 'Vandaag' }).click();

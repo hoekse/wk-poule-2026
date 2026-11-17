@@ -5,15 +5,9 @@ import { IcoonLijst, IcoonVerder, IcoonWeegschaal } from '../components/Iconen';
 import { kortDatum, maandagVan, plusDagen, vandaag } from '../lib/datum';
 import { SPIERNAMEN, zoekOefening } from '../lib/oefeningen';
 import { e1rm, e1rmReeks, fmtKg, geschiedenis, recordsIn, setsPerSpier, tonnage, trainingenPerWeek, werkSets } from '../lib/progressie';
-import type { Datum, Spiergroep, Staat } from '../lib/types';
+import { gewichtReeks, gewichtsTempo } from '../lib/lichaam';
+import type { Datum, Spiergroep } from '../lib/types';
 import { useNav, useWinkel } from '../lib/winkel';
-
-export function gewichtReeks(staat: Staat): { x: Datum; y: number }[] {
-  const per = new Map<Datum, number>();
-  for (const d of Object.values(staat.dagdata)) if (d.gewicht) per.set(d.datum, d.gewicht);
-  for (const m of staat.metingen) if (m.gewicht) per.set(m.datum, m.gewicht);
-  return [...per.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([x, y]) => ({ x, y }));
-}
 
 const SPIER_VOLGORDE: Spiergroep[] = ['borst', 'rug', 'schouders', 'quadriceps', 'hamstrings', 'billen', 'biceps', 'triceps', 'kuiten', 'romp'];
 
@@ -47,6 +41,15 @@ export function Voortgang() {
   const records30 = klaar.filter((t) => t.datum >= plusDagen(d, -30)).reduce((n, t) => n + recordsIn(staat, t).length, 0);
   const gewicht = gewichtReeks(staat).filter((p) => p.x >= plusDagen(d, -180));
   const doelPerWeek = staat.instellingen.trainingsdagen.length;
+  const tempo = gewichtsTempo(staat, d);
+  const vo2 = Object.values(staat.dagdata)
+    .filter((x) => x.vo2max && x.datum >= plusDagen(d, -365))
+    .sort((a, b) => a.datum.localeCompare(b.datum))
+    .map((x) => ({ x: x.datum, y: x.vo2max! }));
+  const intervalMinuten = klaar
+    .filter((t) => t.datum >= plusDagen(d, -27))
+    .flatMap((t) => t.oefeningen.filter((l) => zoekOefening(l.oefeningId, staat.eigenOefeningen)?.spieren[0] === 'conditie'))
+    .reduce((som, l) => som + werkSets(l).reduce((a, x) => a + (x.reps ?? 0), 0), 0) / 60;
 
   const besteSet = (() => {
     if (!oefId) return null;
@@ -169,6 +172,21 @@ export function Voortgang() {
         />
       </section>
 
+      <section className="kaart" aria-label="Conditie">
+        <h2>Conditie</h2>
+        {vo2.length > 0 ? (
+          <>
+            <p className="dun klein">VO2max van je Apple Watch (ml/kg/min): hoe hoger, hoe fitter. Stijgt door de intervallen en door af te vallen.</p>
+            <LijnGrafiek label="VO2max" punten={vo2} eenheid="ml/kg/min" hoogte={150} />
+          </>
+        ) : (
+          <p className="dun klein">Haal je VO2max (Cardiofitheid) op uit Apple Health, dan zie je hier hoe fit je wordt.</p>
+        )}
+        <p className="klein getal">
+          Intervallen afgelopen 4 weken: {intervalMinuten.toLocaleString('nl-NL', { maximumFractionDigits: 1 })} minuten voluit.
+        </p>
+      </section>
+
       <section className="kaart" aria-label="Totaal verplaatst gewicht per week">
         <h2>Totaal verplaatst per week</h2>
         <p className="dun klein">Gewicht × herhalingen van alle sets bij elkaar.</p>
@@ -182,7 +200,10 @@ export function Voortgang() {
           <IcoonVerder style={{ width: 20, height: 20, color: 'var(--tekst-3)' }} />
         </div>
         {gewicht.length ? (
-          <LijnGrafiek label="Lichaamsgewicht, laatste 6 maanden" punten={gewicht} eenheid="kg" hoogte={150} />
+          <>
+            <LijnGrafiek label="Lichaamsgewicht, laatste 6 maanden" punten={gewicht} eenheid="kg" hoogte={150} />
+            {tempo && <p className="klein">{tempo.tekst}</p>}
+          </>
         ) : (
           <p className="dun klein">Nog geen gewicht. Komt automatisch uit Apple Health, of vul een meting in.</p>
         )}

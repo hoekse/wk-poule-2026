@@ -136,8 +136,8 @@ export function Onboarding() {
             <div className="kaart">
               <h3>Herstel bepaalt de dag</h3>
               <p className="dun">
-                Slaap, je CPAP-nacht (AHI en gebruik uit de prisma APP of SleepHQ), hartslag uit Apple Health en hoe je je voelt geven een herstelscore. Slecht
-                geslapen? Dan wordt de training automatisch lichter.
+                Slaap, je CPAP-nacht (AHI en gebruik uit de prisma APP of SleepHQ), zuurstof van je O2Ring, hartslag van je Apple Watch en hoe je je voelt geven
+                een herstelscore. Slecht geslapen? Dan wordt de training automatisch lichter.
               </p>
             </div>
             <div className="knoprij">
