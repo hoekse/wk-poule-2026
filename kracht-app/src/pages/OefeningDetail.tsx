@@ -1,5 +1,6 @@
 import { Kop } from '../components/Basis';
 import { LijnGrafiek } from '../components/Grafiek';
+import { MachineInstelling } from '../components/Machine';
 import { dagDatum } from '../lib/datum';
 import { APPARATUUR, beschikbaar, gewichtLabel, repLabel, SPIERNAMEN, zoekOefening } from '../lib/oefeningen';
 import { e1rm, e1rmReeks, fmtKg, geschiedenis, setTekst, werkSets } from '../lib/progressie';
@@ -34,6 +35,7 @@ export function OefeningDetail({ id }: { id: string }) {
         ))}
         {!kan && <span className="pil geel">apparaat niet aangevinkt</span>}
       </div>
+      <MachineInstelling oef={oef} />
       {oef.tips.length > 0 && (
         <section className="kaart">
           <h3>Uitvoering</h3>

@@ -5,6 +5,7 @@ import { IcoonLijst, IcoonVerder, IcoonWeegschaal } from '../components/Iconen';
 import { kortDatum, maandagVan, plusDagen, vandaag } from '../lib/datum';
 import { SPIERNAMEN, zoekOefening } from '../lib/oefeningen';
 import { e1rm, e1rmReeks, fmtKg, geschiedenis, recordsIn, setsPerSpier, tonnage, trainingenPerWeek, werkSets } from '../lib/progressie';
+import { inzichten } from '../lib/inzichten';
 import { gewichtReeks, gewichtsTempo } from '../lib/lichaam';
 import type { Datum, Spiergroep } from '../lib/types';
 import { useNav, useWinkel } from '../lib/winkel';
@@ -42,6 +43,7 @@ export function Voortgang() {
   const gewicht = gewichtReeks(staat).filter((p) => p.x >= plusDagen(d, -180));
   const doelPerWeek = staat.instellingen.trainingsdagen.length;
   const tempo = gewichtsTempo(staat, d);
+  const inzicht = inzichten(staat, d);
   const vo2 = Object.values(staat.dagdata)
     .filter((x) => x.vo2max && x.datum >= plusDagen(d, -365))
     .sort((a, b) => a.datum.localeCompare(b.datum))
@@ -100,6 +102,23 @@ export function Voortgang() {
           <b>{records30}</b>
         </div>
       </div>
+
+      <section className="kaart" aria-label="Inzichten">
+        <h2>Inzichten</h2>
+        {inzicht.length ? (
+          inzicht.map((x) => (
+            <div key={x.titel} className="inzicht">
+              <i style={{ background: x.soort === 'goed' ? 'var(--groen)' : x.soort === 'let-op' ? 'var(--geel)' : 'var(--accent)', color: x.soort === 'goed' ? 'var(--groen)' : x.soort === 'let-op' ? 'var(--geel)' : 'var(--accent)' }} />
+              <b>{x.titel}</b>
+              <p>{x.tekst}</p>
+            </div>
+          ))
+        ) : (
+          <p className="dun klein">
+            Na ongeveer 10 trainingen met slaap- en CPAP-gegevens zie je hier wat jouw nachten, werkdagen en CPAP met je kracht doen.
+          </p>
+        )}
+      </section>
 
       <section className="kaart" aria-label="Kracht per oefening">
         <div className="rij tussen">

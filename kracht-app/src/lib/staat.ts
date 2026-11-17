@@ -2,9 +2,9 @@ import { maandagVan, vandaag } from './datum';
 import { berekenHerstel } from './herstel';
 import type { DagInvoer } from './importeren';
 import { standaardApparatuur, zoekOefening } from './oefeningen';
-import { advies, werkSets, e1rm } from './progressie';
+import { advies, e1rm, rondAf, stapVoor, werkSets } from './progressie';
 import { actieveDagen, blokInfo, kiesOefening, standaardDagen, zoekDag } from './schema';
-import type { Aanpassing, Bron, Dagdata, DagVeld, Datum, Instellingen, Meting, OefeningLog, SchemaId, Staat, Training } from './types';
+import type { Aanpassing, Bron, Dagdata, DagVeld, Datum, Instellingen, Meting, OefeningLog, SchemaId, Slot, Staat, Training } from './types';
 
 export const nieuwId = () =>
   (typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`);
@@ -24,11 +24,16 @@ export function standaardInstellingen(): Instellingen {
     geluid: true,
     trillen: true,
     opdrachtNaam: 'Kracht Gezondheid',
+    machineInstellingen: {},
+    supersets: true,
+    schijven: [25, 20, 15, 10, 5, 2.5, 1.25],
+    stangGewicht: 20,
+    trainingstijd: '18:00',
   };
 }
 
 export function legeStaat(): Staat {
-  return { versie: 1, instellingen: standaardInstellingen(), trainingen: [], dagdata: {}, metingen: [], eigenOefeningen: [] };
+  return { versie: 1, instellingen: standaardInstellingen(), trainingen: [], dagdata: {}, metingen: [], eigenOefeningen: [], fotos: [] };
 }
 
 /** Vult ontbrekende velden aan (na een update van de app of een oude back-up). */
@@ -43,6 +48,7 @@ export function normaliseer(s: Partial<Staat>): Staat {
     dagdata: s.dagdata && typeof s.dagdata === 'object' ? s.dagdata : {},
     metingen: Array.isArray(s.metingen) ? s.metingen : [],
     eigenOefeningen: Array.isArray(s.eigenOefeningen) ? s.eigenOefeningen : [],
+    fotos: Array.isArray(s.fotos) ? s.fotos : [],
   };
 }
 
@@ -57,16 +63,38 @@ export function maakTraining(s: Staat, dagId: string, aanpassing: Aanpassing, da
   const dag = zoekDag(inst, dagId) ?? actieveDagen(inst)[0];
   const blok = blokInfo(inst, datum);
   const herstel = berekenHerstel(s, datum);
+  // Gisteren veel boven je hoofd gewerkt (plafonds, hoge muren)? Dan schouders ontzien.
+  const ontzien = !!s.dagdata[datum]?.bovenHoofd;
   const oefeningen: OefeningLog[] = dag.slots.map((slot) => {
     const { oefening } = kiesOefening(slot, inst, s.eigenOefeningen);
     const a = advies(s, slot, oefening, { rirExtra: blok.rirExtra, deload: blok.deload, aanpassing });
+    if (ontzien && oefening.spieren[0] === 'schouders' && oefening.soort === 'basis') {
+      a.sets = Math.max(2, a.sets - 1);
+      a.rir += 1;
+      if (a.gewicht) a.gewicht = rondAf(a.gewicht * 0.9, stapVoor(oefening, inst));
+      a.uitleg += ' Schouders ontzien na werk boven je hoofd: 10% lichter en 1 set minder.';
+    }
     return {
       slotId: slot.id,
       oefeningId: oefening.id,
       doel: { ...a },
       sets: Array.from({ length: a.sets }, () => ({ gewicht: a.gewicht, reps: null, rir: null, klaar: false })),
+      ...(inst.supersets && slot.superset ? { superset: slot.superset } : {}),
     };
   });
+  if (ontzien && !oefeningen.some((l) => l.oefeningId === 'face-pull' || l.oefeningId === 'reverse-fly')) {
+    const extra: Slot = { id: `${dag.id}-schouders`, oefeningen: ['face-pull', 'reverse-fly'], sets: 2, repMin: 15, repMax: 20, rir: 2, rust: 60 };
+    const { oefening } = kiesOefening(extra, inst, s.eigenOefeningen);
+    const a = advies(s, extra, oefening, { rirExtra: 0, deload: false, aanpassing: 'normaal' });
+    a.uitleg = `Extra voor je schouders na werk boven je hoofd. ${a.uitleg}`;
+    oefeningen.push({
+      slotId: extra.id,
+      oefeningId: oefening.id,
+      doel: { ...a },
+      sets: Array.from({ length: a.sets }, () => ({ gewicht: a.gewicht, reps: null, rir: null, klaar: false })),
+      extra: true,
+    });
+  }
   return {
     id: nieuwId(),
     datum,
@@ -80,6 +108,7 @@ export function maakTraining(s: Staat, dagId: string, aanpassing: Aanpassing, da
     start: new Date().toISOString(),
     status: 'bezig',
     oefeningen,
+    ...(ontzien ? { schoudersOntzien: true } : {}),
   };
 }
 
@@ -144,16 +173,26 @@ export interface Backup {
   versie: 1;
   gemaakt: string;
   staat: Staat;
+  /** Voortgangsfoto's als data-URL per foto-id. */
+  fotos?: Record<string, string>;
 }
 
-export function maakBackup(s: Staat): Backup {
-  return { app: 'kracht', versie: 1, gemaakt: new Date().toISOString(), staat: s };
+export function maakBackup(s: Staat, fotos?: Record<string, string>): Backup {
+  return { app: 'kracht', versie: 1, gemaakt: new Date().toISOString(), staat: s, ...(fotos ? { fotos } : {}) };
 }
 
 export function leesBackup(tekst: string): Staat {
   const data = JSON.parse(tekst);
   if (data?.app !== 'kracht' || !data.staat) throw new Error('Dit is geen back-up van de Kracht-app.');
   return normaliseer(data.staat);
+}
+
+/** Back-up inclusief voortgangsfoto's (als data-URL per foto-id). */
+export function leesBackupVolledig(tekst: string): { staat: Staat; fotos: Record<string, string> } {
+  const data = JSON.parse(tekst);
+  const staat = leesBackup(tekst);
+  const fotos = data?.fotos && typeof data.fotos === 'object' ? (data.fotos as Record<string, string>) : {};
+  return { staat, fotos };
 }
 
 const csvVeld = (v: unknown) => {
@@ -205,6 +244,8 @@ const DAGVELDEN: [DagVeld, string][] = [
   ['spierpijn', 'spierpijn_1_5'],
   ['stress', 'stress_1_5'],
   ['zwareWerkdag', 'zware_werkdag'],
+  ['bovenHoofd', 'boven_hoofd_gewerkt'],
+  ['eiwit', 'eiwit_g'],
   ['pijn', 'pijn'],
 ];
 

@@ -58,7 +58,9 @@ const geenHorizontaleScroll = async (page, waar) => {
   await page.getByRole('group', { name: 'Spierpijn' }).getByRole('button', { name: '2' }).click();
   await page.getByRole('group', { name: 'Stress' }).getByRole('button', { name: '2' }).click();
   await foto(page, 'a2-ochtendcheck');
+  await page.locator('label[for="oc-bovenhoofd"]').click();
   await page.getByRole('button', { name: 'Ochtendcheck opslaan' }).click();
+  await page.getByText('Gisteren veel boven je hoofd gewerkt: schouderoefeningen').waitFor();
   await page.getByText('laagste 89%, 2 dips per uur').waitFor();
 
   // Apple Health-tekst plakken (zoals de opdracht die kopieert)
@@ -89,6 +91,17 @@ const geenHorizontaleScroll = async (page, waar) => {
   await foto(page, 'a4-training-loggen');
   await geenHorizontaleScroll(page, 'training');
 
+  // Opwarmen afvinken, superset en extra schouderwerk zichtbaar, machine-instelling bewaren
+  await page.getByText('Opwarmen (±5 minuten)').click();
+  await page.getByText('Kat-koe').click();
+  await page.getByText('1 van 7 gedaan').waitFor();
+  await page.getByText('Superset A1').waitFor();
+  await page.getByText('Extra voor je schouders').first().waitFor();
+  await page.getByRole('button', { name: /^Instelling Hack squat/ }).click();
+  await page.locator('#machine-hacksquat').fill('stoel 4, voeten midden');
+  await page.getByRole('button', { name: 'Instelling opslaan' }).click();
+  await page.getByRole('button', { name: 'Instelling Hack squat: stoel 4, voeten midden' }).waitFor();
+
   // Wisselen van oefening
   await page.getByRole('button', { name: 'Wissel' }).nth(2).click();
   await page.getByRole('button', { name: /Eenarmig roeien/ }).click();
@@ -108,6 +121,25 @@ const geenHorizontaleScroll = async (page, waar) => {
   await page.getByRole('button', { name: 'Afronden', exact: true }).click();
   await page.getByRole('button', { name: 'Training weggooien' }).click();
   await page.getByRole('button', { name: 'Ja, weggooien' }).click();
+
+  // Eiwit bijhouden
+  await page.getByRole('navigation').getByRole('button', { name: 'Vandaag' }).click();
+  await page.getByRole('button', { name: /\+30 g eiwit/ }).click();
+  await page.getByRole('button', { name: /\+40 g eiwit/ }).click();
+  await page.getByRole('img', { name: /^70 van/ }).waitFor();
+
+  // Weekoverzicht
+  await page.getByRole('navigation').getByRole('button', { name: 'Meer' }).click();
+  await page.getByRole('button', { name: /^Weekoverzicht/ }).click();
+  await page.getByRole('heading', { level: 1, name: /^Weekoverzicht/ }).waitFor();
+  await geenHorizontaleScroll(page, 'weekoverzicht');
+
+  // Voortgangsfoto toevoegen
+  await page.getByRole('navigation').getByRole('button', { name: 'Meer' }).click();
+  await page.getByRole('button', { name: /^Lichaam en metingen/ }).click();
+  const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAIAAAADCAIAAAA2iEnWAAAAFklEQVR4nGP4z8DAwMDAxMDAwMDAAAANHQEDK+mmyAAAAABJRU5ErkJggg==', 'base64');
+  await page.locator('input[type=file][accept="image/*"]').setInputFiles({ name: 'foto.png', mimeType: 'image/png', buffer: png });
+  await page.getByRole('button', { name: /^Foto van .* bekijken/ }).waitFor();
 
   // Overige schermen openen
   await page.getByRole('navigation').getByRole('button', { name: 'Herstel' }).click();

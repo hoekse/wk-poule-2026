@@ -3,10 +3,14 @@ import { blokInfo, kiesOefening, SCHEMAS, volgendeDag } from '../src/lib/schema'
 import { berekenHerstel } from '../src/lib/herstel';
 import { duurInUren, getal, leesCpapCsv, leesDatum, leesHealthAutoExport, leesOpdrachtJson, leesTijdstip, leesWillekeurig, vatZuurstofSamen } from '../src/lib/importeren';
 import { eiwitAdvies, gewichtsTempo } from '../src/lib/lichaam';
-import { advies, e1rm, opwarmen, recordsIn } from '../src/lib/progressie';
+import { advies, e1rm, opwarmen, recordsIn, stapVoor } from '../src/lib/progressie';
+import { deloadAdvies, inzichten } from '../src/lib/inzichten';
+import { weekSamenvatting, weekTekst } from '../src/lib/week';
+import { maakIcs } from '../src/lib/agenda';
+import { inhoudSleutel, isLeeg, voegSamen } from '../src/lib/samenvoegen';
 import { leesBackup, legeStaat, maakBackup, maakTraining, setsCsv, voegDagdataToe } from '../src/lib/staat';
 import { zoekOefening } from '../src/lib/oefeningen';
-import { schijvenPerKant, schijvenVoor } from '../src/pages/Sessie';
+import { schijvenPerKant, schijvenVoor } from '../src/lib/schijven';
 import type { Staat, Training } from '../src/lib/types';
 
 function staatMet(f: (s: Staat) => void = () => {}): Staat {
@@ -336,5 +340,96 @@ describe('plate-loaded machines, dumbbells en roeien', () => {
     expect(schijvenVoor(zoekOefening('tbar-roeien')!, 45)).toMatchObject({ kop: 'Op de stang:', schijven: [25, 20] });
     expect(schijvenVoor(zoekOefening('squat')!, 100)).toMatchObject({ kop: 'Per kant:', schijven: [25, 15] });
     expect(schijvenVoor(zoekOefening('db-curl')!, 14)).toBeNull();
+  });
+});
+
+describe('uitbreidingen', () => {
+  it('schijvenset van FitButiq: zonder 1,25 kg gaat de halterstang per 5 kg', () => {
+    const s = staatMet((x) => (x.instellingen.schijven = [25, 20, 15, 10, 5, 2.5]));
+    expect(stapVoor(zoekOefening('squat')!, s.instellingen)).toBe(5);
+    expect(stapVoor(zoekOefening('tbar-roeien')!, s.instellingen)).toBe(2.5);
+    expect(schijvenPerKant(62.5, 20, [25, 20, 15, 10, 5, 2.5])).toBeNull();
+    expect(schijvenVoor(zoekOefening('squat')!, 65, { schijven: [20, 10, 5, 2.5], stangGewicht: 15 })).toMatchObject({ schijven: [20, 5] });
+  });
+  it('supersets komen mee in de training, uit te zetten', () => {
+    const s = staatMet((x) => (x.instellingen.schemaId = '4-dagen'));
+    const t = maakTraining(s, '4b1', 'normaal', '2026-11-17');
+    expect(t.oefeningen.filter((l) => l.superset).map((l) => `${l.superset}:${l.slotId}`)).toEqual(['A:4b1-3', 'A:4b1-4', 'B:4b1-6', 'B:4b1-7']);
+    s.instellingen.supersets = false;
+    expect(maakTraining(s, '4b1', 'normaal', '2026-11-17').oefeningen.some((l) => l.superset)).toBe(false);
+  });
+  it('na werk boven je hoofd: schouderpress lichter en face pulls erbij', () => {
+    const s = staatMet();
+    klaar(s, '3b', '2026-11-09', { 'plate-schouderpress': [[60, 6], [60, 6], [60, 6], [60, 6]] });
+    s.dagdata['2026-11-17'] = { datum: '2026-11-17', bovenHoofd: true, bronnen: {}, bijgewerkt: '' };
+    const t = maakTraining(s, '3b', 'normaal', '2026-11-17');
+    const sp = t.oefeningen.find((l) => l.oefeningId === 'plate-schouderpress')!;
+    expect(sp.doel).toMatchObject({ sets: 3, gewicht: 55 });
+    expect(sp.doel.uitleg).toContain('Schouders ontzien');
+    expect(t.oefeningen[t.oefeningen.length - 1]).toMatchObject({ oefeningId: 'face-pull', extra: true });
+    expect(t.schoudersOntzien).toBe(true);
+  });
+  it('inzicht: na goede CPAP-nachten sterker', () => {
+    const s = staatMet();
+    const dagen = ['2026-10-05', '2026-10-07', '2026-10-09', '2026-10-12', '2026-10-14', '2026-10-16', '2026-10-19', '2026-10-21', '2026-10-23'];
+    dagen.forEach((d, i) => {
+      const goed = i % 2 === 0;
+      klaar(s, '3a', d, { hacksquat: [[100, goed ? 8 : 6]] });
+      s.dagdata[d] = { datum: d, ahi: goed ? 2 : 9, bronnen: {}, bijgewerkt: '' };
+    });
+    const i = inzichten(s, '2026-10-25');
+    expect(i.find((x) => x.titel === 'CPAP loont')?.tekst).toMatch(/presteer je gemiddeld [\d,]+% beter/);
+  });
+  it('advies lichte week bij laag herstel en stilstand', () => {
+    const s = staatMet((x) => (x.instellingen.blokStart = '2026-10-26'));
+    for (const [i, d] of ['2026-10-26', '2026-10-28', '2026-10-30', '2026-11-02', '2026-11-04', '2026-11-06'].entries()) {
+      klaar(s, '3a', d, { hacksquat: [[100, i < 2 ? 8 : 6]], 'plate-borstpress': [[80, i < 2 ? 8 : 6]] });
+    }
+    for (const d of ['2026-11-09', '2026-11-10', '2026-11-11']) s.dagdata[d] = { datum: d, slaapUren: 5, ahi: 14, energie: 2, spierpijn: 4, stress: 4, bronnen: {}, bijgewerkt: '' };
+    expect(deloadAdvies(s, '2026-11-11')).toMatch(/Je herstelscore is al 3 dagen/);
+    s.instellingen.deloadAdviesWeg = '2026-11-09';
+    expect(deloadAdvies(s, '2026-11-11')).toBeNull();
+  });
+  it('weekoverzicht en agenda', () => {
+    const s = staatMet();
+    klaar(s, '3a', '2026-11-16', { hacksquat: [[100, 8], [100, 8]] });
+    s.dagdata['2026-11-17'] = { datum: '2026-11-17', slaapUren: 7, ahi: 2, eiwit: 180, bronnen: {}, bijgewerkt: '' };
+    const w = weekSamenvatting(s, '2026-11-16');
+    expect(w).toMatchObject({ trainingen: 1, gepland: 3, sets: 2, tonnage: 1600, slaap: 7, ahi: 2, eiwit: 180 });
+    expect(weekTekst(w)).toContain('Trainingen: 1/3 · 2 sets');
+    const ics = maakIcs({ trainingsdagen: [1, 3, 5], trainingstijd: '18:30' }, '2026-11-17');
+    expect(ics.match(/BEGIN:VEVENT/g)).toHaveLength(3);
+    expect(ics).toContain('DTSTART:20261118T183000');
+    expect(ics).toContain('RRULE:FREQ=WEEKLY;BYDAY=WE');
+    expect(ics).toContain('DTEND:20261118T194500');
+  });
+});
+
+describe('cloud samenvoegen', () => {
+  it('voegt trainingen, metingen en dagdata van twee apparaten samen', () => {
+    const lokaal = staatMet();
+    const cloud = staatMet();
+    const a = klaar(lokaal, '3a', '2026-11-16', { hacksquat: [[100, 8]] });
+    const b = klaar(cloud, '3b', '2026-11-14', {});
+    const bezigLokaal = { ...b, status: 'bezig' as const };
+    lokaal.trainingen.push(bezigLokaal);
+    lokaal.metingen.push({ id: 'm-lok', datum: '2026-11-16', gewicht: 93 });
+    cloud.metingen.push({ id: 'm-cloud', datum: '2026-11-10', gewicht: 94 });
+    lokaal.dagdata['2026-11-17'] = { datum: '2026-11-17', ahi: 2, energie: 4, bronnen: { ahi: 'prisma' }, bijgewerkt: '2026-11-17T07:00:00Z' };
+    cloud.dagdata['2026-11-17'] = { datum: '2026-11-17', hrv: 48, ahi: 3, bronnen: { hrv: 'apple', ahi: 'apple' }, bijgewerkt: '2026-11-17T08:00:00Z' };
+    cloud.dagdata['2026-11-16'] = { datum: '2026-11-16', slaapUren: 7, bronnen: {}, bijgewerkt: '' };
+    const s = voegSamen(lokaal, cloud);
+    expect(s.trainingen.map((t) => t.id)).toEqual([b.id, a.id]);
+    expect(s.trainingen.find((t) => t.id === b.id)!.status).toBe('klaar');
+    expect(s.metingen.map((m) => m.id).sort()).toEqual(['m-cloud', 'm-lok']);
+    expect(s.dagdata['2026-11-17']).toMatchObject({ ahi: 3, hrv: 48, energie: 4, bronnen: { ahi: 'apple', hrv: 'apple' } });
+    expect(s.dagdata['2026-11-16'].slaapUren).toBe(7);
+  });
+  it('herkent een leeg apparaat en negeert de synchronisatietijd', () => {
+    const s = legeStaat();
+    expect(isLeeg(s)).toBe(true);
+    const t = staatMet();
+    expect(isLeeg(t)).toBe(false);
+    expect(inhoudSleutel({ ...t, instellingen: { ...t.instellingen, laatsteSync: 'x' } })).toBe(inhoudSleutel(t));
   });
 });

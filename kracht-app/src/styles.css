@@ -720,3 +720,47 @@ pre.code { padding: 12px 14px; white-space: pre-wrap; margin: 0; border-radius: 
   .hbalk { grid-template-columns: 96px 1fr 36px; }
   h1 { font-size: 1.8rem; }
 }
+
+/* ── Machine-instelling, superset, opwarmen, eiwit, foto's ── */
+.machine {
+  display: inline-flex; align-items: center; gap: 8px;
+  max-width: 100%;
+  padding: 7px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--lijn);
+  background: var(--vlak-2);
+  color: var(--tekst);
+  font-size: 0.84rem; font-weight: 600;
+  text-align: left;
+}
+.machine svg { width: 16px; height: 16px; color: var(--accent); flex: none; }
+.machine span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.machine.leeg { color: var(--tekst-3); border-style: dashed; background: transparent; }
+.oefblok .machine { margin: 10px 16px 0; }
+.oefblok.superset { position: relative; }
+.oefblok.superset::before { content: ''; position: absolute; left: 0; top: 14px; bottom: 14px; width: 3px; border-radius: 0 3px 3px 0; background: var(--grad); }
+.superset-label { display: inline-flex; align-items: center; gap: 6px; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); margin-bottom: 4px; }
+.opwarm { display: grid; gap: 2px; }
+.opwarm label { display: grid; grid-template-columns: 26px 1fr auto; gap: 10px; align-items: start; padding: 9px 2px; border-top: 1px solid var(--lijn); cursor: pointer; }
+.opwarm label:first-child { border-top: 0; }
+.opwarm input { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--groen); }
+.opwarm .naam { font-weight: 620; }
+.opwarm .hoeveel { font-family: var(--font-kop); font-weight: 650; color: var(--tekst-2); font-size: 0.85rem; white-space: nowrap; }
+.opwarm .tip { grid-column: 2 / -1; font-size: 0.8rem; color: var(--tekst-3); margin-top: -4px; }
+.opwarm label.gedaan .naam { color: var(--tekst-3); text-decoration: line-through; }
+.eiwit-balk { height: 10px; border-radius: 5px; background: var(--vlak-2); overflow: hidden; position: relative; }
+.eiwit-balk i { position: absolute; inset: 0 auto 0 0; border-radius: 5px; background: linear-gradient(90deg, var(--groen), var(--groen-2)); transition: width 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.eiwit-balk .doelzone { position: absolute; top: -3px; bottom: -3px; border-left: 1.5px dashed var(--tekst-3); border-right: 1.5px dashed var(--tekst-3); }
+.fotogrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.fotogrid button { position: relative; padding: 0; border: 0; border-radius: 14px; overflow: hidden; aspect-ratio: 3 / 4; background: var(--vlak-2); max-width: 100%; }
+.fotogrid img, .vergelijk img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.fotogrid span { position: absolute; left: 6px; bottom: 6px; padding: 2px 8px; border-radius: 999px; font-size: 0.7rem; font-weight: 650; background: rgb(0 0 0 / 0.55); color: #fff; }
+.vergelijk { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.vergelijk figure { margin: 0; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.vergelijk .kader { border-radius: 16px; overflow: hidden; aspect-ratio: 3 / 4; background: var(--vlak-2); max-width: 100%; }
+.vergelijk figcaption { font-size: 0.78rem; color: var(--tekst-2); text-align: center; }
+.inzicht { display: grid; grid-template-columns: 10px 1fr; gap: 4px 12px; padding: 12px 0; border-top: 1px solid var(--lijn); }
+.inzicht:first-of-type { border-top: 0; padding-top: 0; }
+.inzicht i { width: 10px; height: 10px; border-radius: 50%; margin-top: 6px; box-shadow: 0 0 10px currentColor; }
+.inzicht b { font-family: var(--font-kop); font-weight: 650; letter-spacing: -0.01em; }
+.inzicht p { grid-column: 2; font-size: 0.88rem; color: var(--tekst-2); }

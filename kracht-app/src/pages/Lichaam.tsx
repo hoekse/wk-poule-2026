@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Blad, Kop } from '../components/Basis';
+import { Fotos } from '../components/Fotos';
 import { LijnGrafiek } from '../components/Grafiek';
 import { IcoonPlus, IcoonPrullenbak, IcoonWeegschaal } from '../components/Iconen';
 import { kortDatum, vandaag } from '../lib/datum';
@@ -68,6 +69,7 @@ export function Lichaam() {
           <p className="dun klein">Weeg jezelf bij voorkeur 's ochtends na het opstaan. Gewicht uit Apple Health komt hier vanzelf bij.</p>
         )}
       </section>
+      <Fotos />
       {eiwit && (
         <section className="kaart">
           <h2>Aftrainen en sterker worden</h2>

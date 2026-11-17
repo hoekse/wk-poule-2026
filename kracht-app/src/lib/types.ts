@@ -83,6 +83,8 @@ export interface Slot {
   /** Rusttijd in seconden. */
   rust: number;
   notitie?: string;
+  /** Opeenvolgende slots met dezelfde letter doe je als superset (om en om). */
+  superset?: string;
 }
 
 export interface Trainingsdag {
@@ -123,6 +125,20 @@ export interface Instellingen {
   /** Naam van de iOS-opdracht voor Apple Health. */
   opdrachtNaam: string;
   laatsteBackup?: string;
+  /** Stoelstand, rugleuning, handgreep enz. per oefening. */
+  machineInstellingen: Record<string, string>;
+  /** Supersets uit het schema gebruiken. */
+  supersets: boolean;
+  /** Schijven die bij FitButiq liggen (kg). */
+  schijven: number[];
+  /** Gewicht van de halterstang. */
+  stangGewicht: number;
+  /** Tijd waarop je meestal traint, voor de agenda ('18:00'). */
+  trainingstijd: string;
+  /** Maandag van de week waarin je het advies voor een lichte week hebt weggeklikt. */
+  deloadAdviesWeg?: Datum;
+  /** Supabase-cloud: laatst gesynchroniseerd. */
+  laatsteSync?: string;
 }
 
 export interface SetLog {
@@ -147,6 +163,10 @@ export interface OefeningLog {
   sets: SetLog[];
   notitie?: string;
   overgeslagen?: boolean;
+  /** Superset-letter: om en om met de andere oefening(en) met dezelfde letter. */
+  superset?: string;
+  /** Extra toegevoegd (bijv. face pulls na werk boven je hoofd). */
+  extra?: boolean;
 }
 
 export type Aanpassing = 'normaal' | 'licht' | 'herstel';
@@ -168,6 +188,10 @@ export interface Training {
   /** Zwaarte van de hele training, 1-10. */
   zwaarte?: number;
   notitie?: string;
+  /** Afgevinkte onderdelen van de opwarmroutine. */
+  opwarming?: number[];
+  /** Training is aangepast omdat je gisteren veel boven je hoofd werkte. */
+  schoudersOntzien?: boolean;
 }
 
 export type Bron = 'apple' | 'hae' | 'sleephq' | 'prisma' | 'o2ring' | 'csv' | 'handmatig';
@@ -209,7 +233,11 @@ export interface Dagdata {
   spierpijn?: number;
   stress?: number;
   zwareWerkdag?: boolean;
+  /** Gisteren veel boven je hoofd gewerkt (plafonds, hoge muren). */
+  bovenHoofd?: boolean;
   pijn?: string;
+  /** Gegeten eiwit in gram. */
+  eiwit?: number;
   bronnen: Partial<Record<DagVeld, Bron>>;
   bijgewerkt: string;
 }
@@ -236,4 +264,14 @@ export interface Staat {
   dagdata: Record<Datum, Dagdata>;
   metingen: Meting[];
   eigenOefeningen: Oefening[];
+  /** Voortgangsfoto's; de afbeeldingen zelf staan apart in IndexedDB. */
+  fotos: FotoMeta[];
+}
+
+export type FotoHouding = 'voor' | 'zij' | 'achter';
+
+export interface FotoMeta {
+  id: string;
+  datum: Datum;
+  houding: FotoHouding;
 }

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Kop } from '../components/Basis';
 import { IcoonInfo } from '../components/Iconen';
+import { CloudKaart } from '../components/Cloud';
 import { ImportBlad, OchtendCheck } from '../components/Invoer';
 import { kortDatum } from '../lib/datum';
 import type { Bron } from '../lib/types';
@@ -166,13 +167,7 @@ export function Koppelingen() {
         </button>
       </section>
 
-      <section className="kaart" aria-label="Automatisch synchroniseren">
-        <h2>Volgende stap: automatisch en in de cloud</h2>
-        <p className="dun klein">
-          Nu staat alles op deze telefoon. Met een kleine online database (Supabase, net als je loods-app) kan de opdracht zelf elke ochtend de gegevens versturen,
-          kan SleepHQ via zijn API automatisch worden opgehaald en staat er altijd een back-up in de cloud. Dat is een aparte uitbreiding.
-        </p>
-      </section>
+      <CloudKaart />
 
       <ImportBlad open={importeer != null} metOpdracht={importeer === 'opdracht'} sluit={() => setImporteer(null)} />
       <OchtendCheck open={check} sluit={() => setCheck(false)} />

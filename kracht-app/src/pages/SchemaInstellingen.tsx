@@ -2,6 +2,8 @@ import { Kop, Schakelaar, Segment, Stapper } from '../components/Basis';
 import { DAGEN_KORT, maandagVan, plusDagen, vandaag } from '../lib/datum';
 import { alleOefeningen, beschikbaar, SPIERNAMEN } from '../lib/oefeningen';
 import { actieveDagen, blokInfo, kiesOefening, SCHEMAS } from '../lib/schema';
+import { maakIcs } from '../lib/agenda';
+import { deelBestand } from '../lib/delen';
 import { wisselSchema } from '../lib/staat';
 import type { Instellingen, SchemaId, Slot, Trainingsdag } from '../lib/types';
 import { useWinkel } from '../lib/winkel';
@@ -185,6 +187,31 @@ export function SchemaInstellingen() {
           </div>
         </section>
       ))}
+
+      <section className="sectie">
+        <span className="label">Supersets en agenda</span>
+        <div className="kaart">
+          <Schakelaar id="inst-supersets" aan={inst.supersets} zet={(b) => zet((i) => ({ ...i, supersets: b }))}>
+            Supersets gebruiken: twee hulpoefeningen om en om, scheelt 10-15 minuten per training
+          </Schakelaar>
+          <label className="veld">
+            <span>Ik train meestal om</span>
+            <input id="inst-tijd" type="time" className="invoer" value={inst.trainingstijd} onChange={(e) => zet((i) => ({ ...i, trainingstijd: e.target.value || '18:00' }))} />
+          </label>
+          <button
+            className="knop"
+            onClick={async () => {
+              const r = await deelBestand('kracht-trainingen.ics', maakIcs(inst, vandaag()), 'text/calendar');
+              if (r !== 'geannuleerd') melding('Agendabestand gemaakt: kies Agenda om toe te voegen');
+            }}
+          >
+            Trainingen in mijn agenda zetten
+          </button>
+          <p className="dun mini">
+            Elke {inst.trainingsdagen.map((d) => DAGEN_KORT[d - 1]).join(', ')} om {inst.trainingstijd}, 75 minuten, met een herinnering een uur van tevoren.
+          </p>
+        </div>
+      </section>
 
       <section className="sectie">
         <span className="label">Overig</span>

@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { Ring, Segment, scoreKleur } from '../components/Basis';
 import { IcoonDruppel, IcoonGevoel, IcoonHart, IcoonLet, IcoonMaan, IcoonMasker, IcoonPuls, IcoonStart, IcoonVink } from '../components/Iconen';
+import { EiwitTeller } from '../components/Eiwit';
 import { ImportBlad, OchtendCheck } from '../components/Invoer';
-import { DAGEN_KORT, dagenTussen, langDatum, plusDagen, vandaag, weekdag } from '../lib/datum';
+import { deloadAdvies } from '../lib/inzichten';
+import { DAGEN_KORT, dagenTussen, langDatum, maandagVan, plusDagen, vandaag, weekdag } from '../lib/datum';
 import { berekenHerstel, type Onderdeel } from '../lib/herstel';
 import { gewichtLabel, repLabel } from '../lib/oefeningen';
 import { advies, fmtKg } from '../lib/progressie';
@@ -46,6 +48,9 @@ export function Vandaag() {
   const stappenGisteren = staat.dagdata[plusDagen(d, -1)]?.stappen;
   const backupOud = aantalKlaar >= 3 && (!inst.laatsteBackup || dagenTussen(inst.laatsteBackup.slice(0, 10), d) > 7);
   const initiaal = (inst.naam.trim()[0] ?? 'K').toUpperCase();
+  const lichteWeekAdvies = deloadAdvies(staat, d);
+  const bovenHoofd = !!staat.dagdata[d]?.bovenHoofd;
+  const toonWeek = weekdag(d) === 7 || weekdag(d) === 1;
 
   const start = () => wijzig((s) => ({ ...s, trainingen: [...s.trainingen, maakTraining(s, dag.id, aanpassing)] }));
 
@@ -113,6 +118,31 @@ export function Vandaag() {
           <IcoonLet /> <span>{w}</span>
         </div>
       ))}
+
+      {lichteWeekAdvies && (
+        <section className="kaart" aria-label="Advies lichte week" style={{ borderColor: 'var(--geel)' }}>
+          <h3>Tijd voor een lichte week?</h3>
+          <p className="dun klein">{lichteWeekAdvies}</p>
+          <div className="knoprij">
+            <button
+              className="knop primair"
+              onClick={() => wijzig((s) => ({ ...s, instellingen: { ...s.instellingen, blokStart: plusDagen(maandagVan(d), -35) } }))}
+            >
+              Lichte week nu
+            </button>
+            <button className="knop" onClick={() => wijzig((s) => ({ ...s, instellingen: { ...s.instellingen, deloadAdviesWeg: maandagVan(d) } }))}>
+              Nee, doorgaan
+            </button>
+          </div>
+        </section>
+      )}
+
+      {bovenHoofd && (
+        <div className="melding blauw">
+          <IcoonLet />
+          <span>Gisteren veel boven je hoofd gewerkt: schouderoefeningen worden 10% lichter en er komen face pulls bij.</span>
+        </div>
+      )}
 
       <section className="kaart uitgelicht" aria-label="Volgende training">
         <div className="rij tussen">
@@ -186,6 +216,20 @@ export function Vandaag() {
             </p>
           )}
         </section>
+      )}
+
+      <EiwitTeller datum={d} />
+
+      {toonWeek && (
+        <button className="kaart" onClick={() => nav.ga({ naam: 'week' })} aria-label="Weekoverzicht bekijken">
+          <div className="rij tussen">
+            <div>
+              <span className="label">{weekdag(d) === 7 ? 'Deze week' : 'Vorige week'}</span>
+              <h3 style={{ marginTop: 4 }}>Je week in het kort</h3>
+            </div>
+            <span className="pil blauw">Bekijk</span>
+          </div>
+        </button>
       )}
 
       <section className="sectie" aria-label="Deze week">

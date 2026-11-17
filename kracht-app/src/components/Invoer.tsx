@@ -37,6 +37,7 @@ export function OchtendCheck({ open, sluit, datum = vandaag() }: { open: boolean
   const [spierpijn, setSpierpijn] = useState<number | undefined>();
   const [stress, setStress] = useState<number | undefined>();
   const [werkdag, setWerkdag] = useState(false);
+  const [bovenHoofd, setBovenHoofd] = useState(false);
   const [pijn, setPijn] = useState('');
 
   useEffect(() => {
@@ -51,6 +52,7 @@ export function OchtendCheck({ open, sluit, datum = vandaag() }: { open: boolean
     setSpierpijn(oud.spierpijn);
     setStress(oud.stress);
     setWerkdag(!!oud.zwareWerkdag);
+    setBovenHoofd(!!oud.bovenHoofd);
     setPijn(oud.pijn ?? '');
   }, [open, datum]);
 
@@ -72,6 +74,7 @@ export function OchtendCheck({ open, sluit, datum = vandaag() }: { open: boolean
     zet('spierpijn', spierpijn);
     zet('stress', stress);
     zet('zwareWerkdag', werkdag || undefined);
+    zet('bovenHoofd', bovenHoofd || undefined);
     zet('pijn', pijn.trim() || undefined);
     // Waarden uit de prisma APP en de O2Ring krijgen hun eigen bron, de rest is handmatig.
     const apart = (velden: (keyof Dagdata)[]): DagInvoer => {
@@ -145,6 +148,9 @@ export function OchtendCheck({ open, sluit, datum = vandaag() }: { open: boolean
       <Schaal label="Stress" waarde={stress} zet={setStress} laag="ontspannen" hoog="veel" />
       <Schakelaar id="oc-werkdag" aan={werkdag} zet={setWerkdag}>
         Gisteren een fysiek zware werkdag (steigers, ladders, sjouwen)
+      </Schakelaar>
+      <Schakelaar id="oc-bovenhoofd" aan={bovenHoofd} zet={setBovenHoofd}>
+        Gisteren veel boven mijn hoofd gewerkt (plafonds, hoge muren): schouders ontzien
       </Schakelaar>
       <label className="veld">
         <span>Pijn of blessure?</span>

@@ -44,6 +44,9 @@ const ANTIROTATIE = ['pallof-press', 'dead-bug', 'plank'];
 const DRAGEN = ['boerenwandeling', 'plank'];
 const CONDITIE = ['intervallen', 'kettlebell-intervallen'];
 
+/** Markeert een slot als deel van een superset (om en om met de volgende oefening met dezelfde letter). */
+const ss = (letter: string, slot: Slot): Slot => ({ ...slot, superset: letter });
+
 const FINISHER = 'Finisher: seconden voluit, daarna rustig doortrappen tot de timer afgaat.';
 
 /**
@@ -68,8 +71,8 @@ export const SCHEMAS: Record<SchemaId, Schema> = {
           s('3a-1', SQUAT, 4, 5, 8, 2, 180),
           s('3a-2', BORST, 4, 5, 8, 2, 150),
           s('3a-3', ISO_ROW, 4, 6, 10, 2, 120),
-          s('3a-4', LEGCURL, 3, 10, 12, 1, 90),
-          s('3a-5', ZIJ, 3, 12, 20, 1, 60),
+          ss('A', s('3a-4', LEGCURL, 3, 10, 12, 1, 90)),
+          ss('A', s('3a-5', ZIJ, 3, 12, 20, 1, 60)),
           s('3a-6', CONDITIE, 6, 20, 30, 1, 90, FINISHER),
         ],
       },
@@ -84,8 +87,8 @@ export const SCHEMAS: Record<SchemaId, Schema> = {
           s('3b-3', PULLDOWN, 3, 6, 10, 2, 120),
           s('3b-4', TBAR, 3, 6, 10, 2, 120),
           s('3b-5', LEGPRESS, 3, 10, 12, 2, 120),
-          s('3b-6', CURL, 2, 8, 12, 1, 60),
-          s('3b-7', DRAGEN, 3, 30, 45, 1, 90, 'Seconden lopen met zware dumbbells.'),
+          ss('A', s('3b-6', CURL, 2, 8, 12, 1, 60)),
+          ss('A', s('3b-7', DRAGEN, 3, 30, 45, 1, 90, 'Seconden lopen met zware dumbbells.')),
         ],
       },
       {
@@ -98,8 +101,8 @@ export const SCHEMAS: Record<SchemaId, Schema> = {
           s('3c-2', HIGHROW, 3, 8, 12, 2, 120),
           s('3c-3', SPLIT, 3, 6, 10, 2, 120, 'Herhalingen per been.'),
           s('3c-4', ROW_STEUN, 3, 8, 12, 2, 90),
-          s('3c-5', HIPTHRUST, 3, 8, 12, 2, 120),
-          s('3c-6', TRICEPS, 2, 10, 15, 1, 60),
+          ss('A', s('3c-5', HIPTHRUST, 3, 8, 12, 2, 120)),
+          ss('A', s('3c-6', TRICEPS, 2, 10, 15, 1, 60)),
           s('3c-7', CONDITIE, 6, 20, 30, 1, 90, FINISHER),
         ],
       },
@@ -120,8 +123,8 @@ export const SCHEMAS: Record<SchemaId, Schema> = {
           s('4o1-1', SQUAT, 4, 5, 8, 2, 180),
           s('4o1-2', RDL, 3, 8, 10, 2, 150),
           s('4o1-3', BEENPERS, 3, 10, 15, 1, 120),
-          s('4o1-4', LEGCURL, 3, 10, 12, 1, 75),
-          s('4o1-5', KUIT, 3, 10, 15, 1, 60),
+          ss('A', s('4o1-4', LEGCURL, 3, 10, 12, 1, 75)),
+          ss('A', s('4o1-5', KUIT, 3, 10, 15, 1, 60)),
           s('4o1-6', CONDITIE, 6, 20, 30, 1, 90, FINISHER),
         ],
       },
@@ -133,11 +136,11 @@ export const SCHEMAS: Record<SchemaId, Schema> = {
         slots: [
           s('4b1-1', BORST, 4, 5, 8, 2, 150),
           s('4b1-2', ISO_ROW, 4, 6, 10, 2, 120),
-          s('4b1-3', SCHOUDER_DB, 3, 8, 12, 2, 120),
-          s('4b1-4', PULLDOWN, 3, 8, 12, 2, 90),
+          ss('A', s('4b1-3', SCHOUDER_DB, 3, 8, 12, 2, 120)),
+          ss('A', s('4b1-4', PULLDOWN, 3, 8, 12, 2, 90)),
           s('4b1-5', ZIJ, 3, 12, 20, 1, 60),
-          s('4b1-6', TRICEPS, 2, 10, 15, 1, 60),
-          s('4b1-7', CURL, 2, 10, 15, 1, 60),
+          ss('B', s('4b1-6', TRICEPS, 2, 10, 15, 1, 60)),
+          ss('B', s('4b1-7', CURL, 2, 10, 15, 1, 60)),
         ],
       },
       {
@@ -162,11 +165,11 @@ export const SCHEMAS: Record<SchemaId, Schema> = {
         slots: [
           s('4b2-1', SCHOUDER, 4, 5, 8, 2, 150),
           s('4b2-2', TBAR, 4, 6, 10, 2, 120),
-          s('4b2-3', SCHUIN_DB, 3, 8, 12, 2, 120),
-          s('4b2-4', HIGHROW, 3, 8, 12, 2, 90),
+          ss('A', s('4b2-3', SCHUIN_DB, 3, 8, 12, 2, 120)),
+          ss('A', s('4b2-4', HIGHROW, 3, 8, 12, 2, 90)),
           s('4b2-5', DB_ROW, 2, 10, 15, 1, 75, 'Per arm. Zwaar en veel herhalingen.'),
-          s('4b2-6', HAMER, 2, 10, 12, 1, 60),
-          s('4b2-7', TRI_BOVEN, 2, 10, 15, 1, 60),
+          ss('B', s('4b2-6', HAMER, 2, 10, 12, 1, 60)),
+          ss('B', s('4b2-7', TRI_BOVEN, 2, 10, 15, 1, 60)),
         ],
       },
     ],

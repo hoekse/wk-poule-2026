@@ -1,4 +1,5 @@
-import { Kop } from '../components/Basis';
+import { Kop, Segment } from '../components/Basis';
+import { STANDAARD_SCHIJVEN } from '../lib/schijven';
 import { APPARATUUR } from '../lib/oefeningen';
 import { useWinkel } from '../lib/winkel';
 
@@ -24,6 +25,44 @@ export function Apparatuur() {
           </label>
         ))}
       </div>
+
+      <section className="kaart" aria-label="Schijven">
+        <h3>Schijven en stang</h3>
+        <p className="dun klein">Welke schijven liggen er? De schijvencalculator en de gewichtsstappen rekenen hiermee.</p>
+        <div className="keuzes" role="group" aria-label="Schijven">
+          {STANDAARD_SCHIJVEN.map((kg) => {
+            const aan = inst.schijven.includes(kg);
+            return (
+              <button
+                key={kg}
+                className="keuze"
+                aria-pressed={aan}
+                onClick={() =>
+                  wijzig((s) => {
+                    const lijst = aan ? s.instellingen.schijven.filter((x) => x !== kg) : [...s.instellingen.schijven, kg];
+                    return { ...s, instellingen: { ...s.instellingen, schijven: lijst.length ? lijst.sort((a, b) => b - a) : s.instellingen.schijven } };
+                  })
+                }
+              >
+                {kg.toLocaleString('nl-NL')}
+              </button>
+            );
+          })}
+        </div>
+        <div className="veld">
+          <span>Gewicht van de halterstang</span>
+          <Segment<number>
+            label="Stanggewicht"
+            waarde={inst.stangGewicht}
+            zet={(n) => wijzig((s) => ({ ...s, instellingen: { ...s.instellingen, stangGewicht: n } }))}
+            opties={[
+              { waarde: 20, tekst: '20 kg' },
+              { waarde: 15, tekst: '15 kg' },
+              { waarde: 10, tekst: '10 kg' },
+            ]}
+          />
+        </div>
+      </section>
     </div>
   );
 }

@@ -1,10 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Blad, fmtInvoer, leesInvoer } from '../components/Basis';
+import { MachineInstelling } from '../components/Machine';
+import { OPWARMEN } from '../lib/opwarmen';
 import { IcoonInfo, IcoonLet, IcoonPlus, IcoonPotlood, IcoonPrullenbak, IcoonVink, IcoonWissel } from '../components/Iconen';
 import { minutenTussen } from '../lib/datum';
 import { APPARATUUR, alleOefeningen, beschikbaar, gewichtLabel, OP_TIJD, SPIERNAMEN, zoekOefening } from '../lib/oefeningen';
 import { aantalWerkSets, fmtKg, geschiedenis, opwarmen, recordsIn, setTekst, tonnage } from '../lib/progressie';
 import { zoekDag } from '../lib/schema';
+import { schijfKleur, schijvenVoor } from '../lib/schijven';
 import { wisselOefening } from '../lib/staat';
 import type { Oefening, OefeningLog, SetLog, Training } from '../lib/types';
 import { useWinkel } from '../lib/winkel';
@@ -46,57 +49,33 @@ function useNu(interval = 1000) {
 
 const mmss = (sec: number) => `${Math.floor(sec / 60)}:${String(Math.max(0, sec) % 60).padStart(2, '0')}`;
 
-// ── Schijvencalculator voor de halterstang (20 kg) ──
-const SCHIJVEN: { kg: number; kleur: string }[] = [
-  { kg: 25, kleur: '#e5484d' },
-  { kg: 20, kleur: '#3d7bea' },
-  { kg: 15, kleur: '#f2b705' },
-  { kg: 10, kleur: '#3fa34d' },
-  { kg: 5, kleur: 'var(--schijf-wit)' },
-  { kg: 2.5, kleur: '#9aa0a8' },
-  { kg: 1.25, kleur: '#c9cdd3' },
-];
-export function schijvenPerKant(totaal: number, stang = 20): number[] | null {
-  let rest = (totaal - stang) / 2;
-  if (rest < 0) return null;
-  const uit: number[] = [];
-  for (const s of SCHIJVEN) {
-    while (rest >= s.kg - 1e-9) {
-      uit.push(s.kg);
-      rest -= s.kg;
-    }
-  }
-  return rest > 0.01 ? null : uit;
-}
-
-/** Welke schijven erop moeten: halterstang (20 kg, per kant), plate-loaded machine (per kant) of T-bar (één kant). */
-export function schijvenVoor(oef: Oefening, gewicht: number): { kop: string; schijven: number[]; leeg: string } | null {
-  if (oef.gewichtType === 'totaal' && oef.apparaat.includes('stang')) {
-    const s = schijvenPerKant(gewicht, 20);
-    return s && { kop: 'Per kant:', schijven: s, leeg: 'alleen de stang (20 kg)' };
-  }
-  if (oef.gewichtType === 'schijven') {
-    const eenzijdig = oef.id === 'tbar-roeien';
-    const s = schijvenPerKant(eenzijdig ? gewicht * 2 : gewicht, 0);
-    return s && { kop: eenzijdig ? 'Op de stang:' : 'Per kant:', schijven: s, leeg: 'geen schijven' };
-  }
-  return null;
-}
-
+// ── Schijvencalculator (halterstang, plate-loaded machines, T-bar) ──
 function Schijven({ oef, gewicht }: { oef: Oefening; gewicht: number }) {
-  const r = schijvenVoor(oef, gewicht);
+  const { staat } = useWinkel();
+  const r = schijvenVoor(oef, gewicht, staat.instellingen);
   if (!r) return null;
   return (
     <div className="schijven" aria-label={`${r.kop} ${r.schijven.join(', ')} kg`}>
       <span>{r.kop}</span>
       {r.schijven.length === 0 && <span>{r.leeg}</span>}
       {r.schijven.map((kg, i) => (
-        <span key={i} className="schijf" style={{ background: SCHIJVEN.find((x) => x.kg === kg)!.kleur }}>
+        <span key={i} className="schijf" style={{ background: schijfKleur(kg) }}>
           {fmtKg(kg)}
         </span>
       ))}
     </div>
   );
+}
+
+/** Indexen van de oefeningen die samen een superset vormen met oefening i (opeenvolgend, zelfde letter). */
+export function supersetGroep(t: Training, i: number): number[] {
+  const letter = t.oefeningen[i]?.superset;
+  if (!letter) return [i];
+  let van = i;
+  while (van > 0 && t.oefeningen[van - 1].superset === letter && !t.oefeningen[van - 1].overgeslagen) van--;
+  let tot = i;
+  while (tot < t.oefeningen.length - 1 && t.oefeningen[tot + 1].superset === letter && !t.oefeningen[tot + 1].overgeslagen) tot++;
+  return Array.from({ length: tot - van + 1 }, (_, k) => van + k);
 }
 
 function GetalVeld({ waarde, zet, placeholder, label, id }: { waarde: number | null; zet: (n: number | null) => void; placeholder?: string; label: string; id: string }) {
@@ -124,7 +103,7 @@ function GetalVeld({ waarde, zet, placeholder, label, id }: { waarde: number | n
 export function Sessie({ training }: { training: Training }) {
   const { staat, wijzig, melding } = useWinkel();
   const nu = useNu();
-  const [rust, setRust] = useState<{ eind: number; totaal: number } | null>(() => {
+  const [rust, setRust] = useState<{ eind: number; totaal: number; label?: string } | null>(() => {
     try {
       const r = JSON.parse(localStorage.getItem('kracht-rust') ?? 'null');
       return r && r.eind > Date.now() - 60000 ? r : null;
@@ -216,7 +195,16 @@ export function Sessie({ training }: { training: Training }) {
     }));
     const laatsteSet = j === log.sets.length - 1;
     const laatsteOefening = training.oefeningen.slice(i + 1).every((l) => l.overgeslagen);
-    if (!(laatsteSet && laatsteOefening)) setRust({ eind: Date.now() + log.doel.rust * 1000, totaal: log.doel.rust });
+    // Superset: na de eerste oefening kort wisselen, na de laatste van het rijtje de volle rust.
+    const groep = supersetGroep(training, i);
+    const volgende = groep.find((k) => k > i && training.oefeningen[k].sets.some((x) => !x.klaar));
+    if (volgende != null) {
+      const naam = zoekOefening(training.oefeningen[volgende].oefeningId, staat.eigenOefeningen)?.naam ?? 'volgende oefening';
+      setRust({ eind: Date.now() + 15000, totaal: 15, label: `Superset: nu ${naam}` });
+      return;
+    }
+    const rustTijd = groep.length > 1 ? Math.max(...groep.map((k) => training.oefeningen[k].doel.rust)) : log.doel.rust;
+    if (!(laatsteSet && laatsteOefening)) setRust({ eind: Date.now() + rustTijd * 1000, totaal: rustTijd });
   };
 
   const eersteBasis = training.oefeningen.findIndex((l) => zoekOefening(l.oefeningId, staat.eigenOefeningen)?.soort === 'basis');
@@ -246,6 +234,41 @@ export function Sessie({ training }: { training: Training }) {
       </div>
 
       <div className="pagina" style={{ gap: 14 }}>
+        {training.schoudersOntzien && (
+          <div className="melding blauw">
+            <IcoonInfo />
+            <span>Gisteren veel boven je hoofd gewerkt: schouderoefeningen zijn 10% lichter en er staan face pulls extra in.</span>
+          </div>
+        )}
+        <details className="kaart uitklap" open={!training.oefeningen.some((l) => l.sets.some((x) => x.klaar))}>
+          <summary>
+            <span className="groei" style={{ flex: 1 }}>
+              Opwarmen (±5 minuten)
+              <span className="dun klein" style={{ display: 'block', fontWeight: 500 }}>
+                {training.opwarming?.length ?? 0} van {OPWARMEN.length} gedaan
+              </span>
+            </span>
+          </summary>
+          <div className="opwarm">
+            {OPWARMEN.map((o, k) => {
+              const gedaan = training.opwarming?.includes(k) ?? false;
+              return (
+                <label key={o.naam} className={gedaan ? 'gedaan' : ''}>
+                  <input
+                    type="checkbox"
+                    checked={gedaan}
+                    onChange={() =>
+                      werk((t) => ({ ...t, opwarming: gedaan ? (t.opwarming ?? []).filter((x) => x !== k) : [...(t.opwarming ?? []), k] }))
+                    }
+                  />
+                  <span className="naam">{o.naam}</span>
+                  <span className="hoeveel">{o.hoeveel}</span>
+                  <span className="tip">{o.tip}</span>
+                </label>
+              );
+            })}
+          </div>
+        </details>
         {training.oefeningen.map((log, i) => {
           const oef = zoekOefening(log.oefeningId, staat.eigenOefeningen);
           if (!oef) return null;
@@ -271,9 +294,16 @@ export function Sessie({ training }: { training: Training }) {
             );
           }
           return (
-            <section key={i} className={`oefblok${allesKlaar ? ' klaar' : ''}`} aria-label={oef.naam}>
+            <section key={i} className={`oefblok${allesKlaar ? ' klaar' : ''}${log.superset ? ' superset' : ''}`} aria-label={oef.naam}>
               <div className="oefblok-kop">
                 <div className="groei">
+                  {log.superset && (
+                    <div className="superset-label">
+                      Superset {log.superset}
+                      {supersetGroep(training, i).indexOf(i) + 1}
+                    </div>
+                  )}
+                  {log.extra && <div className="superset-label">Extra voor je schouders</div>}
                   <button className="naam" onClick={() => setInfo(oef)}>
                     <h3>{oef.naam}</h3>
                   </button>
@@ -296,8 +326,9 @@ export function Sessie({ training }: { training: Training }) {
                   </span>
                 )}
               </div>
+              <MachineInstelling oef={oef} />
               <p className="uitleg">{log.doel.uitleg}</p>
-              {(opw.length > 0 || (hoofdGewicht && schijvenVoor(oef, hoofdGewicht))) && (
+              {(opw.length > 0 || (hoofdGewicht && schijvenVoor(oef, hoofdGewicht, staat.instellingen))) && (
                 <div className="hulp">
                   {opw.length > 0 && (
                     <div className="klein dun getal">
@@ -399,7 +430,9 @@ export function Sessie({ training }: { training: Training }) {
           <div className="binnen">
             <div className="tijd">{resterend > 0 ? mmss(resterend) : 'Go!'}</div>
             <div className="groei" style={{ flex: 1, minWidth: 0 }}>
-              <div className="klein dun">{resterend > 0 ? 'Rust' : 'Rust voorbij: volgende set'}</div>
+              <div className="klein dun" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {rust.label ?? (resterend > 0 ? 'Rust' : 'Rust voorbij: volgende set')}
+              </div>
               <div className="balk">
                 <i style={{ width: `${Math.max(0, Math.min(100, (resterend / rust.totaal) * 100))}%` }} />
               </div>

@@ -1,5 +1,5 @@
 import { Kop } from '../components/Basis';
-import { IcoonBoek, IcoonGebouw, IcoonInstellingen, IcoonKoppeling, IcoonLijst, IcoonOpslaan, IcoonVerder, IcoonWeegschaal } from '../components/Iconen';
+import { IcoonGrafiek, IcoonBoek, IcoonGebouw, IcoonInstellingen, IcoonKoppeling, IcoonLijst, IcoonOpslaan, IcoonVerder, IcoonWeegschaal } from '../components/Iconen';
 import { kortDatum } from '../lib/datum';
 import { useNav, useWinkel, type Scherm } from '../lib/winkel';
 
@@ -8,7 +8,8 @@ export function Meer() {
   const nav = useNav();
   const inst = staat.instellingen;
   const items: { scherm: Scherm; titel: string; sub: string; Icoon: typeof IcoonLijst }[] = [
-    { scherm: { naam: 'lichaam' }, titel: 'Lichaam en metingen', sub: 'Gewicht, vetpercentage, omtrekken', Icoon: IcoonWeegschaal },
+    { scherm: { naam: 'week' }, titel: 'Weekoverzicht', sub: 'Trainingen, slaap, CPAP, gewicht per week', Icoon: IcoonGrafiek },
+    { scherm: { naam: 'lichaam' }, titel: 'Lichaam en metingen', sub: "Gewicht, omtrekken en voortgangsfoto's", Icoon: IcoonWeegschaal },
     { scherm: { naam: 'geschiedenis' }, titel: 'Alle trainingen', sub: `${staat.trainingen.filter((t) => t.status === 'klaar').length} opgeslagen`, Icoon: IcoonLijst },
     { scherm: { naam: 'schema' }, titel: 'Schema en trainingsdagen', sub: 'Aantal dagen, oefeningen, sets, blok', Icoon: IcoonInstellingen },
     { scherm: { naam: 'apparatuur' }, titel: 'Apparatuur bij FitButiq', sub: 'Wat er staat bepaalt de oefeningen', Icoon: IcoonGebouw },

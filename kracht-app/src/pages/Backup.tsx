@@ -2,41 +2,28 @@ import { useState } from 'react';
 import { Kop } from '../components/Basis';
 import { IcoonLet, IcoonOpslaan, IcoonUpload } from '../components/Iconen';
 import { kortDatum, vandaag } from '../lib/datum';
-import { dagdataCsv, leesBackup, maakBackup, metingenCsv, setsCsv } from '../lib/staat';
+import { blobNaarDataUrl, dataUrlNaarBlob } from '../lib/foto';
+import { bewaarFoto, laadFoto } from '../lib/opslag';
+import { dagdataCsv, leesBackupVolledig, maakBackup, metingenCsv, setsCsv } from '../lib/staat';
 import type { Staat } from '../lib/types';
+import { deelBestand } from '../lib/delen';
 import { useWinkel } from '../lib/winkel';
-
-/** Deelt een bestand via het deelmenu (Bewaar in Bestanden / iCloud), anders downloaden. */
-async function deelBestand(naam: string, inhoud: string, type: string): Promise<'gedeeld' | 'gedownload' | 'geannuleerd'> {
-  const bestand = new File([inhoud], naam, { type });
-  try {
-    if (navigator.canShare?.({ files: [bestand] })) {
-      await navigator.share({ files: [bestand], title: naam });
-      return 'gedeeld';
-    }
-  } catch (e) {
-    if ((e as Error).name === 'AbortError') return 'geannuleerd';
-  }
-  const url = URL.createObjectURL(bestand);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = naam;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 5000);
-  return 'gedownload';
-}
 
 export function Backup() {
   const { staat, wijzig, melding } = useWinkel();
-  const [terug, setTerug] = useState<Staat | null>(null);
+  const [terug, setTerug] = useState<{ staat: Staat; fotos: Record<string, string> } | null>(null);
   const [fout, setFout] = useState('');
   const d = vandaag();
   const aantal = staat.trainingen.filter((t) => t.status === 'klaar').length;
 
   const backup = async () => {
-    const r = await deelBestand(`kracht-backup-${d}.json`, JSON.stringify(maakBackup(staat)), 'application/json');
+    // Voortgangsfoto's gaan mee in de back-up.
+    const fotos: Record<string, string> = {};
+    for (const f of staat.fotos) {
+      const blob = await laadFoto(f.id).catch(() => undefined);
+      if (blob) fotos[f.id] = await blobNaarDataUrl(blob);
+    }
+    const r = await deelBestand(`kracht-backup-${d}.json`, JSON.stringify(maakBackup(staat, fotos)), 'application/json');
     if (r !== 'geannuleerd') {
       wijzig((s) => ({ ...s, instellingen: { ...s.instellingen, laatsteBackup: new Date().toISOString() } }));
       melding('Back-up gemaakt');
@@ -71,7 +58,7 @@ export function Backup() {
               e.target.value = '';
               if (!f) return;
               try {
-                setTerug(leesBackup(await f.text()));
+                setTerug(leesBackupVolledig(await f.text()));
               } catch (err) {
                 setFout((err as Error).message || 'Dit bestand kan ik niet lezen.');
               }
@@ -86,8 +73,8 @@ export function Backup() {
         {terug && (
           <div className="kaart" style={{ borderColor: 'var(--geel)' }}>
             <p>
-              Back-up gevonden met {terug.trainingen.filter((t) => t.status === 'klaar').length} trainingen en {Object.keys(terug.dagdata).length} dagen. Alles wat nu in de app
-              staat wordt vervangen.
+              Back-up gevonden met {terug.staat.trainingen.filter((t) => t.status === 'klaar').length} trainingen, {Object.keys(terug.staat.dagdata).length} dagen en{' '}
+              {Object.keys(terug.fotos).length} foto's. Alles wat nu in de app staat wordt vervangen.
             </p>
             <div className="knoprij">
               <button className="knop" onClick={() => setTerug(null)}>
@@ -95,9 +82,10 @@ export function Backup() {
               </button>
               <button
                 className="knop vol-gevaar"
-                onClick={() => {
+                onClick={async () => {
                   const nieuw = terug;
-                  wijzig(() => nieuw);
+                  for (const [id, url] of Object.entries(nieuw.fotos)) await bewaarFoto(id, await dataUrlNaarBlob(url)).catch(() => {});
+                  wijzig(() => nieuw.staat);
                   setTerug(null);
                   melding('Back-up teruggezet');
                 }}

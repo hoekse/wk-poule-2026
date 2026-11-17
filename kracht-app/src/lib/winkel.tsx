@@ -98,7 +98,8 @@ export type Scherm =
   | { naam: 'apparatuur' }
   | { naam: 'koppelingen' }
   | { naam: 'backup' }
-  | { naam: 'over' };
+  | { naam: 'over' }
+  | { naam: 'week' };
 
 interface NavCtx {
   tab: Tab;

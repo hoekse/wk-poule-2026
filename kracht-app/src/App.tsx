@@ -1,3 +1,4 @@
+import { CloudSync } from './components/Cloud';
 import { IcoonGrafiek, IcoonHalter, IcoonMaan, IcoonMeer, IcoonVandaag } from './components/Iconen';
 import { actieveTraining } from './lib/staat';
 import { useNav, useWinkel, type Tab } from './lib/winkel';
@@ -15,6 +16,7 @@ import { Sessie } from './pages/Sessie';
 import { Training } from './pages/Training';
 import { Vandaag } from './pages/Vandaag';
 import { Voortgang } from './pages/Voortgang';
+import { Weekoverzicht } from './pages/Weekoverzicht';
 
 const TABS: { id: Tab; naam: string; Icoon: typeof IcoonVandaag }[] = [
   { id: 'vandaag', naam: 'Vandaag', Icoon: IcoonVandaag },
@@ -28,10 +30,22 @@ export function App() {
   const { staat } = useWinkel();
   const nav = useNav();
 
-  if (!staat.instellingen.onboardingKlaar) return <Onboarding />;
+  if (!staat.instellingen.onboardingKlaar)
+    return (
+      <>
+        <CloudSync />
+        <Onboarding />
+      </>
+    );
 
   const bezig = actieveTraining(staat);
-  if (bezig) return <Sessie training={bezig} />;
+  if (bezig)
+    return (
+      <>
+        <CloudSync />
+        <Sessie training={bezig} />
+      </>
+    );
 
   let inhoud;
   const s = nav.scherm;
@@ -46,6 +60,7 @@ export function App() {
       case 'koppelingen': inhoud = <Koppelingen />; break;
       case 'backup': inhoud = <Backup />; break;
       case 'over': inhoud = <Over />; break;
+      case 'week': inhoud = <Weekoverzicht />; break;
     }
   } else {
     inhoud = {
@@ -59,6 +74,7 @@ export function App() {
 
   return (
     <div className="app">
+      <CloudSync />
       <main>{inhoud}</main>
       <nav className="tabbalk" aria-label="Hoofdmenu">
         {TABS.map(({ id, naam, Icoon }) => (
