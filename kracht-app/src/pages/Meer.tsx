@@ -81,16 +81,16 @@ export function Over() {
       <div className="kaart">
         <h3>Sterker én slanker</h3>
         <p className="dun">
-          De basisoefeningen (squat, bankdrukken, deadlift, overhead press) train je zwaar in 3-6 herhalingen: daar word je sterker van. De hulpoefeningen in
-          8-15 herhalingen houden en bouwen spier. De intervallen aan het eind (6 rondes van 20-30 seconden voluit) maken je fitter en helpen bij vetverlies,
+          De basisoefeningen (hack squat, chest press, deadlift, shoulder press en de zware rows) train je zwaar in 3-8 herhalingen: daar word je sterker van.
+          De hulpoefeningen in 8-15 herhalingen houden en bouwen spier. De intervallen aan het eind (6 rondes van 20-30 seconden voluit) maken je fitter en helpen bij vetverlies,
           zonder dat je herstel eronder lijdt. Afvallen doe je vooral met eten; de app laat bij Lichaam zien of je tempo goed is.
         </p>
       </div>
       <div className="kaart">
         <h3>Schijvencalculator</h3>
         <p className="dun">
-          Bij oefeningen met de halterstang zie je per kant welke schijven erop moeten, uitgaande van een stang van 20 kg en schijven van 25, 20, 15, 10, 5, 2,5 en
-          1,25 kg in de wedstrijdkleuren.
+          Bij de halterstang zie je per kant welke schijven erop moeten (stang van 20 kg). Bij plate-loaded machines noteer je het totaal aan schijven van beide
+          kanten samen, zonder de machine zelf; de app laat zien wat er per kant op moet. Bij de T-bar staat wat er op de stang moet.
         </p>
       </div>
     </div>

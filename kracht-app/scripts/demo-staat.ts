@@ -10,8 +10,10 @@ const rnd = () => ((zaad = (zaad * 16807) % 2147483647) / 2147483647);
 
 const START: Record<string, number> = {
   squat: 60, 'bankdrukken': 50, kabelroeien: 45, beenbuigen: 30, 'zijwaarts-heffen': 6, 'kabel-crunch': 20,
-  deadlift: 80, 'db-schouderdrukken': 14, latpulldown: 45, legpress: 100, 'db-curl': 10, 'triceps-pushdown': 17.5,
+  deadlift: 80, 'db-schouderdrukken': 14, latpulldown: 45, legpress: 160, 'db-curl': 10, 'triceps-pushdown': 17.5,
   'bulgaarse-split-squat': 10, 'schuin-db': 18, 'db-roeien': 20, 'hipthrust-stang': 60, 'face-pull': 15, boerenwandeling: 24,
+  hacksquat: 100, 'plate-borstpress': 80, 'plate-roeien': 70, 'plate-schouderpress': 50, 'plate-pulldown': 60, 'tbar-roeien': 40,
+  'plate-schuin': 60, 'plate-highrow': 60, 'borst-gesteund-roeien': 20, 'kroc-row': 36,
   'overhead-press': 40, optrekken: 0, 'schuin-stang': 50, 'stang-roeien': 50, 'knieheffen-hangend': 0,
 };
 

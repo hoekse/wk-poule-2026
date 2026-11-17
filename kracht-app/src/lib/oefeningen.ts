@@ -9,7 +9,15 @@ export const APPARATUUR: { id: ApparaatId; naam: string; standaard: boolean }[] 
   { id: 'latpulldown', naam: 'Lat pulldown', standaard: true },
   { id: 'roeimachine', naam: 'Kabelroeien zittend (seated row)', standaard: true },
   { id: 'legpress', naam: 'Leg press', standaard: true },
-  { id: 'hacksquat', naam: 'Hack squat', standaard: false },
+  { id: 'hacksquat', naam: 'Hack squat (plate-loaded)', standaard: true },
+  { id: 'pendulum', naam: 'Pendulum squat / V-squat (plate-loaded)', standaard: false },
+  { id: 'plate-borst', naam: 'Chest press (plate-loaded)', standaard: true },
+  { id: 'plate-schuin', naam: 'Incline press (plate-loaded)', standaard: true },
+  { id: 'plate-schouder', naam: 'Shoulder press (plate-loaded)', standaard: true },
+  { id: 'plate-roei', naam: 'Row / iso-lateral row (plate-loaded)', standaard: true },
+  { id: 'plate-highrow', naam: 'High row (plate-loaded)', standaard: true },
+  { id: 'plate-pulldown', naam: 'Pulldown (plate-loaded)', standaard: true },
+  { id: 'tbar', naam: 'T-bar row', standaard: true },
   { id: 'smith', naam: 'Smith-machine', standaard: true },
   { id: 'beenstrekker', naam: 'Beenstrekker (leg extension)', standaard: true },
   { id: 'beenbuiger', naam: 'Beenbuiger (leg curl)', standaard: true },
@@ -48,11 +56,13 @@ export const OEFENINGEN: Oefening[] = [
   // ── Squatten ──────────────────────────────────────────────
   o({ id: 'squat', naam: 'Squat (stang)', spieren: ['quadriceps', 'billen', 'onderrug'], apparaat: ['stang', 'rek'], soort: 'basis', gewichtType: 'totaal', stap: 2.5,
     tips: ['Stang op je bovenrug, voeten iets breder dan je heupen.', 'Adem in, span je buik aan, dan pas zakken.', 'Knieën gaan mee in de richting van je tenen.', 'Zak tot je heupen minstens op kniehoogte zijn en duw door je hele voet omhoog.'] }),
-  o({ id: 'hacksquat', naam: 'Hack squat', spieren: ['quadriceps', 'billen'], apparaat: ['hacksquat'], soort: 'basis', gewichtType: 'totaal', stap: 5,
-    tips: ['Rug en billen blijven tegen het kussen.', 'Zak gecontroleerd zo diep als je rug plat blijft.', 'Knieën niet op slot bovenin.'] }),
+  o({ id: 'hacksquat', naam: 'Hack squat', spieren: ['quadriceps', 'billen'], apparaat: ['hacksquat'], soort: 'basis', gewichtType: 'schijven', stap: 5,
+    tips: ['Rug en billen blijven tegen het kussen.', 'Zak gecontroleerd zo diep als je rug plat blijft.', 'Knieën niet op slot bovenin.', 'Noteer alleen de schijven (beide kanten samen).'] }),
+  o({ id: 'pendulum-squat', naam: 'Pendulum squat', spieren: ['quadriceps', 'billen'], apparaat: ['pendulum'], soort: 'basis', gewichtType: 'schijven', stap: 5,
+    tips: ['Voeten midden op het plateau, rug tegen het kussen.', 'Zak zo diep als het lukt met je hielen aan de grond.', 'Noteer alleen de schijven.'] }),
   o({ id: 'smith-squat', naam: 'Squat in de Smith-machine', spieren: ['quadriceps', 'billen'], apparaat: ['smith'], soort: 'basis', gewichtType: 'totaal', stap: 2.5,
     tips: ['Voeten iets voor de stang, zodat je rechtop blijft.', 'Zak tot je heupen op kniehoogte zijn.', 'Noteer het gewicht van de schijven (de stang zelf weegt per machine anders).'] }),
-  o({ id: 'legpress', naam: 'Leg press', spieren: ['quadriceps', 'billen'], apparaat: ['legpress'], soort: 'basis', gewichtType: 'totaal', stap: 5,
+  o({ id: 'legpress', naam: 'Leg press', spieren: ['quadriceps', 'billen'], apparaat: ['legpress'], soort: 'basis', gewichtType: 'schijven', stap: 5,
     tips: ['Onderrug blijft tegen het kussen: zak niet verder dan dat lukt.', 'Voeten op heupbreedte, midden op het plateau.', 'Knieën niet op slot bovenin.'] }),
   o({ id: 'goblet-squat', naam: 'Goblet squat', spieren: ['quadriceps', 'billen', 'romp'], apparaat: ['dumbbells'], soort: 'basis', gewichtType: 'totaal', stap: 2,
     tips: ['Houd één dumbbell rechtop tegen je borst.', 'Ellebogen zakken tussen je knieën door.', 'Borst blijft omhoog.'] }),
@@ -74,7 +84,7 @@ export const OEFENINGEN: Oefening[] = [
     tips: ['Knieën licht gebogen, heupen naar achteren.', 'Dumbbells langs je benen, rug recht.'] }),
   o({ id: 'hipthrust-stang', naam: 'Hip thrust (stang)', spieren: ['billen', 'hamstrings'], apparaat: ['stang', 'bank'], soort: 'hulp', gewichtType: 'totaal', stap: 5,
     tips: ['Schouderbladen tegen de bank, kussen onder de stang.', 'Kin naar je borst, ribben omlaag.', 'Bovenin billen hard aanspannen, één tel vasthouden.'] }),
-  o({ id: 'hipthrust-machine', naam: 'Hip thrust-machine', spieren: ['billen', 'hamstrings'], apparaat: ['hipthrust'], soort: 'hulp', gewichtType: 'totaal', stap: 5,
+  o({ id: 'hipthrust-machine', naam: 'Hip thrust-machine', spieren: ['billen', 'hamstrings'], apparaat: ['hipthrust'], soort: 'hulp', gewichtType: 'schijven', stap: 5,
     tips: ['Bovenin billen hard aanspannen, één tel vasthouden.', 'Niet overstrekken in je onderrug.'] }),
   o({ id: 'hipthrust-smith', naam: 'Hip thrust in de Smith-machine', spieren: ['billen', 'hamstrings'], apparaat: ['smith', 'bank'], soort: 'hulp', gewichtType: 'totaal', stap: 5,
     tips: ['Schouderbladen tegen de bank, kussen onder de stang.', 'Bovenin één tel vasthouden.'] }),
@@ -94,6 +104,12 @@ export const OEFENINGEN: Oefening[] = [
     tips: ['Bank zo zetten dat de stang op je onderste borst zakt.'] }),
   o({ id: 'borstpress', naam: 'Chest press (machine)', spieren: ['borst', 'triceps', 'schouders'], apparaat: ['borstpress'], soort: 'basis', gewichtType: 'stapel', stap: 5,
     tips: ['Handgrepen ter hoogte van je middelste borst.', 'Schouderbladen tegen het kussen.'] }),
+  o({ id: 'plate-borstpress', naam: 'Chest press (plate-loaded)', spieren: ['borst', 'triceps', 'schouders'], apparaat: ['plate-borst'], soort: 'basis', gewichtType: 'schijven', stap: 5,
+    tips: ['Stoel zo dat de handgrepen op je middelste borst uitkomen.', 'Schouderbladen naar achteren tegen het kussen, borst vooruit.', 'Rustig terug tot je de rek in je borst voelt.', 'Noteer alleen de schijven (beide kanten samen).'] }),
+  o({ id: 'plate-schuin', naam: 'Incline press (plate-loaded)', spieren: ['borst', 'schouders', 'triceps'], apparaat: ['plate-schuin'], soort: 'basis', gewichtType: 'schijven', stap: 5,
+    tips: ['Handgrepen ter hoogte van je bovenste borst.', 'Schouderbladen naar achteren, ellebogen iets onder schouderhoogte.', 'Noteer alleen de schijven.'] }),
+  o({ id: 'db-fly', naam: 'Dumbbell fly', spieren: ['borst'], apparaat: ['dumbbells', 'bank'], soort: 'hulp', gewichtType: 'per-hand', stap: 2,
+    tips: ['Ellebogen licht gebogen en die hoek blijft gelijk.', 'Zak tot je de rek in je borst voelt, niet verder.'] }),
   o({ id: 'schuin-db', naam: 'Schuin bankdrukken (dumbbells)', spieren: ['borst', 'schouders', 'triceps'], apparaat: ['dumbbells', 'bank'], soort: 'basis', gewichtType: 'per-hand', stap: 2,
     tips: ['Bank op 30°.', 'Dumbbells zakken tot naast je bovenste borst.'] }),
   o({ id: 'schuin-stang', naam: 'Schuin bankdrukken (stang)', spieren: ['borst', 'schouders', 'triceps'], apparaat: ['stang', 'bank', 'rek'], soort: 'basis', gewichtType: 'totaal', stap: 2.5,
@@ -112,6 +128,8 @@ export const OEFENINGEN: Oefening[] = [
     tips: ['Staand, billen en buik aangespannen.', 'Hoofd even naar achteren, stang recht omhoog.', 'Bovenin hoofd door je armen.'] }),
   o({ id: 'db-schouderdrukken', naam: 'Schouderdrukken zittend (dumbbells)', spieren: ['schouders', 'triceps'], apparaat: ['dumbbells', 'bank'], soort: 'basis', gewichtType: 'per-hand', stap: 2,
     tips: ['Bank bijna rechtop, rug tegen de leuning.', 'Dumbbells zakken tot oorhoogte.'] }),
+  o({ id: 'plate-schouderpress', naam: 'Shoulder press (plate-loaded)', spieren: ['schouders', 'triceps'], apparaat: ['plate-schouder'], soort: 'basis', gewichtType: 'schijven', stap: 5,
+    tips: ['Handgrepen starten op schouderhoogte.', 'Rug tegen de leuning, niet hol trekken.', 'Noteer alleen de schijven.'] }),
   o({ id: 'schouderpress', naam: 'Shoulder press (machine)', spieren: ['schouders', 'triceps'], apparaat: ['schouderpress'], soort: 'basis', gewichtType: 'stapel', stap: 5,
     tips: ['Handgrepen starten op schouderhoogte.', 'Niet volledig op slot bovenin.'] }),
   o({ id: 'zijwaarts-heffen', naam: 'Zijwaarts heffen (dumbbells)', spieren: ['schouders'], apparaat: ['dumbbells'], soort: 'hulp', gewichtType: 'per-hand', stap: 1,
@@ -126,12 +144,24 @@ export const OEFENINGEN: Oefening[] = [
   // ── Trekken verticaal ─────────────────────────────────────
   o({ id: 'latpulldown', naam: 'Lat pulldown', spieren: ['rug', 'biceps'], apparaat: ['latpulldown'], soort: 'basis', gewichtType: 'stapel', stap: 5,
     tips: ['Iets breder dan schouderbreedte, borst omhoog.', 'Trek de stang naar je bovenste borst, ellebogen naar je zij.', 'Rustig terug tot je armen gestrekt zijn.'] }),
+  o({ id: 'plate-pulldown', naam: 'Pulldown (plate-loaded)', spieren: ['rug', 'biceps'], apparaat: ['plate-pulldown'], soort: 'basis', gewichtType: 'schijven', stap: 5,
+    tips: ['Bovenbenen vast onder de rol.', 'Trek met je ellebogen naar je zij, borst omhoog.', 'Eenarmig kan ook: noteer dan per arm en zet het in de notitie.', 'Noteer alleen de schijven.'] }),
   o({ id: 'optrekken', naam: 'Optrekken (pull-up)', spieren: ['rug', 'biceps'], apparaat: ['optrekstang'], soort: 'basis', gewichtType: 'lichaamsgewicht', stap: 2.5,
     tips: ['Vanuit gestrekte armen tot je kin boven de stang.', 'Lukt het nog niet: gebruik de ondersteuning of kies lat pulldown.', 'Gewicht = extra gewicht (0 = alleen je lichaam).'] }),
 
   // ── Trekken horizontaal ───────────────────────────────────
   o({ id: 'kabelroeien', naam: 'Kabelroeien zittend', spieren: ['rug', 'biceps'], apparaat: ['roeimachine'], soort: 'basis', gewichtType: 'stapel', stap: 5,
     tips: ['Rug recht, borst omhoog.', 'Trek naar je navel, schouderbladen samen.', 'Niet achterover zwaaien.'] }),
+  o({ id: 'plate-roeien', naam: 'Iso-lateral row (plate-loaded)', spieren: ['rug', 'biceps'], apparaat: ['plate-roei'], soort: 'basis', gewichtType: 'schijven', stap: 5,
+    tips: ['Borst tegen het kussen, schouders laag.', 'Trek je ellebogen langs je lichaam naar achteren, schouderbladen samen.', 'Eén tel vasthouden, rustig terug tot je armen gestrekt zijn.', 'Noteer alleen de schijven (beide kanten samen).'] }),
+  o({ id: 'plate-highrow', naam: 'High row (plate-loaded)', spieren: ['rug', 'schouders', 'biceps'], apparaat: ['plate-highrow'], soort: 'basis', gewichtType: 'schijven', stap: 5,
+    tips: ['Trek schuin naar beneden en naar achteren, ellebogen breed.', 'Borst omhoog, niet achterover hangen.', 'Noteer alleen de schijven.'] }),
+  o({ id: 'tbar-roeien', naam: 'T-bar row', spieren: ['rug', 'biceps', 'onderrug'], apparaat: ['tbar'], soort: 'basis', gewichtType: 'schijven', stap: 2.5,
+    tips: ['Met borststeun: borst tegen het kussen. Zonder: rug recht, ±45° voorover.', 'Trek naar je onderste borst, schouderbladen samen.', 'Noteer de schijven op de stang.'] }),
+  o({ id: 'kroc-row', naam: 'Kroc row (zware eenarmige dumbbell row)', spieren: ['rug', 'biceps', 'grip'], apparaat: ['dumbbells'], soort: 'hulp', gewichtType: 'per-hand', stap: 2, perKant: true,
+    tips: ['Zware dumbbell, hand op het rek of de bank.', 'Veel herhalingen (12-20), een beetje body English mag.', 'Trek naar je heup.'] }),
+  o({ id: 'db-pullover', naam: 'Dumbbell pullover', spieren: ['rug', 'borst'], apparaat: ['dumbbells', 'bank'], soort: 'hulp', gewichtType: 'totaal', stap: 2,
+    tips: ['Dwars of in de lengte op de bank, één dumbbell met twee handen.', 'Armen licht gebogen, zak achter je hoofd tot je de rek voelt.'] }),
   o({ id: 'db-roeien', naam: 'Eenarmig roeien (dumbbell)', spieren: ['rug', 'biceps'], apparaat: ['dumbbells', 'bank'], soort: 'basis', gewichtType: 'per-hand', stap: 2, perKant: true,
     tips: ['Knie en hand op de bank, rug plat.', 'Trek de dumbbell naar je heup.'] }),
   o({ id: 'borst-gesteund-roeien', naam: 'Roeien met borststeun (dumbbells)', spieren: ['rug', 'biceps'], apparaat: ['dumbbells', 'bank'], soort: 'basis', gewichtType: 'per-hand', stap: 2,
@@ -158,7 +188,7 @@ export const OEFENINGEN: Oefening[] = [
   // ── Kuiten ────────────────────────────────────────────────
   o({ id: 'kuit-machine', naam: 'Kuitheffen (machine)', spieren: ['kuiten'], apparaat: ['kuitmachine'], soort: 'hulp', gewichtType: 'stapel', stap: 5,
     tips: ['Helemaal omlaag tot je de rek voelt, bovenin één tel vasthouden.'] }),
-  o({ id: 'kuit-legpress', naam: 'Kuitheffen in de leg press', spieren: ['kuiten'], apparaat: ['legpress'], soort: 'hulp', gewichtType: 'totaal', stap: 5,
+  o({ id: 'kuit-legpress', naam: 'Kuitheffen in de leg press', spieren: ['kuiten'], apparaat: ['legpress'], soort: 'hulp', gewichtType: 'schijven', stap: 5,
     tips: ['Alleen je voorvoeten op de rand van het plateau.', 'Zet de veiligheidsvergrendeling dicht bij.'] }),
   o({ id: 'kuit-staand-db', naam: 'Kuitheffen staand (dumbbell)', spieren: ['kuiten'], apparaat: ['dumbbells'], soort: 'hulp', gewichtType: 'per-hand', stap: 2, perKant: true,
     tips: ['Voorvoet op een verhoging, één been tegelijk.'] }),
@@ -212,6 +242,8 @@ export function gewichtLabel(oef: Oefening): string {
       return 'kg extra';
     case 'stapel':
       return 'kg (stapel)';
+    case 'schijven':
+      return 'kg schijven';
     case 'geen':
       return '';
     default:

@@ -6,7 +6,7 @@ import { eiwitAdvies, gewichtsTempo } from '../src/lib/lichaam';
 import { advies, e1rm, opwarmen, recordsIn } from '../src/lib/progressie';
 import { leesBackup, legeStaat, maakBackup, maakTraining, setsCsv, voegDagdataToe } from '../src/lib/staat';
 import { zoekOefening } from '../src/lib/oefeningen';
-import { schijvenPerKant } from '../src/pages/Sessie';
+import { schijvenPerKant, schijvenVoor } from '../src/pages/Sessie';
 import type { Staat, Training } from '../src/lib/types';
 
 function staatMet(f: (s: Staat) => void = () => {}): Staat {
@@ -128,47 +128,47 @@ describe('schema', () => {
 describe('progressie', () => {
   it('verhoogt het gewicht als alle sets op het maximum zitten', () => {
     const s = staatMet();
-    klaar(s, '3a', '2026-11-09', { squat: [[100, 6], [100, 6], [100, 6], [100, 6]] });
+    klaar(s, '3a', '2026-11-09', { hacksquat: [[100, 8], [100, 8], [100, 8], [100, 8]] });
     const slot = SCHEMAS['3-dagen'].dagen[0].slots[0];
-    const a = advies(s, slot, zoekOefening('squat')!, { rirExtra: 0, deload: false, aanpassing: 'normaal' });
-    expect(a).toMatchObject({ gewicht: 102.5, sets: 4, repMin: 4, repMax: 6 });
+    const a = advies(s, slot, zoekOefening('hacksquat')!, { rirExtra: 0, deload: false, aanpassing: 'normaal' });
+    expect(a).toMatchObject({ gewicht: 105, sets: 4, repMin: 5, repMax: 8 });
   });
   it('houdt het gewicht als niet alle sets het maximum halen', () => {
     const s = staatMet();
-    klaar(s, '3a', '2026-11-09', { squat: [[60, 6], [60, 6], [60, 5], [60, 5]] });
+    klaar(s, '3a', '2026-11-09', { hacksquat: [[60, 6], [60, 6], [60, 5], [60, 5]] });
     const slot = SCHEMAS['3-dagen'].dagen[0].slots[0];
-    expect(advies(s, slot, zoekOefening('squat')!, { rirExtra: 0, deload: false, aanpassing: 'normaal' }).gewicht).toBe(60);
+    expect(advies(s, slot, zoekOefening('hacksquat')!, { rirExtra: 0, deload: false, aanpassing: 'normaal' }).gewicht).toBe(60);
   });
   it('gaat 10% omlaag na twee keer onder het minimum', () => {
     const s = staatMet();
-    klaar(s, '3a', '2026-11-09', { squat: [[80, 4], [80, 4], [80, 3], [80, 3]] });
-    klaar(s, '3a', '2026-11-12', { squat: [[80, 4], [80, 3], [80, 3], [80, 3]] });
+    klaar(s, '3a', '2026-11-09', { hacksquat: [[80, 4], [80, 4], [80, 3], [80, 3]] });
+    klaar(s, '3a', '2026-11-12', { hacksquat: [[80, 4], [80, 3], [80, 3], [80, 3]] });
     const slot = SCHEMAS['3-dagen'].dagen[0].slots[0];
-    expect(advies(s, slot, zoekOefening('squat')!, { rirExtra: 0, deload: false, aanpassing: 'normaal' }).gewicht).toBe(72.5);
+    expect(advies(s, slot, zoekOefening('hacksquat')!, { rirExtra: 0, deload: false, aanpassing: 'normaal' }).gewicht).toBe(70);
   });
   it('lichte week en herstelsessie verlagen sets en gewicht', () => {
     const s = staatMet();
-    klaar(s, '3a', '2026-11-09', { squat: [[100, 5], [100, 5], [100, 5], [100, 5]] });
+    klaar(s, '3a', '2026-11-09', { hacksquat: [[100, 5], [100, 5], [100, 5], [100, 5]] });
     const slot = SCHEMAS['3-dagen'].dagen[0].slots[0];
-    const deload = advies(s, slot, zoekOefening('squat')!, { rirExtra: 2, deload: true, aanpassing: 'normaal' });
+    const deload = advies(s, slot, zoekOefening('hacksquat')!, { rirExtra: 2, deload: true, aanpassing: 'normaal' });
     expect(deload).toMatchObject({ sets: 3, gewicht: 90 });
-    const herstel = advies(s, slot, zoekOefening('squat')!, { rirExtra: 0, deload: false, aanpassing: 'herstel' });
+    const herstel = advies(s, slot, zoekOefening('hacksquat')!, { rirExtra: 0, deload: false, aanpassing: 'herstel' });
     expect(herstel).toMatchObject({ sets: 2, gewicht: 85, rir: 4 });
   });
   it('na een lichte week weer verder op het gewicht van daarvoor', () => {
     const s = staatMet();
-    klaar(s, '3a', '2026-11-30', { squat: [[100, 6], [100, 6], [100, 6], [100, 6]] });
-    const licht = klaar(s, '3a', '2026-12-09', { squat: [[90, 6], [90, 6]] });
+    klaar(s, '3a', '2026-11-30', { hacksquat: [[100, 8], [100, 8], [100, 8], [100, 8]] });
+    const licht = klaar(s, '3a', '2026-12-09', { hacksquat: [[90, 6], [90, 6]] });
     licht.deload = true;
     const slot = SCHEMAS['3-dagen'].dagen[0].slots[0];
-    expect(advies(s, slot, zoekOefening('squat')!, { rirExtra: 1, deload: false, aanpassing: 'normaal' }).gewicht).toBe(102.5);
+    expect(advies(s, slot, zoekOefening('hacksquat')!, { rirExtra: 1, deload: false, aanpassing: 'normaal' }).gewicht).toBe(105);
   });
   it('dumbbells volgen de ingestelde stap', () => {
     const s = staatMet((x) => {
       x.instellingen.dumbbellStap = 2.5;
       x.instellingen.keuzes['3b-2'] = 'db-schouderdrukken';
     });
-    klaar(s, '3b', '2026-11-09', { 'db-schouderdrukken': [[20, 6], [20, 6], [20, 6], [20, 6]] });
+    klaar(s, '3b', '2026-11-09', { 'db-schouderdrukken': [[20, 8], [20, 8], [20, 8], [20, 8]] });
     const slot = SCHEMAS['3-dagen'].dagen[1].slots[1];
     expect(advies(s, slot, zoekOefening('db-schouderdrukken')!, { rirExtra: 0, deload: false, aanpassing: 'normaal' }).gewicht).toBe(22.5);
   });
@@ -182,8 +182,8 @@ describe('progressie', () => {
   });
   it('herkent records', () => {
     const s = staatMet();
-    klaar(s, '3a', '2026-11-09', { squat: [[60, 8]] });
-    const t = klaar(s, '3a', '2026-11-12', { squat: [[65, 8]] });
+    klaar(s, '3a', '2026-11-09', { hacksquat: [[60, 8]] });
+    const t = klaar(s, '3a', '2026-11-12', { hacksquat: [[65, 8]] });
     expect(recordsIn(s, t)).toHaveLength(1);
   });
 });
@@ -230,10 +230,10 @@ describe('back-up en export', () => {
   });
   it('CSV met puntkomma en komma-decimaal', () => {
     const s = staatMet();
-    klaar(s, '3a', '2026-11-09', { squat: [[62.5, 8]] });
+    klaar(s, '3a', '2026-11-09', { hacksquat: [[62.5, 8]] });
     const csv = setsCsv(s).split('\n');
     expect(csv[0]).toBe('datum;training;oefening;set;gewicht_kg;herhalingen;rir;geschat_1rm;notitie');
-    expect(csv[1]).toContain('Squat (stang);1;62,5;8;2;');
+    expect(csv[1]).toContain('Hack squat;1;62,5;8;2;');
   });
 });
 
@@ -304,5 +304,37 @@ describe('aftrainen en conditie', () => {
     expect(a.sets).toBe(6);
     expect(a.uitleg).toContain('Vorige keer: 25s, 25s');
     expect(a.uitleg).toContain('1 seconde meer');
+  });
+});
+
+describe('plate-loaded machines, dumbbells en roeien', () => {
+  it('kiest standaard plate-loaded machines en roeit elke training', () => {
+    const s = staatMet();
+    const kies = (dag: number, slot: number, schema: '3-dagen' | '4-dagen' = '3-dagen') =>
+      kiesOefening(SCHEMAS[schema].dagen[dag].slots[slot], s.instellingen, []).oefening.id;
+    expect([kies(0, 0), kies(0, 1), kies(0, 2)]).toEqual(['hacksquat', 'plate-borstpress', 'plate-roeien']);
+    expect([kies(1, 1), kies(1, 2), kies(1, 3)]).toEqual(['plate-schouderpress', 'plate-pulldown', 'tbar-roeien']);
+    expect([kies(2, 0), kies(2, 1), kies(2, 3)]).toEqual(['plate-schuin', 'plate-highrow', 'borst-gesteund-roeien']);
+    for (const schema of ['3-dagen', '4-dagen'] as const) {
+      for (const dag of SCHEMAS[schema].dagen) {
+        const rug = dag.slots.filter((sl) => zoekOefening(kiesOefening(sl, s.instellingen, []).oefening.id)?.spieren[0] === 'rug').length;
+        if (!dag.id.includes('o')) expect(rug, `${dag.id} heeft roei- of trekoefeningen`).toBeGreaterThanOrEqual(dag.id.startsWith('4') ? 2 : 1);
+      }
+    }
+  });
+  it('zonder plate-machines valt het terug op dumbbells', () => {
+    const s = staatMet((x) => {
+      x.instellingen.apparatuur['plate-borst'] = false;
+      x.instellingen.apparatuur['plate-roei'] = false;
+      x.instellingen.apparatuur.tbar = false;
+    });
+    expect(kiesOefening(SCHEMAS['3-dagen'].dagen[0].slots[1], s.instellingen, []).oefening.id).toBe('db-bankdrukken');
+    expect(kiesOefening(SCHEMAS['3-dagen'].dagen[0].slots[2], s.instellingen, []).oefening.id).toBe('db-roeien');
+  });
+  it('schijvencalculator voor machine en T-bar', () => {
+    expect(schijvenVoor(zoekOefening('plate-borstpress')!, 90)).toMatchObject({ kop: 'Per kant:', schijven: [25, 20] });
+    expect(schijvenVoor(zoekOefening('tbar-roeien')!, 45)).toMatchObject({ kop: 'Op de stang:', schijven: [25, 20] });
+    expect(schijvenVoor(zoekOefening('squat')!, 100)).toMatchObject({ kop: 'Per kant:', schijven: [25, 15] });
+    expect(schijvenVoor(zoekOefening('db-curl')!, 14)).toBeNull();
   });
 });

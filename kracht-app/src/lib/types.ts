@@ -38,10 +38,19 @@ export type ApparaatId =
   | 'rugstrekbank'
   | 'kuitmachine'
   | 'kettlebell'
-  | 'cardio';
+  | 'cardio'
+  | 'plate-borst'
+  | 'plate-schuin'
+  | 'plate-schouder'
+  | 'plate-roei'
+  | 'plate-highrow'
+  | 'plate-pulldown'
+  | 'tbar'
+  | 'pendulum';
 
 /** Hoe het gewicht van een oefening wordt genoteerd. */
-export type GewichtType = 'totaal' | 'per-hand' | 'stapel' | 'lichaamsgewicht' | 'geen';
+/** schijven = plate-loaded machine: totaal aan schijven, de machine zelf telt niet mee. */
+export type GewichtType = 'totaal' | 'per-hand' | 'stapel' | 'lichaamsgewicht' | 'schijven' | 'geen';
 
 export interface Oefening {
   id: string;

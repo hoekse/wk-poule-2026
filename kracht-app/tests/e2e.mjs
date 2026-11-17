@@ -71,8 +71,9 @@ const geenHorizontaleScroll = async (page, waar) => {
 
   // Training A starten en loggen
   await page.getByRole('button', { name: 'Start Training A' }).click();
-  await page.getByText('Training A · Squat en bankdrukken').waitFor();
+  await page.getByText('Training A · Hack squat, chest press en row').waitFor();
   await page.locator('#kg-0-0').fill('60');
+  await page.getByLabel('Per kant: 25, 5 kg').waitFor(); // hack squat: 60 kg schijven = 25 + 5 per kant
   await page.locator('#reps-0-0').fill('8');
   await page.getByRole('button', { name: 'Set 1 klaar' }).first().click();
   await page.getByRole('timer').waitFor();

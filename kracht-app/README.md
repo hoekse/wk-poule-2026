@@ -7,9 +7,9 @@ Werkt als app op het beginscherm van de iPhone (PWA), ook zonder internet in de 
 
 | Onderdeel | Wat het doet |
 |---|---|
-| **Schema** | Voor een ervaren sporter die sterker, slanker en fitter wil: 3× volledig lichaam (A/B/C) of 4× boven/onder, zware basisoefeningen, hulpoefeningen en conditie-intervallen. Blokken van 6 weken: instap, opbouw, zwaarste week, lichte week. |
+| **Schema** | Voor een ervaren sporter die sterker, slanker en fitter wil: 3× volledig lichaam (A/B/C) of 4× boven/onder, gebouwd rond plate-loaded machines, dumbbells en veel roei-oefeningen, met conditie-intervallen. Blokken van 6 weken: instap, opbouw, zwaarste week, lichte week. |
 | **Apparatuur** | Vink aan wat er bij FitButiq staat; per oefening wordt de beste variant gekozen (bijv. squat → hack squat → Smith → leg press). |
-| **Training loggen** | Gewicht, herhalingen en RIR per set, vorige prestatie ernaast, rusttimer met piep, schijvencalculator, opwarmsets, oefening wisselen, notities. |
+| **Training loggen** | Gewicht, herhalingen en RIR per set, vorige prestatie ernaast, rusttimer met piep, schijvencalculator (halterstang, plate-loaded machines, T-bar), opwarmsets, oefening wisselen, notities. |
 | **Automatisch zwaarder** | Dubbele progressie: alle sets op het maximum → volgende keer zwaarder. Twee keer onder het minimum → 10% lichter. Lichte weken tellen niet mee als uitgangspunt. |
 | **Herstelscore** | 0-100 uit slaap, CPAP (AHI + uren masker op), zuurstof van de O2Ring, HRV en rusthartslag t.o.v. je eigen gemiddelde, en de ochtendcheck. Bepaalt of je normaal, lichter of herstel traint. |
 | **Voortgang** | Geschat maximum per oefening, records, sets per spiergroep, trainingen per week, conditie (VO2max), intervalminuten, totaal verplaatst gewicht, lichaamsgewicht. |

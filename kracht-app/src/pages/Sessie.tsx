@@ -69,14 +69,28 @@ export function schijvenPerKant(totaal: number, stang = 20): number[] | null {
   return rest > 0.01 ? null : uit;
 }
 
-function Schijven({ gewicht }: { gewicht: number }) {
-  const s = schijvenPerKant(gewicht);
-  if (!s) return null;
+/** Welke schijven erop moeten: halterstang (20 kg, per kant), plate-loaded machine (per kant) of T-bar (één kant). */
+export function schijvenVoor(oef: Oefening, gewicht: number): { kop: string; schijven: number[]; leeg: string } | null {
+  if (oef.gewichtType === 'totaal' && oef.apparaat.includes('stang')) {
+    const s = schijvenPerKant(gewicht, 20);
+    return s && { kop: 'Per kant:', schijven: s, leeg: 'alleen de stang (20 kg)' };
+  }
+  if (oef.gewichtType === 'schijven') {
+    const eenzijdig = oef.id === 'tbar-roeien';
+    const s = schijvenPerKant(eenzijdig ? gewicht * 2 : gewicht, 0);
+    return s && { kop: eenzijdig ? 'Op de stang:' : 'Per kant:', schijven: s, leeg: 'geen schijven' };
+  }
+  return null;
+}
+
+function Schijven({ oef, gewicht }: { oef: Oefening; gewicht: number }) {
+  const r = schijvenVoor(oef, gewicht);
+  if (!r) return null;
   return (
-    <div className="schijven" aria-label={`Per kant: ${s.join(', ')} kg`}>
-      <span>Per kant:</span>
-      {s.length === 0 && <span>alleen de stang (20 kg)</span>}
-      {s.map((kg, i) => (
+    <div className="schijven" aria-label={`${r.kop} ${r.schijven.join(', ')} kg`}>
+      <span>{r.kop}</span>
+      {r.schijven.length === 0 && <span>{r.leeg}</span>}
+      {r.schijven.map((kg, i) => (
         <span key={i} className="schijf" style={{ background: SCHIJVEN.find((x) => x.kg === kg)!.kleur }}>
           {fmtKg(kg)}
         </span>
@@ -283,14 +297,14 @@ export function Sessie({ training }: { training: Training }) {
                 )}
               </div>
               <p className="uitleg">{log.doel.uitleg}</p>
-              {(opw.length > 0 || (oef.apparaat.includes('stang') && oef.gewichtType === 'totaal' && hoofdGewicht)) && (
+              {(opw.length > 0 || (hoofdGewicht && schijvenVoor(oef, hoofdGewicht))) && (
                 <div className="hulp">
                   {opw.length > 0 && (
                     <div className="klein dun getal">
                       Opwarmen: {opw.map((w) => `${fmtKg(w.gewicht)}×${w.reps}`).join(' · ')}
                     </div>
                   )}
-                  {oef.apparaat.includes('stang') && oef.gewichtType === 'totaal' && hoofdGewicht ? <Schijven gewicht={hoofdGewicht} /> : null}
+                  {hoofdGewicht ? <Schijven oef={oef} gewicht={hoofdGewicht} /> : null}
                 </div>
               )}
               <div className="sets">

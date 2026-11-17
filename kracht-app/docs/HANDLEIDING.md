@@ -22,8 +22,9 @@ De app werkt daarna ook zonder internet. Updates komen vanzelf binnen als je onl
 
 ## 3. Apparatuur bij FitButiq
 
-Ik kon de apparatuurlijst van FitButiq niet online vinden. Standaard staat aan wat in een goed uitgeruste sportschool staat; hack squat, trap bar,
-hip thrust-machine en kuitmachine staan uit. Loop één keer met de app door de zaal: **Meer → Apparatuur bij FitButiq** en zet aan/uit wat klopt.
+Ik kon de apparatuurlijst van FitButiq niet online vinden. Standaard staat aan wat in een goed uitgeruste sportschool staat, inclusief de
+plate-loaded machines (hack squat, chest press, incline press, shoulder press, row, high row, pulldown) en een T-bar row. Uit staan: pendulum squat,
+trap bar, hip thrust-machine en kuitmachine. Loop één keer met de app door de zaal: **Meer → Apparatuur bij FitButiq** en zet aan/uit wat klopt.
 Het schema past zich direct aan. Staat er tijdens het trainen iets bezet of kapot: tik op **Wissel** bij de oefening.
 
 ## 4. Trainen
@@ -35,7 +36,10 @@ Het schema past zich direct aan. Staat er tijdens het trainen iets bezet of kapo
    Je noteert de seconden die je voluit ging.
 5. **Afronden** → zwaarte 1-10 → **Opslaan**. Nieuwe records worden gemeld.
 
-Het schema is gemaakt voor een ervaren sporter die **sterker, slanker en fitter** wil worden: de basisoefeningen zwaar (4×4-6, deadlift 3×3-5),
+Bij **plate-loaded machines** noteer je het totaal aan schijven van beide kanten samen (zonder de machine zelf); de app laat zien wat er per kant op moet.
+
+Het schema is gemaakt voor een ervaren sporter die **sterker, slanker en fitter** wil worden, gebouwd rond plate-loaded machines, dumbbells en
+veel roei-oefeningen (elke training minstens één): de basisoefeningen zwaar (4×5-8, deadlift 3×3-5),
 hulpoefeningen in 8-15 herhalingen en korte intervallen voor conditie. Op rustdagen: 30-45 minuten rustig bewegen en minstens 8.000 stappen.
 Bij **Lichaam** zie je hoe snel je afvalt (goed is 0,25-0,75% per week) en hoeveel eiwit je nodig hebt.
 
