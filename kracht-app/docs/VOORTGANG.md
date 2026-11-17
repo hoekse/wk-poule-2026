@@ -48,6 +48,19 @@ Dennis traint vooral met plate-loaded machines, roei-oefeningen en dumbbells.
 - Vandaag: grote herstelring, tegels per onderdeel (slaap, CPAP, zuurstof, HRV, rusthartslag, gevoel) en een uitgelichte trainingskaart.
 - Licht thema werkt mee met de instelling van de iPhone.
 
+## Af (versie 1.4): twaalf uitbreidingen en cloud
+
+- Machine-instellingen per oefening, supersets (aan/uit), schouders ontzien na werk boven het hoofd, opwarmroutine van 5 minuten.
+- Inzichten uit eigen gegevens, weekoverzicht met delen, voortgangsfoto's met vergelijken, eiwitteller, agendabestand (.ics),
+  schijvenset en stanggewicht, advies voor een lichte week bij laag herstel en stilstand.
+- Cloud (Supabase-project `kracht`): tabellen `kracht_staat`, `kracht_sleutels`, `kracht_inbox` met RLS; functie `kracht-health`
+  (verify_jwt uit, beveiligd met een sleutel) voor de iOS-opdracht en Health Auto Export; synchronisatie en inloggen met e-mail en
+  wachtwoord in de app. Databasetests: `bash scripts/test-db.sh`.
+- Online via Vercel-project `kracht-hoeksema`.
+
+Bewuste beperking: bij gelijktijdig gebruik op twee apparaten worden trainingen en metingen samengevoegd; iets wat op het ene apparaat is
+verwijderd, kan via het andere terugkomen. Foto's blijven op de telefoon (en in de back-up).
+
 ## Gemaakte keuzes
 
 - **Gegevens lokaal op de telefoon** (IndexedDB) in plaats van een database in de cloud: geen extra kosten, werkt zonder internet in de

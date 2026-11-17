@@ -1,16 +1,12 @@
 # Handleiding Kracht
 
-## 1. App online zetten (eenmalig, ±5 minuten)
+## 1. Adres van de app
 
-De app is een website die je op je beginscherm zet. Hosting gaat via Vercel, net als de loods-app.
+De app staat online op **<https://kracht-hoeksema.vercel.app>** (Vercel-project `kracht-hoeksema`, map `kracht-app` uit de repository
+**wk-poule-2026**).
 
-1. Ga naar <https://vercel.com> → **Add New → Project** → kies de GitHub-repository **wk-poule-2026** → **Import**.
-2. **Project Name**: bijvoorbeeld `kracht-dennis` (het adres wordt dan `https://kracht-dennis.vercel.app`).
-3. **Root Directory** → **Edit** → kies `kracht-app`. De rest staat al in `kracht-app/vercel.json`.
-4. **Deploy**. Na ±1 minuut staat de app online.
-
-> Vercel bouwt standaard de branch `main`. Staat de app nog op een andere branch, voeg die dan eerst samen (pull request) of kies in Vercel bij
-> *Settings → Git → Production Branch* de juiste branch.
+> Vercel bouwt automatisch opnieuw zodra er iets op de branch `main` verandert. Wijzigingen op een andere branch komen eerst als
+> testversie; zet ze live door ze samen te voegen in `main` (pull request), of door in Vercel een nieuwe productie-deployment te starten.
 
 ## 2. Op de iPhone zetten
 
@@ -44,6 +40,27 @@ hulpoefeningen in 8-15 herhalingen en korte intervallen voor conditie. Op rustda
 Bij **Lichaam** zie je hoe snel je afvalt (goed is 0,25-0,75% per week) en hoeveel eiwit je nodig hebt.
 
 Tip: draag je een Apple Watch, start daar dan een workout *Krachttraining*. Hartslag en calorieën komen dan in Apple Health.
+
+## 4b. Handig tijdens het trainen
+
+- **Machine-instelling:** onder elke machine-oefening staat "Stoelstand of instelling toevoegen". Vul één keer stoel, rugleuning of handgreep
+  in; je ziet het daarna elke training.
+- **Supersets:** twee hulpoefeningen om en om (bijv. triceps en biceps). Na de eerste krijg je 15 seconden om te wisselen, na de tweede de
+  volle rust. Uit te zetten bij **Schema → Supersets en agenda**.
+- **Opwarmen:** bovenaan elke training een routine van 5 minuten voor heupen, bovenrug en schouders. Vink af wat je gedaan hebt.
+- **Boven je hoofd gewerkt?** Zet het aan in de ochtendcheck. Schouderoefeningen worden 10% lichter en er komen face pulls bij.
+- **Lichte week:** is je herstel een paar dagen laag en sta je stil bij de basisoefeningen, dan stelt de app een lichte week voor (één tik).
+
+## 4c. Bijhouden buiten de sportschool
+
+- **Eiwit:** op Vandaag tik je per maaltijd +20, +30 of +40 gram. Je doel rekent de app uit op je gewicht.
+- **Voortgangsfoto's:** bij **Lichaam** voeg je per maand een foto toe (voor, zij, achter) en vergelijk je twee data naast elkaar. Ze blijven op
+  je telefoon en gaan mee in je back-up.
+- **Weekoverzicht:** op zondag en maandag op Vandaag, en altijd via **Meer → Weekoverzicht**. Met **Delen** stuur je het door.
+- **Inzichten:** bij **Voortgang** zie je na een paar weken wat jouw slaap, CPAP en werkdagen met je kracht doen.
+- **Agenda:** **Schema → Trainingen in mijn agenda zetten** maakt een agendabestand met je trainingsdagen en een herinnering een uur van
+  tevoren. Kies in het deelmenu **Agenda**.
+- **Schijven:** bij **Apparatuur** geef je aan welke schijven er liggen en hoe zwaar de stang is.
 
 ## 5. Apple Health koppelen (opdracht, ±5 minuten eenmalig)
 
@@ -92,6 +109,21 @@ Telt voor 15% mee in je herstelscore. Zakt je zuurstof onder de 85% of heb je me
 Exporteer je nachten in SleepHQ (of OSCAR) als CSV en importeer het bestand via **Meer → Koppelingen → CSV importeren**. De app zoekt zelf de
 kolommen datum, AHI, gebruiksduur, lekkage en druk en laat eerst zien wat er binnenkomt. SleepHQ en OSCAR zetten de datum van de *avond* bij een
 nacht; de app schuift die standaard naar de ochtend (uit te zetten bij het importeren).
+
+## 8b. Cloud en elke ochtend automatisch
+
+Met de cloud worden je gegevens automatisch bewaard (8 seconden na elke wijziging en bij het openen van de app) en kun je ze op een nieuwe
+telefoon terugzetten door in te loggen.
+
+1. **Meer → Koppelingen → Cloud**: vul je e-mail en een wachtwoord (minstens 8 tekens) in en tik **Account maken**. Bevestig je e-mailadres via de
+   link in de mail en log daarna in de app in.
+2. Open **Elke ochtend automatisch uit Apple Health** en tik **Sleutel maken**. Kopieer het adres en de sleutel.
+3. Pas je opdracht aan: vervang de laatste stap door **Haal inhoud van URL op**, methode **POST**, header **X-Sleutel** met je sleutel, hoofdtekst
+   **JSON** met je Woordenboek.
+4. **Opdrachten → Automatisering → +** → Tijdstip, elke dag 8:00, **Voer direct uit** → de opdracht uitvoeren.
+
+Vanaf dan staan slaap, HRV, rusthartslag, zuurstof en gewicht er elke ochtend vanzelf in. Health Auto Export kan ook rechtstreeks
+afleveren: REST API naar hetzelfde adres met `?sleutel=` en je sleutel, formaat JSON. Foto's gaan niet naar de cloud.
 
 ## 9. Back-up
 
