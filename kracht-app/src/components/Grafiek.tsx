@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type PointerEvent } from 'react';
+import { useEffect, useId, useRef, useState, type PointerEvent } from 'react';
 import { kortDatum } from '../lib/datum';
 
 export interface GPunt {
@@ -57,6 +57,7 @@ export function LijnGrafiek({
 }) {
   const [ref, breedte] = useBreedte();
   const [actief, setActief] = useState<number | null>(null);
+  const gid = `g${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
   if (!punten.length) return <div className="leeg">Nog geen gegevens.</div>;
 
   const links = 40;
@@ -104,6 +105,16 @@ export function LijnGrafiek({
         onPointerMove={(e) => (e.pointerType === 'mouse' || e.buttons) && kies(e)}
         onPointerLeave={() => setActief(null)}
       >
+        <defs>
+          <linearGradient id={`${gid}l`} gradientUnits="userSpaceOnUse" x1={links} y1="0" x2={breedte - rechts} y2="0">
+            <stop offset="0" style={{ stopColor: 'var(--accent)' }} />
+            <stop offset="1" style={{ stopColor: 'var(--accent-2)' }} />
+          </linearGradient>
+          <linearGradient id={`${gid}v`} gradientUnits="userSpaceOnUse" x1="0" y1={boven} x2="0" y2={boven + bh}>
+            <stop offset="0" style={{ stopColor: 'var(--accent)', stopOpacity: 0.32 }} />
+            <stop offset="1" style={{ stopColor: 'var(--accent)', stopOpacity: 0 }} />
+          </linearGradient>
+        </defs>
         {t.map((v) => (
           <g key={v}>
             <line className="raster" x1={links} x2={breedte - rechts} y1={yPos(v)} y2={yPos(v)} />
@@ -122,10 +133,10 @@ export function LijnGrafiek({
             <line className="doel" x1={links} x2={breedte - rechts} y1={yPos(doel)} y2={yPos(doel)} />
           </g>
         )}
-        {punten.length > 1 && <path className="vlakvulling" d={vlak} />}
-        <path className="lijn" d={pad} />
-        {punten.length <= 20 && punten.map((p, i) => <circle key={i} className="punt" cx={xPos(i)} cy={yPos(p.y)} r={3.5} />)}
-        <circle className="punt" cx={xPos(laatste)} cy={yPos(punten[laatste].y)} r={5} />
+        {punten.length > 1 && <path d={vlak} fill={`url(#${gid}v)`} />}
+        <path className="lijn" d={pad} stroke={`url(#${gid}l)`} />
+        {punten.length <= 20 && punten.map((p, i) => <circle key={i} className="punt" cx={xPos(i)} cy={yPos(p.y)} r={3} />)}
+        <circle className="punt eind" cx={xPos(laatste)} cy={yPos(punten[laatste].y)} r={5.5} />
         {actief != null && (
           <g>
             <line className="kruis" x1={xPos(actief)} x2={xPos(actief)} y1={boven} y2={boven + bh} />
@@ -169,6 +180,7 @@ export function StaafGrafiek({
 }) {
   const [ref, breedte] = useBreedte();
   const [actief, setActief] = useState<number | null>(null);
+  const gid = `g${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
   if (!punten.length) return <div className="leeg">Nog geen gegevens.</div>;
   const links = 32;
   const rechts = 8;
@@ -189,6 +201,12 @@ export function StaafGrafiek({
   return (
     <div className="grafiek" ref={ref}>
       <svg viewBox={`0 0 ${breedte} ${hoogte}`} height={hoogte} role="img" aria-label={label} onPointerLeave={() => setActief(null)}>
+        <defs>
+          <linearGradient id={`${gid}b`} gradientUnits="userSpaceOnUse" x1="0" y1={boven} x2="0" y2={boven + bh}>
+            <stop offset="0" style={{ stopColor: 'var(--accent-2)' }} />
+            <stop offset="1" style={{ stopColor: 'var(--accent)' }} />
+          </linearGradient>
+        </defs>
         {t.map((v) => (
           <g key={v}>
             <line className="raster" x1={links} x2={breedte - rechts} y1={yPos(v)} y2={yPos(v)} />
@@ -205,7 +223,7 @@ export function StaafGrafiek({
           const d = h <= 0 ? '' : `M${x},${y0}V${y0 - h + r}Q${x},${y0 - h} ${x + r},${y0 - h}H${x + staaf - r}Q${x + staaf},${y0 - h} ${x + staaf},${y0 - h + r}V${y0}Z`;
           return (
             <g key={i}>
-              {d && <path className="staaf" d={d} style={{ fill: kleur?.(p.y), opacity: actief == null || actief === i ? 1 : 0.55 }} />}
+              {d && <path d={d} fill={kleur?.(p.y) ?? `url(#${gid}b)`} style={{ opacity: actief == null || actief === i ? 1 : 0.5, transition: 'opacity 0.15s' }} />}
               <rect x={links + i * kolom} y={boven} width={kolom} height={bh} fill="transparent" onPointerEnter={() => setActief(i)} onPointerDown={() => setActief(i)} />
               {i % elke === 0 && (
                 <text className="as" x={links + i * kolom + kolom / 2} y={hoogte - 6} textAnchor="middle">

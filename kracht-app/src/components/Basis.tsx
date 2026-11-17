@@ -2,16 +2,17 @@ import { useEffect, useId, useState, type ReactNode } from 'react';
 import { useNav } from '../lib/winkel';
 import { IcoonMin, IcoonPlus, IcoonSluit, IcoonTerug } from './Iconen';
 
-export function Kop({ titel, sub, terug, rechts }: { titel: string; sub?: string; terug?: boolean; rechts?: ReactNode }) {
+export function Kop({ titel, sub, boven, terug, rechts }: { titel: string; sub?: string; boven?: string; terug?: boolean; rechts?: ReactNode }) {
   const nav = useNav();
   return (
     <header className="kop">
       {terug && (
-        <button className="icoonknop" onClick={nav.terug} aria-label="Terug" style={{ marginLeft: -10 }}>
+        <button className="icoonknop" onClick={nav.terug} aria-label="Terug">
           <IcoonTerug />
         </button>
       )}
       <h1>
+        {boven && <span className="boven">{boven}</span>}
         {titel}
         {sub && <span className="sub">{sub}</span>}
       </h1>
@@ -164,17 +165,40 @@ export function Schakelaar({ id, aan, zet, children }: { id: string; aan: boolea
   );
 }
 
-const NIVEAU_KLEUR = { groen: 'var(--groen)', oranje: 'var(--geel)', rood: 'var(--rood)', onbekend: 'var(--vlak-3)' } as const;
+const NIVEAU_VERLOOP = {
+  groen: ['var(--groen)', 'var(--groen-2)'],
+  oranje: ['#fbbf24', '#fb923c'],
+  rood: ['#f87171', '#f43f5e'],
+  onbekend: ['var(--vlak-3)', 'var(--vlak-3)'],
+} as const;
 
-export function Ring({ score, niveau }: { score: number | null; niveau: keyof typeof NIVEAU_KLEUR }) {
+export function Ring({ score, niveau, groot = false }: { score: number | null; niveau: keyof typeof NIVEAU_VERLOOP; groot?: boolean }) {
+  const id = `ring${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
   const r = 44;
   const omtrek = 2 * Math.PI * r;
   const deel = score == null ? 0 : Math.max(0.02, score / 100);
+  const [van, tot] = NIVEAU_VERLOOP[niveau];
   return (
-    <div className="ring" role="img" aria-label={score == null ? 'Geen herstelscore' : `Herstelscore ${score} van 100`}>
+    <div className={`ring${groot ? ' groot' : ''}`} role="img" aria-label={score == null ? 'Geen herstelscore' : `Herstelscore ${score} van 100`}>
       <svg viewBox="0 0 104 104">
-        <circle cx="52" cy="52" r={r} fill="none" stroke="var(--vlak-3)" strokeWidth="10" />
-        <circle cx="52" cy="52" r={r} fill="none" stroke={NIVEAU_KLEUR[niveau]} strokeWidth="10" strokeLinecap="round" strokeDasharray={`${omtrek * deel} ${omtrek}`} />
+        <defs>
+          <linearGradient id={id} x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stopColor={van} />
+            <stop offset="1" stopColor={tot} />
+          </linearGradient>
+        </defs>
+        <circle cx="52" cy="52" r={r} fill="none" stroke="var(--vlak-2)" strokeWidth="9" />
+        <circle
+          cx="52"
+          cy="52"
+          r={r}
+          fill="none"
+          stroke={`url(#${id})`}
+          strokeWidth="9"
+          strokeLinecap="round"
+          strokeDasharray={`${omtrek * deel} ${omtrek}`}
+          style={{ filter: score == null ? undefined : `drop-shadow(0 0 6px ${van})` }}
+        />
       </svg>
       <div className="waarde">
         <div>

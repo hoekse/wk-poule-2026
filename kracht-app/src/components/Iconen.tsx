@@ -75,3 +75,7 @@ export const IcoonGebouw = (p: P) => (
   <svg {...basis(p)}><path d="M3 21h18M5 21V8l7-5 7 5v13" /><path d="M9 21v-6h6v6" /></svg>
 );
 export const IcoonBoek = (p: P) => (<svg {...basis(p)}><path d="M4 4h10a4 4 0 0 1 4 4v12H8a4 4 0 0 1-4-4Z" /><path d="M8 8h6M8 12h6" /></svg>);
+export const IcoonPuls = (p: P) => (<svg {...basis(p)}><path d="M3 12h4l2-6 4 12 2-6h6" /></svg>);
+export const IcoonDruppel = (p: P) => (<svg {...basis(p)}><path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11Z" /><path d="M9.5 14.5a2.5 2.5 0 0 0 2.5 2.5" /></svg>);
+export const IcoonGevoel = (p: P) => (<svg {...basis(p)}><circle cx="12" cy="12" r="9" /><path d="M8.5 14.5a4 4 0 0 0 7 0M9 9.5h.01M15 9.5h.01" /></svg>);
+export const IcoonStart = (p: P) => (<svg {...basis(p)}><path d="M7 4.5v15l12-7.5Z" fill="currentColor" /></svg>);

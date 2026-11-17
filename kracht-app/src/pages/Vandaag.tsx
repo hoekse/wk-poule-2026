@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { Ring, Segment, scoreKleur } from '../components/Basis';
-import { IcoonLet, IcoonVink } from '../components/Iconen';
+import { IcoonDruppel, IcoonGevoel, IcoonHart, IcoonLet, IcoonMaan, IcoonMasker, IcoonPuls, IcoonStart, IcoonVink } from '../components/Iconen';
 import { ImportBlad, OchtendCheck } from '../components/Invoer';
 import { DAGEN_KORT, dagenTussen, langDatum, plusDagen, vandaag, weekdag } from '../lib/datum';
-import { berekenHerstel } from '../lib/herstel';
-import { repLabel } from '../lib/oefeningen';
+import { berekenHerstel, type Onderdeel } from '../lib/herstel';
+import { gewichtLabel, repLabel } from '../lib/oefeningen';
 import { advies, fmtKg } from '../lib/progressie';
 import { blokInfo, kiesOefening, volgendeDag, weekOverzicht } from '../lib/schema';
 import { maakTraining } from '../lib/staat';
@@ -15,6 +15,17 @@ function groet(): string {
   const u = new Date().getHours();
   return u < 6 ? 'Goedenacht' : u < 12 ? 'Goedemorgen' : u < 18 ? 'Goedemiddag' : 'Goedenavond';
 }
+
+const ICOON: Record<Onderdeel['sleutel'], typeof IcoonMaan> = {
+  slaap: IcoonMaan,
+  cpap: IcoonMasker,
+  zuurstof: IcoonDruppel,
+  hrv: IcoonHart,
+  rusthartslag: IcoonPuls,
+  gevoel: IcoonGevoel,
+};
+
+const NIVEAU_PIL = { groen: 'groen', oranje: 'geel', rood: 'rood', onbekend: '' } as const;
 
 export function Vandaag() {
   const { staat, wijzig } = useWinkel();
@@ -34,6 +45,7 @@ export function Vandaag() {
   const aantalKlaar = staat.trainingen.filter((t) => t.status === 'klaar').length;
   const stappenGisteren = staat.dagdata[plusDagen(d, -1)]?.stappen;
   const backupOud = aantalKlaar >= 3 && (!inst.laatsteBackup || dagenTussen(inst.laatsteBackup.slice(0, 10), d) > 7);
+  const initiaal = (inst.naam.trim()[0] ?? 'K').toUpperCase();
 
   const start = () => wijzig((s) => ({ ...s, trainingen: [...s.trainingen, maakTraining(s, dag.id, aanpassing)] }));
 
@@ -41,38 +53,28 @@ export function Vandaag() {
     <div className="pagina">
       <header className="kop">
         <h1>
+          <span className="boven">{langDatum(d)}</span>
           {groet()}
           {inst.naam ? `, ${inst.naam}` : ''}
-          <span className="sub">{langDatum(d)}</span>
         </h1>
+        <button className="avatar" aria-label="Meer en instellingen" onClick={() => nav.zetTab('meer')}>
+          {initiaal}
+        </button>
       </header>
 
       <section className="kaart" aria-label="Herstel">
         <div className="herstel">
-          <Ring score={herstel.score} niveau={herstel.niveau} />
-          <div className="sectie" style={{ gap: 4 }}>
+          <Ring score={herstel.score} niveau={herstel.niveau} groot />
+          <div className="sectie" style={{ gap: 6 }}>
+            {herstel.niveau !== 'onbekend' && (
+              <span className={`pil ${NIVEAU_PIL[herstel.niveau]}`} style={{ alignSelf: 'flex-start' }}>
+                {herstel.aanpassing === 'normaal' ? 'Volgens schema' : herstel.aanpassing === 'licht' ? 'Iets lichter' : 'Herstel'}
+              </span>
+            )}
             <h2>{herstel.kop}</h2>
             <p className="dun klein">{herstel.advies}</p>
           </div>
         </div>
-        {herstel.onderdelen.length > 0 && (
-          <div className="onderdelen">
-            {herstel.onderdelen.map((o) => (
-              <div key={o.sleutel} className="onderdeel">
-                <span>{o.naam}</span>
-                <span className="dun getal">{o.toelichting}</span>
-                <div className="balk">
-                  <i style={{ width: `${Math.max(3, o.score)}%`, background: scoreKleur(o.score) }} />
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-        {herstel.waarschuwingen.map((w) => (
-          <div key={w} className="melding">
-            <IcoonLet /> <span>{w}</span>
-          </div>
-        ))}
         <div className="knoprij">
           <button className="knop" onClick={() => setCheck(true)}>
             Ochtendcheck
@@ -83,14 +85,45 @@ export function Vandaag() {
         </div>
       </section>
 
-      <section className="kaart" aria-label="Volgende training">
+      {herstel.onderdelen.length > 0 && (
+        <section className="statgrid" aria-label="Vannacht">
+          {herstel.onderdelen.map((o) => {
+            const Icoon = ICOON[o.sleutel];
+            const kleur = scoreKleur(o.score);
+            return (
+              <div key={o.sleutel} className="stat">
+                <div className="stat-kop">
+                  <Icoon />
+                  {o.naam}
+                  <span className="stip" style={{ background: kleur, color: kleur }} aria-hidden="true" />
+                </div>
+                <b>{o.hoofd}</b>
+                <span className="stat-sub">{o.toelichting}</span>
+                <div className="balk">
+                  <i style={{ width: `${Math.max(4, o.score)}%`, background: kleur }} />
+                </div>
+              </div>
+            );
+          })}
+        </section>
+      )}
+
+      {herstel.waarschuwingen.map((w) => (
+        <div key={w} className="melding">
+          <IcoonLet /> <span>{w}</span>
+        </div>
+      ))}
+
+      <section className="kaart uitgelicht" aria-label="Volgende training">
         <div className="rij tussen">
           <span className="label">Volgende training</span>
           <span className={`pil ${blok.deload ? 'geel' : 'blauw'}`}>{blok.label}</span>
         </div>
         <div>
-          <h2>{dag.naam}</h2>
-          <p className="dun">{dag.focus}</p>
+          <h2 style={{ fontSize: '1.9rem' }}>{dag.naam}</h2>
+          <p className="dun" style={{ marginTop: 4 }}>
+            {dag.focus}
+          </p>
         </div>
         {vandaagGedaan.length > 0 && (
           <div className="melding blauw">
@@ -109,10 +142,14 @@ export function Vandaag() {
                   <div className="dun klein getal">
                     {a.sets} × {a.repMin}-{a.repMax}
                     {repLabel(oefening.id) === 'sec' ? ' sec' : ''} · RIR {a.rir}
-                    {a.gewicht != null ? ` · ${fmtKg(a.gewicht)} kg` : ''}
                     {ontbreekt ? ' · apparaat ontbreekt' : ''}
                   </div>
                 </div>
+                {a.gewicht != null && (
+                  <span className="rechts" title={gewichtLabel(oefening)}>
+                    {fmtKg(a.gewicht)} kg
+                  </span>
+                )}
               </button>
             );
           })}
@@ -131,7 +168,7 @@ export function Vandaag() {
           />
         </div>
         <button className="knop primair groot" onClick={start}>
-          Start {dag.naam}
+          <IcoonStart /> Start {dag.naam}
         </button>
         <p className="dun mini">{blok.uitleg}</p>
       </section>
@@ -169,7 +206,7 @@ export function Vandaag() {
       </section>
 
       {backupOud && (
-        <button className="melding" style={{ border: 0, textAlign: 'left' }} onClick={() => nav.ga({ naam: 'backup' })}>
+        <button className="melding" style={{ border: 0 }} onClick={() => nav.ga({ naam: 'backup' })}>
           <IcoonLet />
           <span>
             <b>Maak een back-up.</b> Je laatste back-up is {inst.laatsteBackup ? 'meer dan een week oud' : 'nog nooit gemaakt'}. Tik hier; het kost 10 seconden.

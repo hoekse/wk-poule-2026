@@ -9,7 +9,7 @@ const uit = join(dirname(fileURLToPath(import.meta.url)), '..', 'public', 'icons
 mkdirSync(uit, { recursive: true });
 
 const hex = (h) => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
-const ACHTERGROND = hex('#15171B');
+const ACHTERGROND = hex('#0A0C10');
 const STANG = hex('#C9CDD3');
 const BLAUW = hex('#2F6FE0'); // 20 kg-schijf
 const GEEL = hex('#F2B705'); // 15 kg-schijf

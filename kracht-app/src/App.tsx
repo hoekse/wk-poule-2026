@@ -63,7 +63,9 @@ export function App() {
       <nav className="tabbalk" aria-label="Hoofdmenu">
         {TABS.map(({ id, naam, Icoon }) => (
           <button key={id} aria-current={nav.tab === id && !s ? 'page' : undefined} onClick={() => nav.zetTab(id)}>
-            <Icoon />
+            <span className="tab-icoon">
+              <Icoon />
+            </span>
             {naam}
           </button>
         ))}

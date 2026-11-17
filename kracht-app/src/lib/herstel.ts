@@ -7,6 +7,8 @@ export interface Onderdeel {
   score: number;
   gewicht: number;
   toelichting: string;
+  /** Kernwaarde voor een tegel, bijvoorbeeld '6u36' of 'AHI 1,8'. */
+  hoofd: string;
 }
 
 export interface Herstel {
@@ -75,6 +77,7 @@ export function berekenHerstel(staat: Staat, datum: Datum): Herstel {
       score: klem(100 - tekort * 25),
       gewicht: 25,
       toelichting: `${uurMin(slaap)} geslapen${d.slaapUren == null ? ' (CPAP-tijd)' : ''}, doel ${uurMin(doel)}`,
+      hoofd: uurMin(slaap),
     });
   }
 
@@ -91,7 +94,7 @@ export function berekenHerstel(staat: Staat, datum: Datum): Herstel {
       tekst.push(`${uurMin(d.cpapUren)} masker op`);
       if (d.cpapUren < 4) waarschuwingen.push('Minder dan 4 uur CPAP vannacht. Een korte nacht met apneus kost herstel: houd het vandaag rustiger.');
     }
-    onderdelen.push({ sleutel: 'cpap', naam: 'CPAP', score: Math.min(...delen) * 0.6 + gem(delen) * 0.4, gewicht: 25, toelichting: tekst.join(', ') });
+    onderdelen.push({ sleutel: 'cpap', naam: 'CPAP', score: Math.min(...delen) * 0.6 + gem(delen) * 0.4, gewicht: 25, toelichting: tekst.join(', '), hoofd: typeof d.ahi === 'number' ? `AHI ${fmt1(d.ahi)}` : uurMin(d.cpapUren!) });
   }
 
   const odi = odiVan(d);
@@ -112,7 +115,7 @@ export function berekenHerstel(staat: Staat, datum: Datum): Herstel {
       delen.push(d.onder90 <= 5 ? 100 : klem(100 - (d.onder90 - 5) * 2, 10));
       tekst.push(`${Math.round(d.onder90)} min < 90%`);
     }
-    onderdelen.push({ sleutel: 'zuurstof', naam: 'Zuurstof (O2Ring)', score: Math.min(...delen) * 0.6 + gem(delen) * 0.4, gewicht: 15, toelichting: tekst.join(', ') });
+    onderdelen.push({ sleutel: 'zuurstof', naam: 'Zuurstof', score: Math.min(...delen) * 0.6 + gem(delen) * 0.4, gewicht: 15, toelichting: tekst.join(', '), hoofd: typeof d.spo2Min === 'number' ? `${Math.round(d.spo2Min)}%` : `${fmt1(odi!)}/u` });
   }
 
   if (typeof d.hrv === 'number') {
@@ -121,10 +124,11 @@ export function berekenHerstel(staat: Staat, datum: Datum): Herstel {
       const verhouding = d.hrv / basis;
       onderdelen.push({
         sleutel: 'hrv',
-        naam: 'Hartslagvariabiliteit',
+        naam: 'HRV',
         score: klem(100 + (verhouding - 1.03) * 350),
         gewicht: 20,
         toelichting: `${Math.round(d.hrv)} ms (normaal ${Math.round(basis)} ms)`,
+        hoofd: `${Math.round(d.hrv)} ms`,
       });
     }
   }
@@ -139,6 +143,7 @@ export function berekenHerstel(staat: Staat, datum: Datum): Herstel {
         score: klem(100 - Math.max(0, verschil - 1) * 12),
         gewicht: 10,
         toelichting: `${Math.round(d.rustHartslag)} slagen/min (normaal ${Math.round(basis)})`,
+        hoofd: `${Math.round(d.rustHartslag)} bpm`,
       });
       if (verschil >= 7) waarschuwingen.push('Je rusthartslag is flink hoger dan normaal. Word je ziek? Neem dan liever rust.');
     }
@@ -153,7 +158,8 @@ export function berekenHerstel(staat: Staat, datum: Datum): Herstel {
     if (d.zwareWerkdag) score -= 10;
     onderdelen.push({
       sleutel: 'gevoel',
-      naam: 'Hoe je je voelt',
+      naam: 'Gevoel',
+      hoofd: d.energie ? `${d.energie}/5` : `${Math.round(klem(score) / 20)}/5`,
       score: klem(score),
       gewicht: 20,
       toelichting: [d.energie && `energie ${d.energie}/5`, d.spierpijn && `spierpijn ${d.spierpijn}/5`, d.stress && `stress ${d.stress}/5`, d.zwareWerkdag && 'zware werkdag']

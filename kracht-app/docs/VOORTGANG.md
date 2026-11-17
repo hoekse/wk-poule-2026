@@ -41,6 +41,13 @@ Dennis traint vooral met plate-loaded machines, roei-oefeningen en dumbbells.
 - Gewicht bij plate-loaded machines = schijven totaal (beide kanten), zonder de machine. De schijvencalculator laat zien wat er per kant
   op moet, bij de T-bar wat er op de stang moet.
 
+## Af (versie 1.3): hypermoderne vormgeving
+
+- OLED-zwarte achtergrond met een blauw-cyaan gloed, glazen kaarten, zwevend menu onderin, verlopende knoppen, ringen en grafieken.
+- Letters: Space Grotesk voor koppen en cijfers, Inter voor tekst (lokaal meegeleverd, werkt offline).
+- Vandaag: grote herstelring, tegels per onderdeel (slaap, CPAP, zuurstof, HRV, rusthartslag, gevoel) en een uitgelichte trainingskaart.
+- Licht thema werkt mee met de instelling van de iPhone.
+
 ## Gemaakte keuzes
 
 - **Gegevens lokaal op de telefoon** (IndexedDB) in plaats van een database in de cloud: geen extra kosten, werkt zonder internet in de
