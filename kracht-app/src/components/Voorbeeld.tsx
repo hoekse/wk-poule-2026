@@ -1,5 +1,6 @@
 import { videoLink } from '../lib/oefeningen';
 import type { Oefening } from '../lib/types';
+import { UitlegFotos } from './UitlegFotos';
 
 /** Uitgewerkt voorbeeld bij een oefening: instellen, startpositie, beweging, fouten, voorbeeld-sets en video's. */
 export function VoorbeeldKaart({ oef }: { oef: Oefening }) {
@@ -12,6 +13,7 @@ export function VoorbeeldKaart({ oef }: { oef: Oefening }) {
           ▶ Voorbeeldvideo's
         </a>
       </div>
+      <UitlegFotos oef={oef} />
       {v ? (
         <ol className="voorbeeld-stappen">
           {v.instelling && (

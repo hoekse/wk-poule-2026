@@ -19,7 +19,7 @@ export function Backup() {
   const backup = async () => {
     // Voortgangsfoto's gaan mee in de back-up.
     const fotos: Record<string, string> = {};
-    for (const f of staat.fotos) {
+    for (const f of [...staat.fotos, ...Object.values(staat.uitlegFotos).flat().map((id) => ({ id }))]) {
       const blob = await laadFoto(f.id).catch(() => undefined);
       if (blob) fotos[f.id] = await blobNaarDataUrl(blob);
     }

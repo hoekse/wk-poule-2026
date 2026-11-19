@@ -33,7 +33,7 @@ export function standaardInstellingen(): Instellingen {
 }
 
 export function legeStaat(): Staat {
-  return { versie: 1, instellingen: standaardInstellingen(), trainingen: [], dagdata: {}, metingen: [], eigenOefeningen: [], fotos: [] };
+  return { versie: 1, instellingen: standaardInstellingen(), trainingen: [], dagdata: {}, metingen: [], eigenOefeningen: [], fotos: [], uitlegFotos: {} };
 }
 
 /** Vult ontbrekende velden aan (na een update van de app of een oude back-up). */
@@ -49,6 +49,7 @@ export function normaliseer(s: Partial<Staat>): Staat {
     metingen: Array.isArray(s.metingen) ? s.metingen : [],
     eigenOefeningen: Array.isArray(s.eigenOefeningen) ? s.eigenOefeningen : [],
     fotos: Array.isArray(s.fotos) ? s.fotos : [],
+    uitlegFotos: s.uitlegFotos && typeof s.uitlegFotos === 'object' ? s.uitlegFotos : {},
   };
 }
 

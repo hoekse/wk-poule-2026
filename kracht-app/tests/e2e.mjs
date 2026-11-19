@@ -209,6 +209,11 @@ if (demo) {
   await page.getByRole('navigation').getByRole('button', { name: 'Schema' }).click();
   await page.getByRole('button', { name: /^Panatta low row/ }).first().click();
   await page.getByText('Zo doe je het').waitFor();
+  const sticker = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAIAAAADCAIAAAA2iEnWAAAAFklEQVR4nGP4z8DAwMDAxMDAwMDAAAANHQEDK+mmyAAAAABJRU5ErkJggg==', 'base64');
+  await page.getByLabel('Foto van de uitleg op de machine toevoegen voor Panatta low row').setInputFiles({ name: 'sticker.png', mimeType: 'image/png', buffer: sticker });
+  await page.getByRole('button', { name: 'Uitlegfoto 1 van Panatta low row vergroten' }).click();
+  await page.getByText('Knijp met twee vingers om in te zoomen.').waitFor();
+  await page.keyboard.press('Escape');
   await page.screenshot({ path: `${uit}/b8-voorbeeld.png`, fullPage: true });
   await page.getByRole('navigation').getByRole('button', { name: 'Meer' }).click();
   await page.getByRole('button', { name: /^Apparatuur bij FitButiq/ }).click();

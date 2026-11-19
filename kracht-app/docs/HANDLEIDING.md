@@ -43,6 +43,9 @@ Tip: draag je een Apple Watch, start daar dan een workout *Krachttraining*. Hart
 
 ## 4b. Handig tijdens het trainen
 
+- **Foto van de uitleg op de machine:** open een oefening (tik op de naam) en kies **Foto van de uitleg op de machine**. Fotografeer de sticker
+  met de tekening op de machine; je ziet hem daarna bij die oefening en tijdens het trainen (tik erop om te vergroten). De foto's blijven op je
+  telefoon en gaan mee in je back-up.
 - **Machine-instelling:** onder elke machine-oefening staat "Stoelstand of instelling toevoegen". Vul één keer stoel, rugleuning of handgreep
   in; je ziet het daarna elke training.
 - **Supersets:** twee hulpoefeningen om en om (bijv. triceps en biceps). Na de eerste krijg je 15 seconden om te wisselen, na de tweede de

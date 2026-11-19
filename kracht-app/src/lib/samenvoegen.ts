@@ -31,6 +31,9 @@ export function voegSamen(lokaal: Staat, cloud: Staat): Staat {
     dagdata,
     metingen: [...metingen.values()],
     eigenOefeningen: [...oefeningen.values()],
+    // Foto's (voortgang en machine-uitleg) blijven op dit apparaat.
+    fotos: lokaal.fotos,
+    uitlegFotos: lokaal.uitlegFotos,
   });
 }
 

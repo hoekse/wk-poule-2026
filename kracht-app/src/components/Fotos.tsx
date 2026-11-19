@@ -14,20 +14,22 @@ const HOUDING: { waarde: FotoHouding; tekst: string }[] = [
   { waarde: 'achter', tekst: 'Achterkant' },
 ];
 
-/** Laadt een foto uit IndexedDB als object-URL. */
-function useFotoUrl(id: string | undefined): string | null {
-  const [url, setUrl] = useState<string | null>(null);
+/** Laadt een foto uit IndexedDB als object-URL: undefined = nog bezig, null = niet op dit apparaat. */
+export function useFotoUrl(id: string | undefined): string | null | undefined {
+  const [url, setUrl] = useState<string | null | undefined>(undefined);
   useEffect(() => {
     if (!id) return;
     let weg: string | null = null;
     let actief = true;
+    setUrl(undefined);
     laadFoto(id)
       .then((blob) => {
-        if (!blob || !actief) return;
+        if (!actief) return;
+        if (!blob) return setUrl(null);
         weg = URL.createObjectURL(blob);
         setUrl(weg);
       })
-      .catch(() => setUrl(null));
+      .catch(() => actief && setUrl(null));
     return () => {
       actief = false;
       if (weg) URL.revokeObjectURL(weg);

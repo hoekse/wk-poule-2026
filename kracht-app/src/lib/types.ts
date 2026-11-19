@@ -298,6 +298,8 @@ export interface Staat {
   eigenOefeningen: Oefening[];
   /** Voortgangsfoto's; de afbeeldingen zelf staan apart in IndexedDB. */
   fotos: FotoMeta[];
+  /** Eigen foto's van de uitlegsticker op een machine, per oefening (foto-id's; de afbeeldingen staan in IndexedDB). */
+  uitlegFotos: Record<string, string[]>;
 }
 
 export type FotoHouding = 'voor' | 'zij' | 'achter';

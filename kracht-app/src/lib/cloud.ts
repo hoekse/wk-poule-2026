@@ -97,7 +97,7 @@ export async function synchroniseer(lokaal: Staat): Promise<SyncResultaat> {
   if (rij?.data) {
     const remote = normaliseer(rij.data as Partial<Staat>);
     if (isLeeg(lokaal)) {
-      staat = { ...remote, fotos: lokaal.fotos };
+      staat = { ...remote, fotos: lokaal.fotos, uitlegFotos: lokaal.uitlegFotos };
       overgenomen = true;
     } else if (!lokaal.instellingen.laatsteSync || rij.bijgewerkt > lokaal.instellingen.laatsteSync) {
       staat = voegSamen(lokaal, remote);
@@ -124,7 +124,7 @@ export async function synchroniseer(lokaal: Staat): Promise<SyncResultaat> {
   staat = { ...staat, instellingen: { ...staat.instellingen, laatsteSync: nu } };
   const { error: schrijfFout } = await sb
     .from('kracht_staat')
-    .upsert({ gebruiker: gebruiker.id, data: { ...staat, fotos: [] }, bijgewerkt: nu }, { onConflict: 'gebruiker' });
+    .upsert({ gebruiker: gebruiker.id, data: { ...staat, fotos: [], uitlegFotos: {} }, bijgewerkt: nu }, { onConflict: 'gebruiker' });
   if (schrijfFout) throw new Error('Opslaan in de cloud is mislukt.');
   return { staat, nieuweDagen, overgenomen };
 }

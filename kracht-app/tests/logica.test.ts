@@ -8,7 +8,7 @@ import { deloadAdvies, inzichten } from '../src/lib/inzichten';
 import { weekSamenvatting, weekTekst } from '../src/lib/week';
 import { maakIcs } from '../src/lib/agenda';
 import { inhoudSleutel, isLeeg, voegSamen } from '../src/lib/samenvoegen';
-import { leesBackup, legeStaat, maakBackup, maakTraining, setsCsv, voegDagdataToe } from '../src/lib/staat';
+import { leesBackup, legeStaat, maakBackup, maakTraining, normaliseer, setsCsv, voegDagdataToe } from '../src/lib/staat';
 import { alleOefeningen, APPARATUUR, videoLink, zoekOefening } from '../src/lib/oefeningen';
 import { schijvenPerKant, schijvenVoor } from '../src/lib/schijven';
 import type { Staat, Training } from '../src/lib/types';
@@ -426,6 +426,12 @@ describe('cloud samenvoegen', () => {
     expect(s.metingen.map((m) => m.id).sort()).toEqual(['m-cloud', 'm-lok']);
     expect(s.dagdata['2026-11-17']).toMatchObject({ ahi: 3, hrv: 48, energie: 4, bronnen: { ahi: 'apple', hrv: 'apple' } });
     expect(s.dagdata['2026-11-16'].slaapUren).toBe(7);
+  });
+  it("foto's van de machine-uitleg blijven op dit apparaat", () => {
+    const lokaal = staatMet((x) => (x.uitlegFotos = { 'panatta-low-row': ['uitleg-1'] }));
+    const cloud = staatMet((x) => (x.uitlegFotos = { anders: ['uitleg-2'] }));
+    expect(voegSamen(lokaal, cloud).uitlegFotos).toEqual({ 'panatta-low-row': ['uitleg-1'] });
+    expect(normaliseer({}).uitlegFotos).toEqual({});
   });
   it('herkent een leeg apparaat en negeert de synchronisatietijd', () => {
     const s = legeStaat();

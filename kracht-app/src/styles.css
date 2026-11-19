@@ -782,3 +782,12 @@ pre.code { padding: 12px 14px; white-space: pre-wrap; margin: 0; border-radius: 
 .voorbeeld-fouten ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; font-size: 0.88rem; }
 .voorbeeld-fouten li::marker { color: var(--rood); }
 .voorbeeld .knop.klein { white-space: nowrap; }
+
+/* ── Foto's van de uitleg op de machine ── */
+.uitlegfotos { display: grid; gap: 8px; }
+.uitlegfotos-rij { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; }
+.uitlegfotos-rij button { flex: none; width: 46%; max-width: 220px; aspect-ratio: 4 / 3; padding: 0; border: 1px solid var(--lijn); border-radius: 14px; overflow: hidden; background: var(--vlak-2); display: grid; place-items: center; }
+.uitlegfotos-rij img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.uitlegfotos .machine { cursor: pointer; justify-self: start; }
+.uitlegfoto-groot { border-radius: 18px; overflow: hidden; background: var(--vlak-2); }
+.uitlegfoto-groot img { width: 100%; height: auto; display: block; }
