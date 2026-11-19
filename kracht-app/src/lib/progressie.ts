@@ -1,5 +1,5 @@
 import { maandagVan } from './datum';
-import { kleinsteSchijf } from './schijven';
+import { EENZIJDIG, kleinsteSchijf } from './schijven';
 import { OP_TIJD, zoekOefening } from './oefeningen';
 import type { Aanpassing, Datum, Instellingen, Oefening, OefeningLog, SetLog, Slot, Spiergroep, Staat, Training } from './types';
 
@@ -22,7 +22,7 @@ export function stapVoor(oef: Oefening, inst: Instellingen): number {
   // Met de schijven die er liggen: halterstang en machines laden aan twee kanten, de T-bar aan één.
   const kleinste = kleinsteSchijf(inst);
   if (oef.gewichtType === 'totaal' && oef.apparaat.includes('stang')) return Math.max(oef.stap, kleinste * 2);
-  if (oef.gewichtType === 'schijven') return Math.max(oef.stap, oef.id === 'tbar-roeien' ? kleinste : kleinste * 2);
+  if (oef.gewichtType === 'schijven') return Math.max(oef.stap, EENZIJDIG.has(oef.id) ? kleinste : kleinste * 2);
   return oef.stap;
 }
 

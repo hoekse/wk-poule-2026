@@ -1,6 +1,7 @@
 import { Kop } from '../components/Basis';
 import { LijnGrafiek } from '../components/Grafiek';
 import { MachineInstelling } from '../components/Machine';
+import { VoorbeeldKaart } from '../components/Voorbeeld';
 import { dagDatum } from '../lib/datum';
 import { APPARATUUR, beschikbaar, gewichtLabel, repLabel, SPIERNAMEN, zoekOefening } from '../lib/oefeningen';
 import { e1rm, e1rmReeks, fmtKg, geschiedenis, setTekst, werkSets } from '../lib/progressie';
@@ -36,19 +37,10 @@ export function OefeningDetail({ id }: { id: string }) {
         {!kan && <span className="pil geel">apparaat niet aangevinkt</span>}
       </div>
       <MachineInstelling oef={oef} />
-      {oef.tips.length > 0 && (
-        <section className="kaart">
-          <h3>Uitvoering</h3>
-          <ul className="stappen">
-            {oef.tips.map((t) => (
-              <li key={t}>{t}</li>
-            ))}
-          </ul>
-          <p className="dun klein">
-            Nodig: {oef.apparaat.length ? oef.apparaat.map((a) => APPARATUUR.find((x) => x.id === a)?.naam).join(', ') : 'niets'}. Gewicht noteer je als {gewichtLabel(oef)}.
-          </p>
-        </section>
-      )}
+      <VoorbeeldKaart oef={oef} />
+      <p className="dun klein">
+        Nodig: {oef.apparaat.length ? oef.apparaat.map((a) => APPARATUUR.find((x) => x.id === a)?.naam).join(', ') : 'niets'}. Gewicht noteer je als {gewichtLabel(oef) || 'seconden'}.
+      </p>
       {reeks.length > 0 && !sec && (
         <section className="kaart">
           <h3>Geschat maximum</h3>

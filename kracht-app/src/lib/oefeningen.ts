@@ -1,6 +1,7 @@
+import { PANATTA } from './panatta';
 import type { ApparaatId, Oefening, Spiergroep } from './types';
 
-export const APPARATUUR: { id: ApparaatId; naam: string; standaard: boolean }[] = [
+export const APPARATUUR: { id: ApparaatId; naam: string; standaard: boolean; groep?: 'Panatta' }[] = [
   { id: 'stang', naam: 'Halterstangen en schijven', standaard: true },
   { id: 'rek', naam: 'Squatrek / powerrek', standaard: true },
   { id: 'bank', naam: 'Verstelbare bank', standaard: true },
@@ -18,6 +19,27 @@ export const APPARATUUR: { id: ApparaatId; naam: string; standaard: boolean }[] 
   { id: 'plate-highrow', naam: 'High row (plate-loaded)', standaard: true },
   { id: 'plate-pulldown', naam: 'Pulldown (plate-loaded)', standaard: true },
   { id: 'tbar', naam: 'T-bar row', standaard: true },
+  // Panatta (plate-loaded Freeweight-lijn en machines met gewichtsstapel). Vink aan wat er bij FitButiq staat.
+  { id: 'pan-chest', naam: 'Panatta chest press', standaard: true, groep: 'Panatta' },
+  { id: 'pan-incline', naam: 'Panatta incline chest press', standaard: true, groep: 'Panatta' },
+  { id: 'pan-shoulder', naam: 'Panatta shoulder press', standaard: true, groep: 'Panatta' },
+  { id: 'pan-pulldown', naam: 'Panatta lat pulldown', standaard: true, groep: 'Panatta' },
+  { id: 'pan-lowrow', naam: 'Panatta low row', standaard: true, groep: 'Panatta' },
+  { id: 'pan-highrow', naam: 'Panatta high row', standaard: true, groep: 'Panatta' },
+  { id: 'pan-tbar', naam: 'Panatta T-bar row', standaard: false, groep: 'Panatta' },
+  { id: 'pan-hack', naam: 'Panatta hack squat', standaard: true, groep: 'Panatta' },
+  { id: 'pan-pendulum', naam: 'Panatta pendulum squat', standaard: false, groep: 'Panatta' },
+  { id: 'pan-legpress', naam: 'Panatta leg press 45°', standaard: true, groep: 'Panatta' },
+  { id: 'pan-hipthrust', naam: 'Panatta hip thrust', standaard: false, groep: 'Panatta' },
+  { id: 'pan-calf', naam: 'Panatta calf (kuiten)', standaard: false, groep: 'Panatta' },
+  { id: 'pan-legext', naam: 'Panatta leg extension', standaard: true, groep: 'Panatta' },
+  { id: 'pan-legcurl', naam: 'Panatta leg curl', standaard: true, groep: 'Panatta' },
+  { id: 'pan-pecdeck', naam: 'Panatta pec deck / rear delt', standaard: true, groep: 'Panatta' },
+  { id: 'pan-lateral', naam: 'Panatta lateral raise', standaard: false, groep: 'Panatta' },
+  { id: 'pan-biceps', naam: 'Panatta biceps curl', standaard: false, groep: 'Panatta' },
+  { id: 'pan-triceps', naam: 'Panatta triceps (dip of extension)', standaard: false, groep: 'Panatta' },
+  { id: 'pan-abs', naam: 'Panatta abdominal crunch', standaard: false, groep: 'Panatta' },
+  { id: 'pan-pullover', naam: 'Panatta pullover', standaard: false, groep: 'Panatta' },
   { id: 'smith', naam: 'Smith-machine', standaard: true },
   { id: 'beenstrekker', naam: 'Beenstrekker (leg extension)', standaard: true },
   { id: 'beenbuiger', naam: 'Beenbuiger (leg curl)', standaard: true },
@@ -212,7 +234,49 @@ export const OEFENINGEN: Oefening[] = [
     tips: ['2-3 minuten rustig inrijden.', 'Elke ronde: de aangegeven seconden voluit, daarna rustig doortrappen of -roeien tot de rusttimer afgaat.', 'Noteer de seconden die je voluit ging. Lukt alles makkelijk: maak de rondes langer of zet de weerstand hoger.', 'Maakt je vetverbranding en conditie beter zonder je krachttraining in de weg te zitten.'] }),
   o({ id: 'kettlebell-intervallen', naam: 'Kettlebell swing-intervallen', spieren: ['conditie', 'billen', 'hamstrings'], apparaat: ['kettlebell'], soort: 'romp', gewichtType: 'totaal', stap: 4,
     tips: ['Swings op tempo gedurende de aangegeven seconden, daarna rust tot de timer afgaat.', 'Beweging uit je heupen, rug recht.'] }),
+
+  // ── Panatta (zie panatta.ts) ──────────────────────────────
+  ...PANATTA,
 ];
+
+/** Engelse zoektermen voor voorbeeldvideo's van de algemene oefeningen. */
+const VIDEO: Record<string, string> = {
+  squat: 'barbell back squat technique',
+  hacksquat: 'hack squat machine technique',
+  'smith-squat': 'smith machine squat technique',
+  legpress: 'leg press technique',
+  'goblet-squat': 'goblet squat technique',
+  'bulgaarse-split-squat': 'bulgarian split squat dumbbell technique',
+  deadlift: 'conventional deadlift technique',
+  rdl: 'romanian deadlift technique',
+  'rdl-db': 'dumbbell romanian deadlift technique',
+  'hipthrust-stang': 'barbell hip thrust technique',
+  bankdrukken: 'bench press technique',
+  'db-bankdrukken': 'dumbbell bench press technique',
+  'schuin-db': 'incline dumbbell press technique',
+  'db-schouderdrukken': 'seated dumbbell shoulder press technique',
+  'zijwaarts-heffen': 'dumbbell lateral raise technique',
+  'face-pull': 'cable face pull technique',
+  latpulldown: 'lat pulldown technique',
+  optrekken: 'pull up technique',
+  kabelroeien: 'seated cable row technique',
+  'db-roeien': 'one arm dumbbell row technique',
+  'borst-gesteund-roeien': 'chest supported dumbbell row technique',
+  'kroc-row': 'kroc row technique',
+  'tbar-roeien': 't bar row technique',
+  'db-curl': 'dumbbell biceps curl technique',
+  'hamer-curl': 'hammer curl technique',
+  'triceps-pushdown': 'cable triceps pushdown technique',
+  boerenwandeling: 'farmers walk technique',
+  'pallof-press': 'pallof press technique',
+  'kabel-crunch': 'cable crunch technique',
+};
+
+/** Link naar voorbeeldvideo's (YouTube-zoekopdracht). */
+export function videoLink(oef: Oefening): string {
+  const zoek = oef.video ?? VIDEO[oef.id] ?? `${oef.naam.replace(/\s*\(.*\)\s*/g, ' ').trim()} oefening uitvoering`;
+  return `https://www.youtube.com/results?search_query=${encodeURIComponent(zoek)}`;
+}
 
 /** Oefeningen waarbij je seconden noteert in plaats van herhalingen. */
 export const OP_TIJD = new Set(['plank', 'boerenwandeling', 'intervallen', 'kettlebell-intervallen']);

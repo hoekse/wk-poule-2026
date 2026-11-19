@@ -13,8 +13,14 @@ export function Apparatuur() {
         Vink aan wat er staat. Per oefening kiest het schema de eerste variant die kan. Loop een keer met de app door de zaal en zet uit wat er niet is; dan klopt
         je schema precies.
       </p>
+      {[
+        { titel: 'Algemeen', lijst: APPARATUUR.filter((a) => !a.groep) },
+        { titel: 'Panatta-machines', lijst: APPARATUUR.filter((a) => a.groep === 'Panatta') },
+      ].map(({ titel, lijst }) => (
+      <section key={titel} className="sectie">
+      <span className="label">{titel}</span>
       <div className="lijst">
-        {APPARATUUR.map((a) => (
+        {lijst.map((a) => (
           <label key={a.id} className="vinkje">
             <input
               type="checkbox"
@@ -25,6 +31,12 @@ export function Apparatuur() {
           </label>
         ))}
       </div>
+      </section>
+      ))}
+      <p className="dun klein">
+        Panatta-machines staan in het schema bovenaan: staat er een aangevinkt, dan kiest de app die eerst. Bij elke oefening zie je een uitgewerkt voorbeeld
+        en een knop naar voorbeeldvideo's.
+      </p>
 
       <section className="kaart" aria-label="Schijven">
         <h3>Schijven en stang</h3>

@@ -83,7 +83,7 @@ export function maakTraining(s: Staat, dagId: string, aanpassing: Aanpassing, da
     };
   });
   if (ontzien && !oefeningen.some((l) => l.oefeningId === 'face-pull' || l.oefeningId === 'reverse-fly')) {
-    const extra: Slot = { id: `${dag.id}-schouders`, oefeningen: ['face-pull', 'reverse-fly'], sets: 2, repMin: 15, repMax: 20, rir: 2, rust: 60 };
+    const extra: Slot = { id: `${dag.id}-schouders`, oefeningen: ['face-pull', 'panatta-rear-delt', 'reverse-fly'], sets: 2, repMin: 15, repMax: 20, rir: 2, rust: 60 };
     const { oefening } = kiesOefening(extra, inst, s.eigenOefeningen);
     const a = advies(s, extra, oefening, { rirExtra: 0, deload: false, aanpassing: 'normaal' });
     a.uitleg = `Extra voor je schouders na werk boven je hoofd. ${a.uitleg}`;

@@ -9,6 +9,8 @@ let zaad = 7;
 const rnd = () => ((zaad = (zaad * 16807) % 2147483647) / 2147483647);
 
 const START: Record<string, number> = {
+  'panatta-hack-squat': 100, 'panatta-chest-press': 80, 'panatta-low-row': 90, 'panatta-shoulder-press': 40, 'panatta-lat-pulldown': 70,
+  'panatta-incline-press': 60, 'panatta-high-row': 60, 'panatta-leg-press': 160, 'panatta-leg-curl': 40, 'panatta-leg-extension': 50,
   squat: 60, 'bankdrukken': 50, kabelroeien: 45, beenbuigen: 30, 'zijwaarts-heffen': 6, 'kabel-crunch': 20,
   deadlift: 80, 'db-schouderdrukken': 14, latpulldown: 45, legpress: 160, 'db-curl': 10, 'triceps-pushdown': 17.5,
   'bulgaarse-split-squat': 10, 'schuin-db': 18, 'db-roeien': 20, 'hipthrust-stang': 60, 'face-pull': 15, boerenwandeling: 24,

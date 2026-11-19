@@ -764,3 +764,21 @@ pre.code { padding: 12px 14px; white-space: pre-wrap; margin: 0; border-radius: 
 .inzicht i { width: 10px; height: 10px; border-radius: 50%; margin-top: 6px; box-shadow: 0 0 10px currentColor; }
 .inzicht b { font-family: var(--font-kop); font-weight: 650; letter-spacing: -0.01em; }
 .inzicht p { grid-column: 2; font-size: 0.88rem; color: var(--tekst-2); }
+
+/* ── Voorbeeld bij een oefening ── */
+.voorbeeld-stappen { margin: 0; padding: 0; list-style: none; counter-reset: stap; display: grid; gap: 12px; }
+.voorbeeld-stappen li { counter-increment: stap; display: grid; grid-template-columns: 30px 1fr; gap: 2px 12px; }
+.voorbeeld-stappen li::before {
+  content: counter(stap);
+  grid-row: span 2;
+  width: 30px; height: 30px; border-radius: 10px;
+  display: grid; place-items: center;
+  background: var(--grad); color: var(--op-accent);
+  font-family: var(--font-kop); font-weight: 700; font-size: 0.95rem;
+}
+.voorbeeld-stappen b { font-family: var(--font-kop); font-weight: 650; letter-spacing: -0.01em; }
+.voorbeeld-stappen span { font-size: 0.9rem; color: var(--tekst-2); line-height: 1.5; }
+.voorbeeld-fouten { display: grid; gap: 6px; padding: 12px 14px; border-radius: 16px; background: var(--rood-zacht); }
+.voorbeeld-fouten ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; font-size: 0.88rem; }
+.voorbeeld-fouten li::marker { color: var(--rood); }
+.voorbeeld .knop.klein { white-space: nowrap; }

@@ -41,7 +41,7 @@ const geenHorizontaleScroll = async (page, waar) => {
   await page.getByRole('button', { name: '3× per week' }).click();
   await foto(page, 'a1-kennismaken');
   await page.getByRole('button', { name: 'Volgende' }).click();
-  await page.getByText('Hack squat').waitFor();
+  await page.getByText('Panatta-machines').waitFor();
   await page.getByRole('button', { name: 'Volgende' }).click();
   await page.getByRole('button', { name: 'Beginnen' }).click();
   await page.getByRole('heading', { name: /Goede\w+, Dennis/ }).waitFor();
@@ -97,10 +97,15 @@ const geenHorizontaleScroll = async (page, waar) => {
   await page.getByText('1 van 7 gedaan').waitFor();
   await page.getByText('Superset A1').waitFor();
   await page.getByText('Extra voor je schouders').first().waitFor();
-  await page.getByRole('button', { name: /^Instelling Hack squat/ }).click();
-  await page.locator('#machine-hacksquat').fill('stoel 4, voeten midden');
+  await page.getByRole('button', { name: /^Instelling Panatta hack squat/ }).click();
+  await page.locator('#machine-panatta-hack-squat').fill('stoel 4, voeten midden');
   await page.getByRole('button', { name: 'Instelling opslaan' }).click();
-  await page.getByRole('button', { name: 'Instelling Hack squat: stoel 4, voeten midden' }).waitFor();
+  await page.getByRole('button', { name: 'Instelling Panatta hack squat: stoel 4, voeten midden' }).waitFor();
+  // Voorbeeld bij de oefening in het infoblad
+  await page.getByRole('button', { name: 'Uitleg Panatta hack squat' }).click();
+  await page.getByText('Zo doe je het').first().waitFor();
+  await page.getByRole('link', { name: /Voorbeeldvideo/ }).first().waitFor();
+  await page.keyboard.press('Escape');
 
   // Wisselen van oefening
   await page.getByRole('button', { name: 'Wissel' }).nth(2).click();
@@ -197,6 +202,17 @@ if (demo) {
   await page.getByRole('button', { name: 'Set 1 klaar' }).first().click();
   await page.waitForTimeout(1200);
   await foto(page, 'b5-training');
+  // Voorbeeldpagina van een Panatta-machine
+  await page.getByRole('button', { name: 'Afronden', exact: true }).click();
+  await page.getByRole('button', { name: 'Training weggooien' }).click();
+  await page.getByRole('button', { name: 'Ja, weggooien' }).click();
+  await page.getByRole('navigation').getByRole('button', { name: 'Schema' }).click();
+  await page.getByRole('button', { name: /^Panatta low row/ }).first().click();
+  await page.getByText('Zo doe je het').waitFor();
+  await page.screenshot({ path: `${uit}/b8-voorbeeld.png`, fullPage: true });
+  await page.getByRole('navigation').getByRole('button', { name: 'Meer' }).click();
+  await page.getByRole('button', { name: /^Apparatuur bij FitButiq/ }).click();
+  await page.getByText('Panatta-machines').first().waitFor();
   await ctx.close();
 
   const licht = await browser.newContext({ ...devices['iPhone 14'], colorScheme: 'light', locale: 'nl-NL' });

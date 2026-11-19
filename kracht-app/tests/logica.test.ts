@@ -9,7 +9,7 @@ import { weekSamenvatting, weekTekst } from '../src/lib/week';
 import { maakIcs } from '../src/lib/agenda';
 import { inhoudSleutel, isLeeg, voegSamen } from '../src/lib/samenvoegen';
 import { leesBackup, legeStaat, maakBackup, maakTraining, setsCsv, voegDagdataToe } from '../src/lib/staat';
-import { zoekOefening } from '../src/lib/oefeningen';
+import { alleOefeningen, APPARATUUR, videoLink, zoekOefening } from '../src/lib/oefeningen';
 import { schijvenPerKant, schijvenVoor } from '../src/lib/schijven';
 import type { Staat, Training } from '../src/lib/types';
 
@@ -17,6 +17,8 @@ function staatMet(f: (s: Staat) => void = () => {}): Staat {
   const s = legeStaat();
   s.instellingen.onboardingKlaar = true;
   s.instellingen.blokStart = '2026-11-02';
+  // Algemene tests rekenen zonder Panatta-machines; die hebben hun eigen tests.
+  for (const k of Object.keys(s.instellingen.apparatuur)) if (k.startsWith('pan-')) (s.instellingen.apparatuur as Record<string, boolean>)[k] = false;
   f(s);
   return s;
 }
@@ -431,5 +433,37 @@ describe('cloud samenvoegen', () => {
     const t = staatMet();
     expect(isLeeg(t)).toBe(false);
     expect(inhoudSleutel({ ...t, instellingen: { ...t.instellingen, laatsteSync: 'x' } })).toBe(inhoudSleutel(t));
+  });
+});
+
+describe('Panatta-machines', () => {
+  it('standaard kiest het schema de aangevinkte Panatta-machines', () => {
+    const s = legeStaat();
+    const kies = (dag: number, slot: number) => kiesOefening(SCHEMAS['3-dagen'].dagen[dag].slots[slot], s.instellingen, []).oefening.id;
+    expect([kies(0, 0), kies(0, 1), kies(0, 2), kies(0, 3)]).toEqual(['panatta-hack-squat', 'panatta-chest-press', 'panatta-low-row', 'panatta-leg-curl']);
+    expect([kies(1, 1), kies(1, 2), kies(1, 4)]).toEqual(['panatta-shoulder-press', 'panatta-lat-pulldown', 'panatta-leg-press']);
+    expect([kies(2, 0), kies(2, 1)]).toEqual(['panatta-incline-press', 'panatta-high-row']);
+    // T-bar van Panatta staat standaard uit: dan de gewone T-bar row.
+    expect(kies(1, 3)).toBe('tbar-roeien');
+  });
+  it('elke Panatta-oefening heeft een voorbeeld, video en bestaand apparaat', () => {
+    const panatta = alleOefeningen([]).filter((o) => o.id.startsWith('panatta-'));
+    expect(panatta.length).toBeGreaterThanOrEqual(20);
+    for (const o of panatta) {
+      expect(o.voorbeeld?.start, o.id).toBeTruthy();
+      expect(o.voorbeeld?.beweging, o.id).toBeTruthy();
+      expect(o.voorbeeld?.fouten.length, o.id).toBeGreaterThan(0);
+      expect(o.voorbeeld?.sets, o.id).toBeTruthy();
+      expect(APPARATUUR.some((a) => a.id === o.apparaat[0] && a.groep === 'Panatta'), o.id).toBe(true);
+      expect(videoLink(o)).toMatch(/^https:\/\/www\.youtube\.com\/results\?search_query=Panatta/);
+    }
+    expect(new Set(alleOefeningen([]).map((o) => o.id)).size).toBe(alleOefeningen([]).length);
+  });
+  it('plate-loaded Panatta: schijvencalculator en stappen van 5 kg', () => {
+    const s = legeStaat();
+    expect(schijvenVoor(zoekOefening('panatta-hack-squat')!, 100)).toMatchObject({ kop: 'Per kant:', schijven: [25, 25] });
+    expect(schijvenVoor(zoekOefening('panatta-tbar')!, 40)).toMatchObject({ kop: 'Op de stang:', schijven: [25, 15] });
+    expect(stapVoor(zoekOefening('panatta-chest-press')!, s.instellingen)).toBe(5);
+    expect(schijvenVoor(zoekOefening('panatta-leg-extension')!, 50)).toBeNull();
   });
 });

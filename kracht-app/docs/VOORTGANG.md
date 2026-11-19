@@ -61,6 +61,17 @@ Dennis traint vooral met plate-loaded machines, roei-oefeningen en dumbbells.
 Bewuste beperking: bij gelijktijdig gebruik op twee apparaten worden trainingen en metingen samengevoegd; iets wat op het ene apparaat is
 verwijderd, kan via het andere terugkomen. Foto's blijven op de telefoon (en in de back-up).
 
+## Af (versie 1.5): Panatta-machines met voorbeelden
+
+- 21 Panatta-oefeningen: plate-loaded (chest press, incline press, shoulder press, lat pulldown, low row, high row, T-bar row, hack squat,
+  pendulum squat, leg press 45°, hip thrust, calf) en met gewichtsstapel (pec deck, rear delt, lateral raise, triceps, biceps, pullover,
+  leg extension, leg curl, abdominal crunch).
+- Apart blok "Panatta-machines" bij Apparatuur; aangevinkte Panatta-machines staan in het schema bovenaan.
+- Bij elke oefening "Zo doe je het": instellen, startpositie, beweging, let op (fouten), sets en gewicht als voorbeeld, en een knop naar
+  voorbeeldvideo's (YouTube-zoekopdracht).
+- Welke Panatta-machines er bij FitButiq staan is niet online te vinden: standaard aan staan de gangbare (chest/incline/shoulder press, lat
+  pulldown, low/high row, hack squat, leg press, leg extension/curl, pec deck). De rest staat uit; aan te passen bij Apparatuur.
+
 ## Gemaakte keuzes
 
 - **Gegevens lokaal op de telefoon** (IndexedDB) in plaats van een database in de cloud: geen extra kosten, werkt zonder internet in de

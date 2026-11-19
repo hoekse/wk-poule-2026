@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Blad, fmtInvoer, leesInvoer } from '../components/Basis';
 import { MachineInstelling } from '../components/Machine';
+import { VoorbeeldKaart } from '../components/Voorbeeld';
 import { OPWARMEN } from '../lib/opwarmen';
 import { IcoonInfo, IcoonLet, IcoonPlus, IcoonPotlood, IcoonPrullenbak, IcoonVink, IcoonWissel } from '../components/Iconen';
 import { minutenTussen } from '../lib/datum';
@@ -493,13 +494,7 @@ function OefeningInfo({ oef, sluit }: { oef: Oefening | null; sluit: () => void 
           </span>
         ))}
       </div>
-      {oef.tips.length > 0 && (
-        <ul className="stappen">
-          {oef.tips.map((t) => (
-            <li key={t}>{t}</li>
-          ))}
-        </ul>
-      )}
+      <VoorbeeldKaart oef={oef} />
       <p className="dun klein">
         Nodig: {oef.apparaat.length ? oef.apparaat.map((a) => APPARATUUR.find((x) => x.id === a)?.naam).join(', ') : 'niets'}. Gewicht noteer je als{' '}
         {gewichtLabel(oef)}.

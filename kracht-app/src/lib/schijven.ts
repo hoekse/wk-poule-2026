@@ -12,6 +12,9 @@ export const ALLE_SCHIJVEN: { kg: number; kleur: string }[] = [
 
 export const STANDAARD_SCHIJVEN = ALLE_SCHIJVEN.map((s) => s.kg);
 
+/** Machines die aan één kant worden geladen (T-bar). */
+export const EENZIJDIG = new Set(['tbar-roeien', 'panatta-tbar']);
+
 export function schijfKleur(kg: number): string {
   return ALLE_SCHIJVEN.find((s) => s.kg === kg)?.kleur ?? '#9aa0a8';
 }
@@ -49,7 +52,7 @@ export function schijvenVoor(
     return s && { kop: 'Per kant:', schijven: s, leeg: `alleen de stang (${stang} kg)` };
   }
   if (oef.gewichtType === 'schijven') {
-    const eenzijdig = oef.id === 'tbar-roeien';
+    const eenzijdig = EENZIJDIG.has(oef.id);
     const s = schijvenPerKant(eenzijdig ? gewicht * 2 : gewicht, 0, beschikbaar);
     return s && { kop: eenzijdig ? 'Op de stang:' : 'Per kant:', schijven: s, leeg: 'geen schijven' };
   }

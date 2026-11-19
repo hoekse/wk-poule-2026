@@ -81,18 +81,26 @@ export function Onboarding() {
               Vink aan wat er in de sportschool aan de Spoorstraat staat. Het schema kiest dan per oefening de beste variant. Twijfel je? Laat het aan staan en
               wissel later tijdens de training.
             </p>
-            <div className="lijst">
-              {APPARATUUR.map((a) => (
-                <label key={a.id} className="vinkje">
-                  <input
-                    type="checkbox"
-                    checked={inst.apparatuur[a.id]}
-                    onChange={(e) => zet((i) => ({ ...i, apparatuur: { ...i.apparatuur, [a.id]: e.target.checked } }))}
-                  />
-                  <span className="groei">{a.naam}</span>
-                </label>
-              ))}
-            </div>
+            {[
+              { titel: 'Algemeen', lijst: APPARATUUR.filter((a) => !a.groep) },
+              { titel: 'Panatta-machines', lijst: APPARATUUR.filter((a) => a.groep === 'Panatta') },
+            ].map(({ titel, lijst }) => (
+              <section key={titel} className="sectie">
+                <span className="label">{titel}</span>
+                <div className="lijst">
+                  {lijst.map((a) => (
+                    <label key={a.id} className="vinkje">
+                      <input
+                        type="checkbox"
+                        checked={inst.apparatuur[a.id]}
+                        onChange={(e) => zet((i) => ({ ...i, apparatuur: { ...i.apparatuur, [a.id]: e.target.checked } }))}
+                      />
+                      <span className="groei">{a.naam}</span>
+                    </label>
+                  ))}
+                </div>
+              </section>
+            ))}
             <div className="veld">
               <span>Kleinste stap tussen dumbbells</span>
               <Segment<number>

@@ -46,7 +46,27 @@ export type ApparaatId =
   | 'plate-highrow'
   | 'plate-pulldown'
   | 'tbar'
-  | 'pendulum';
+  | 'pendulum'
+  | 'pan-chest'
+  | 'pan-incline'
+  | 'pan-shoulder'
+  | 'pan-pulldown'
+  | 'pan-lowrow'
+  | 'pan-highrow'
+  | 'pan-tbar'
+  | 'pan-hack'
+  | 'pan-pendulum'
+  | 'pan-legpress'
+  | 'pan-hipthrust'
+  | 'pan-calf'
+  | 'pan-legext'
+  | 'pan-legcurl'
+  | 'pan-pecdeck'
+  | 'pan-lateral'
+  | 'pan-biceps'
+  | 'pan-triceps'
+  | 'pan-abs'
+  | 'pan-pullover';
 
 /** Hoe het gewicht van een oefening wordt genoteerd. */
 /** schijven = plate-loaded machine: totaal aan schijven, de machine zelf telt niet mee. */
@@ -69,6 +89,18 @@ export interface Oefening {
   tips: string[];
   /** Zelf toegevoegd door de gebruiker. */
   eigen?: boolean;
+  /** Uitgewerkt voorbeeld: instellen, startpositie, beweging, fouten en voorbeeld-sets. */
+  voorbeeld?: Voorbeeld;
+  /** Zoekterm voor voorbeeldvideo's. */
+  video?: string;
+}
+
+export interface Voorbeeld {
+  instelling?: string;
+  start: string;
+  beweging: string;
+  fouten: string[];
+  sets?: string;
 }
 
 export interface Slot {
