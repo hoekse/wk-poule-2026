@@ -1,0 +1,213 @@
+{
+  "_uitleg": "Start- en noodinhoud. De LIVE inhoud staat in Supabase (tabellen narrowcasting_slides en narrowcasting_instellingen). Dit bestand wordt alleen gebruikt bij de allereerste start zonder internet, of met ?bron=lokaal.",
+  "instellingen": {
+    "bedrijf": {
+      "naam": "Hoeksema Schilderwerken",
+      "slogan": "Jouw partner in kleurrijk meesterschap",
+      "website": "schildersbedrijfhoeksema.nl",
+      "telefoon": "06 41 14 43 58",
+      "email": "dennis@schildersbedrijfhoeksema.nl",
+      "adres": "Industrieweg 3-U, 8263 AA Kampen",
+      "logo": "media/logo.svg",
+      "logo_wit": "media/logo-wit.svg"
+    },
+    "ticker": [
+      "Vakwerk voor binnen én buiten — vraag vrijblijvend advies",
+      "Schilderwerk · Beglazing · Wandafwerking · Kleuradvies",
+      "De winter is hét moment voor binnenschilderwerk",
+      "Plan je buitenschilderwerk voor het voorjaar nu alvast in"
+    ],
+    "mededeling": {
+      "tekst": "",
+      "kleur": "rood",
+      "tot": null
+    },
+    "weer": {
+      "plaats": "Kampen"
+    },
+    "weergave": {
+      "standaard_duur": 12,
+      "overgang": "vervagen",
+      "verversen_sec": 30,
+      "ticker_snelheid": 110
+    },
+    "nachtstand": {
+      "aan": false,
+      "van": "19:00",
+      "tot": "07:00",
+      "weekend": false
+    },
+    "herladen": 1
+  },
+  "slides": [
+    {
+      "naam": "welkom",
+      "volgorde": 10,
+      "type": "titel",
+      "duur": 10,
+      "inhoud": {
+        "titel": "{groet}, welkom!",
+        "tekst": "Jouw partner in *kleurrijk meesterschap*",
+        "thema": "licht",
+        "kleur": "blauw"
+      }
+    },
+    {
+      "naam": "diensten",
+      "volgorde": 20,
+      "type": "diensten",
+      "duur": 14,
+      "inhoud": {
+        "kop": "Onze diensten",
+        "titel": "Vakwerk voor binnen én buiten",
+        "thema": "licht",
+        "items": [
+          {
+            "naam": "Binnenschilderwerk",
+            "icoon": "roller",
+            "tekst": "Wanden, plafonds, deuren en kozijnen strak afgewerkt"
+          },
+          {
+            "naam": "Buitenschilderwerk",
+            "icoon": "huis",
+            "tekst": "Kozijnen, gevels en houtwerk beschermd tegen weer en wind"
+          },
+          {
+            "naam": "Beglazing",
+            "icoon": "glas",
+            "tekst": "Glas vervangen of vernieuwen, vakkundig geplaatst"
+          },
+          {
+            "naam": "Wandafwerking",
+            "icoon": "muur",
+            "tekst": "Een strakke, verzorgde afwerking van je wanden"
+          },
+          {
+            "naam": "Kleuradvies",
+            "icoon": "palet",
+            "tekst": "De juiste kleur op de juiste plek"
+          }
+        ]
+      }
+    },
+    {
+      "naam": "voor-na-voorbeeld",
+      "volgorde": 30,
+      "type": "voor_na",
+      "duur": 14,
+      "inhoud": {
+        "kop": "Voor & na",
+        "titel": "Van verweerd naar *als nieuw*",
+        "voor": "media/voorbeeld-voor.svg",
+        "na": "media/voorbeeld-na.svg",
+        "onderschrift": "Kozijnen, boeideel en voordeur opnieuw geschilderd",
+        "thema": "donker",
+        "kleur": "groen"
+      }
+    },
+    {
+      "naam": "schilderweer",
+      "volgorde": 40,
+      "type": "weer",
+      "duur": 14,
+      "inhoud": {
+        "thema": "licht",
+        "kleur": "blauw"
+      }
+    },
+    {
+      "naam": "tip-buiten-schilderen",
+      "volgorde": 50,
+      "type": "tekst",
+      "duur": 14,
+      "inhoud": {
+        "kop": "Schilderstip",
+        "titel": "Wanneer schilder je *buiten*?",
+        "punten": [
+          "Bij voorkeur vanaf zo'n 10 °C",
+          "Droog weer, ook de dag erna",
+          "Niet in de felle middagzon",
+          "Liefst niet bij hoge luchtvochtigheid"
+        ],
+        "thema": "donker",
+        "kleur": "geel"
+      }
+    },
+    {
+      "naam": "wist-je-dat-onderhoud",
+      "volgorde": 60,
+      "type": "tekst",
+      "duur": 12,
+      "inhoud": {
+        "kop": "Wist je dat?",
+        "titel": "Op tijd schilderen voorkomt *houtrot*",
+        "tekst": "Door buitenschilderwerk tijdig bij te werken, blijft het hout beschermd en voorkom je dure reparaties. We kijken graag vrijblijvend met je mee.",
+        "thema": "licht",
+        "kleur": "groen"
+      }
+    },
+    {
+      "naam": "contact",
+      "volgorde": 70,
+      "type": "contact",
+      "duur": 12,
+      "inhoud": {
+        "kop": "Contact",
+        "titel": "Vrijblijvend advies of een offerte?",
+        "tekst": "Scan de QR-code of neem contact met ons op.",
+        "thema": "donker",
+        "kleur": "blauw"
+      }
+    },
+    {
+      "naam": "feestdagen",
+      "volgorde": 5,
+      "type": "titel",
+      "duur": 10,
+      "van": "2026-12-14",
+      "tot": "2027-01-03",
+      "inhoud": {
+        "kop": "Het team van Hoeksema Schilderwerken wenst je",
+        "titel": "Fijne feestdagen en een *kleurrijk* {volgend_jaar}!",
+        "thema": "donker",
+        "kleur": "rood"
+      }
+    },
+    {
+      "naam": "vacature",
+      "volgorde": 80,
+      "type": "vacature",
+      "actief": false,
+      "duur": 14,
+      "inhoud": {
+        "kop": "Vacature",
+        "titel": "Wij zoeken versterking!",
+        "functie": "Allround schilder (m/v)",
+        "punten": [
+          "Binnen- en buitenschilderwerk",
+          "Gevarieerde projecten",
+          "Vakmanschap en netjes werken staan voorop"
+        ],
+        "tekst": "Interesse? Spreek ons aan of kijk op de website.",
+        "link": "schildersbedrijfhoeksema.nl",
+        "thema": "licht",
+        "kleur": "rood"
+      }
+    },
+    {
+      "naam": "review-voorbeeld",
+      "volgorde": 90,
+      "type": "review",
+      "actief": false,
+      "duur": 12,
+      "inhoud": {
+        "tekst": "Plak hier een echte review van een klant (bijvoorbeeld van Google).",
+        "naam": "Naam klant",
+        "plaats": "Plaats",
+        "sterren": 5,
+        "thema": "donker",
+        "kleur": "geel"
+      }
+    }
+  ]
+}
