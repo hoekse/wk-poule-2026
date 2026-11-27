@@ -1,0 +1,19 @@
+---
+/** Geïllustreerde spot-iconen uit het ontwerp (hoge resolutie, transparant) – scherp op elk scherm. */
+import { Image } from 'astro:assets';
+import boekBlad from '@/assets/iconen/boek-blad.png';
+import personage from '@/assets/iconen/personage.png';
+import kwast from '@/assets/iconen/kwast.png';
+import liniaal from '@/assets/iconen/liniaal.png';
+import boek from '@/assets/iconen/boek.png';
+import meetlint from '@/assets/iconen/meetlint.png';
+import preview from '@/assets/iconen/preview.png';
+import doos from '@/assets/iconen/doos.png';
+const spots = { 'boek-blad': boekBlad, personage, kwast, liniaal, boek, meetlint, preview, doos } as const;
+interface Props { naam: keyof typeof spots; maat?: number; class?: string; }
+const { naam, maat = 96, class: klasse } = Astro.props;
+---
+<Image src={spots[naam]} alt="" width={maat} height={maat} widths={[maat, maat * 2, maat * 3]} sizes={`${maat}px`} loading="lazy" class:list={['spot', klasse]} />
+<style>
+  .spot { display: block; width: var(--spot, auto); height: auto; object-fit: contain; }
+</style>

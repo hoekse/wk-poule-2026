@@ -1,0 +1,24 @@
+---
+import Icon from './Icon.astro';
+interface Props { items: { naam: string; url: string }[]; }
+const { items } = Astro.props;
+---
+<nav class="kruimel container" aria-label="Kruimelpad">
+  <ol>
+    {items.map((it, i) => (
+      <li>
+        {i < items.length - 1 ? <a href={it.url}>{it.naam}</a> : <span aria-current="page">{it.naam}</span>}
+        {i < items.length - 1 && <Icon naam="rechts" />}
+      </li>
+    ))}
+  </ol>
+</nav>
+<style>
+  .kruimel { padding-top: 20px; padding-bottom: 8px; }
+  .kruimel ol { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 4px; font-size: 0.84rem; font-weight: 600; color: var(--tekst-zacht); }
+  .kruimel li { display: inline-flex; align-items: center; gap: 4px; }
+  .kruimel a { color: var(--tekst-zacht); text-decoration: none; }
+  .kruimel a:hover { color: var(--groen); text-decoration: underline; }
+  .kruimel [aria-current] { color: var(--groen); }
+  .kruimel :global(svg) { width: 14px; height: 14px; opacity: 0.6; }
+</style>

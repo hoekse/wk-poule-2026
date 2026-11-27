@@ -1,0 +1,50 @@
+---
+import { getImage } from 'astro:assets';
+import Basis from '@/layouts/Basis.astro';
+import Icon from '@/components/Icon.astro';
+import { producten } from '@/data/producten';
+import { beelden } from '@/lib/beelden';
+import { euro } from '@/lib/prijs';
+const catalogus = await Promise.all(producten.map(async (p) => ({
+  key: p.key, naam: p.naam, sub: p.ondertitel, url: p.url,
+  prijs: p.type === 'fotobehang' ? `vanaf ${euro(4495)} /m²` : `vanaf ${euro(p.vanafCent)}`,
+  img: (await getImage({ src: beelden[p.beeld], width: 480, height: 360, fit: 'cover', format: 'webp', quality: 78 })).src,
+})));
+---
+<Basis titel="Bewaarlijst" beschrijving="Jouw bewaarde favorieten bij Wallstories Kids." noindex>
+  <section class="container sectie--krap">
+    <span class="eyebrow">Jouw favorieten</span>
+    <h1>Bewaarlijst</h1>
+    <p class="lead">Klik op het hartje bij een product om het hier te bewaren. Je lijst blijft op dit apparaat bewaard.</p>
+    <ul class="fav-grid" data-fav-lijst></ul>
+    <div class="leeg kaart" data-fav-leeg hidden>
+      <p><b>Je bewaarlijst is nog leeg.</b></p>
+      <a href="/werelden/" class="knop">Ontdek de werelden <Icon naam="pijl" class="pijl" /></a>
+    </div>
+  </section>
+</Basis>
+<script type="application/json" id="fav-catalogus" set:html={JSON.stringify(catalogus)} />
+<script>
+  import { favorieten } from '@/scripts/favorieten';
+  type P = { key: string; naam: string; sub: string; url: string; prijs: string; img: string };
+  const cat: P[] = JSON.parse(document.getElementById('fav-catalogus')!.textContent || '[]');
+  const lijst = document.querySelector<HTMLElement>('[data-fav-lijst]')!;
+  const leeg = document.querySelector<HTMLElement>('[data-fav-leeg]')!;
+  const render = () => {
+    const items = favorieten.lijst().map((k) => cat.find((p) => p.key === k)).filter(Boolean) as P[];
+    leeg.hidden = items.length > 0;
+    lijst.innerHTML = items.map((p) => `<li class="fav-item"><a href="${p.url}"><img src="${p.img}" alt="" width="480" height="360" loading="lazy"><span class="fav-tekst"><small>${p.sub}</small><b>${p.naam}</b><span>${p.prijs}</span></span></a><button type="button" class="fav-weg" data-fav="${p.key}" aria-pressed="true" aria-label="Verwijder uit je bewaarlijst">Verwijderen</button></li>`).join('');
+  };
+  favorieten.bijWijziging(render); render();
+</script>
+<style>
+  h1 { font-size: clamp(2.2rem, 1.5rem + 2.4vw, 3.4rem); }
+  .fav-grid { list-style: none; margin: 32px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 24px; }
+  .fav-grid :global(.fav-item a) { display: grid; gap: 10px; text-decoration: none; color: inherit; }
+  .fav-grid :global(img) { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: var(--r-lg); }
+  .fav-grid :global(.fav-tekst) { display: grid; }
+  .fav-grid :global(.fav-tekst b) { font-family: var(--font-kop); color: var(--groen); font-size: 1.15rem; }
+  .fav-grid :global(.fav-tekst small) { color: var(--tekst-zacht); }
+  .fav-grid :global(.fav-weg) { margin-top: 6px; background: none; border: 0; padding: 0; color: var(--tekst-zacht); text-decoration: underline; cursor: pointer; font-size: 0.85rem; }
+  .leeg { padding: 32px; margin-top: 32px; max-width: 520px; }
+</style>

@@ -1,0 +1,43 @@
+---
+import Basis from '@/layouts/Basis.astro';
+import Kruimelpad from '@/components/Kruimelpad.astro';
+import Icon from '@/components/Icon.astro';
+import { faq } from '@/data/faq';
+import { kruimelpad } from '@/lib/schema';
+const kruimels = [{ naam: 'Home', url: '/' }, { naam: 'Veelgestelde vragen', url: '/veelgestelde-vragen/' }];
+const categorieen = [...new Set(faq.map((f) => f.categorie))];
+const strip = (s: string) => s.replace(/<[^>]+>/g, '');
+const ld = [kruimelpad(Astro.site, kruimels), { '@type': 'FAQPage', mainEntity: faq.map((f) => ({ '@type': 'Question', name: f.vraag, acceptedAnswer: { '@type': 'Answer', text: strip(f.antwoord) } })) }];
+const slug = (s: string) => s.toLowerCase().replace(/&/g, 'en').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+---
+<Basis titel="Veelgestelde vragen" beschrijving="Antwoorden op veelgestelde vragen over fotobehang op maat, opmeten, aanbrengen, materialen, verzending, retourneren en personaliseren bij Wallstories Kids." jsonLd={ld}>
+  <Kruimelpad items={kruimels} />
+  <header class="container">
+    <span class="eyebrow">Klantenservice</span>
+    <h1>Veelgestelde vragen</h1>
+    <nav class="sprong" aria-label="Categorieën">{categorieen.map((c) => <a href={`#${slug(c)}`} class="label">{c}</a>)}</nav>
+  </header>
+  <section class="container sectie--krap lijst">
+    {categorieen.map((c) => (
+      <div id={slug(c)} class="groep">
+        <h2>{c}</h2>
+        <div class="items">{faq.filter((f) => f.categorie === c).map((f) => <details class="faq-item"><summary>{f.vraag}<Icon naam="plus" /></summary><p set:html={f.antwoord} /></details>)}</div>
+      </div>
+    ))}
+    <div class="kaart nog">
+      <h2 class="h-klein">Staat je vraag er niet bij?</h2>
+      <p class="zacht">We helpen je graag persoonlijk verder.</p>
+      <a href="/contact/" class="knop">Neem contact op <Icon naam="pijl" class="pijl" /></a>
+    </div>
+  </section>
+</Basis>
+<style>
+  h1 { font-size: clamp(2.4rem, 1.6rem + 3vw, 4.2rem); }
+  .sprong { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+  .sprong a { text-decoration: none; }
+  .lijst { display: grid; gap: 48px; max-width: 860px; }
+  .groep h2 { font-size: 1.6rem; }
+  .items { display: grid; gap: 10px; }
+  .nog { padding: 32px; }
+  .h-klein { font-size: 1.4rem; }
+</style>

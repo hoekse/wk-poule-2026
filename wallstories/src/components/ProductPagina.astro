@@ -1,0 +1,343 @@
+---
+/** Gedeelde productpagina voor alle producttypes, met configurator, specificaties, verhaal en gerelateerde producten. */
+import { Image, getImage } from 'astro:assets';
+import Basis from '@/layouts/Basis.astro';
+import Kruimelpad from './Kruimelpad.astro';
+import ProductBeeld from './ProductBeeld.astro';
+import ProductKaart from './ProductKaart.astro';
+import Icon from './Icon.astro';
+import { beelden } from '@/lib/beelden';
+import { categorieen, productenInWereld, producten, type Product } from '@/data/producten';
+import { wereldBySlug } from '@/data/werelden';
+import { personageBySlug } from '@/data/personages';
+import { tarieven, euro, maatLabels, vanafCent, NAAM_MAX } from '@/lib/prijs';
+import { kruimelpad, verzendDetails, retourBeleid, absoluut } from '@/lib/schema';
+import { specs, winkel, merk } from '@/config';
+
+interface Props { product: Product; }
+const { product: p } = Astro.props;
+const cat = categorieen.find((c) => c.slug === p.categorie)!;
+const wereld = p.wereld ? wereldBySlug(p.wereld) : undefined;
+const personage = p.personage ? personageBySlug(p.personage) : undefined;
+const src = beelden[p.beeld];
+
+const thumb = (await getImage({ src, width: 160, height: 160, fit: 'cover', format: 'webp', quality: 78, position: p.focus ? 'attention' : 'centre' })).src;
+const previewBeeld = p.type === 'fotobehang' ? (await getImage({ src, width: 1800, format: 'webp', quality: 82 })).src : '';
+const schemaBeeld = (await getImage({ src, width: 1200, format: 'jpg', quality: 82 })).src;
+
+const verwant = [
+  ...(p.wereld ? productenInWereld(p.wereld) : []),
+  ...(p.personage ? producten.filter((x) => x.personage === p.personage) : []),
+].filter((x, i, a) => x.key !== p.key && a.findIndex((y) => y.key === x.key) === i).slice(0, 4);
+const meer = verwant.length < 4 ? producten.filter((x) => x.categorie === p.categorie && x.key !== p.key && !verwant.includes(x)).slice(0, 4 - verwant.length) : [];
+
+const levertijd = p.maatwerk ? winkel.levertijd.maatwerk : winkel.levertijd.standaard;
+const kruimels = [
+  { naam: 'Home', url: '/' },
+  { naam: cat.naam, url: `/${cat.slug}/` },
+  { naam: p.naam, url: p.url },
+];
+
+const prijzen: Record<string, [string, number][]> = {
+  behangcirkel: Object.entries(tarieven.behangcirkel.maten),
+  poster: Object.entries(tarieven.poster.maten),
+  muursticker: Object.entries(tarieven.muursticker.maten),
+};
+const maxPrijs = p.type === 'fotobehang' ? undefined : Math.max(...(prijzen[p.type]?.map(([, c]) => c) ?? [p.vanafCent]));
+
+const productLd = {
+  '@type': 'Product',
+  '@id': absoluut(Astro.site, `${p.url}#product`),
+  name: p.naam,
+  description: p.metaBeschrijving,
+  image: absoluut(Astro.site, schemaBeeld),
+  sku: p.key.replace('/', '-'),
+  brand: { '@type': 'Brand', name: merk.naam },
+  category: cat.naam,
+  offers: {
+    '@type': maxPrijs && maxPrijs !== p.vanafCent ? 'AggregateOffer' : 'Offer',
+    priceCurrency: 'EUR',
+    ...(maxPrijs && maxPrijs !== p.vanafCent
+      ? { lowPrice: (p.vanafCent / 100).toFixed(2), highPrice: (maxPrijs / 100).toFixed(2) }
+      : { price: (p.vanafCent / 100).toFixed(2) }),
+    availability: 'https://schema.org/InStock',
+    itemCondition: 'https://schema.org/NewCondition',
+    url: absoluut(Astro.site, p.url),
+    seller: { '@id': absoluut(Astro.site, '/#organisatie') },
+    shippingDetails: verzendDetails(),
+    hasMerchantReturnPolicy: retourBeleid(p.maatwerk),
+  },
+};
+const kleuren = { 'diep-groen': '#18403A', koraal: '#F08A76', 'zon-geel': '#F0B44D', lichtblauw: '#9DC4E0', munt: '#A8C5B3' } as const;
+---
+<Basis titel={p.seoTitel} beschrijving={p.metaBeschrijving} ogBeeld={src} ogAlt={p.alt} type="product" jsonLd={[kruimelpad(Astro.site, kruimels), productLd]}>
+  <Kruimelpad items={kruimels} />
+
+  <section class="container product" data-product>
+    <!-- Visual / preview -->
+    <div class="product-visual">
+      {p.type === 'fotobehang' ? (
+        <div class="wandpreview" data-preview data-ratio={(src.width / src.height).toFixed(3)}>
+          <div class="wand-kader">
+            <span class="maat maat-b" data-maat-b>300 cm</span>
+            <div class="wand" data-wand style={`background-image:url(${previewBeeld})`} role="img" aria-label={`Preview van ${p.naam} op jouw muurmaat`}>
+              <span class="wand-naam" data-naam-preview hidden></span>
+            </div>
+            <span class="maat maat-h" data-maat-h>260 cm</span>
+          </div>
+          <p class="preview-hint"><Icon naam="info" /> Stippellijnen tonen de naden van de banen (50 cm). Wij printen 5 cm extra rondom.</p>
+        </div>
+      ) : (
+        <div data-preview class="pv-statisch">
+          <ProductBeeld product={p} groot eager sizes="(max-width: 960px) 92vw, 640px" />
+          {p.type === 'poster' && <span class="poster-naam" data-naam-preview hidden></span>}
+          {p.type === 'behangcirkel' && <span class="label pv-maatlabel" data-maat-label>Ø 70 cm</span>}
+        </div>
+      )}
+      <div class="miniaturen">
+        {p.type !== 'naamsticker' && <div class="media"><Image src={src} alt={p.alt} widths={[240, 480]} sizes="160px" loading="lazy" style={p.focus ? `object-position:${p.focus}` : undefined} /></div>}
+        <div class="media"><Image src={beelden['babykamer-walvis']} alt="Sfeerbeeld: babykamer met Wallstories-fotobehang" widths={[240, 480]} sizes="160px" loading="lazy" /></div>
+        {wereld && p.type !== 'fotobehang' && <div class="media"><Image src={beelden[wereld.beeld]} alt={wereld.alt} widths={[240, 480]} sizes="160px" loading="lazy" style={`object-position:${wereld.focus}`} /></div>}
+      </div>
+    </div>
+
+    <!-- Info + configurator -->
+    <div class="product-info">
+      {wereld && <a href={`/werelden/${wereld.slug}/`} class="eyebrow wereld-link">Wereld: {wereld.naam}</a>}
+      {!wereld && personage && <a href={`/personages/${personage.slug}/`} class="eyebrow wereld-link">{personage.rol}</a>}
+      <h1>{p.naam}</h1>
+      <p class="ondertitel">{p.ondertitel}</p>
+
+      <form class="config" data-configurator data-type={p.type} data-key={p.key} data-naam={p.naam} data-url={p.url} data-thumb={thumb} novalidate>
+        {p.type === 'fotobehang' && (
+          <>
+            <fieldset class="groep">
+              <legend>1. Jouw muurmaat</legend>
+              <div class="maatvelden">
+                <div class="veld"><label for="breedte">Breedte (cm)</label><input class="invoer" id="breedte" name="breedte" type="number" inputmode="numeric" min={tarieven.fotobehang.grenzen.minCm} max={tarieven.fotobehang.grenzen.maxBreedteCm} step="1" value="300" required /></div>
+                <span class="maal" aria-hidden="true">×</span>
+                <div class="veld"><label for="hoogte">Hoogte (cm)</label><input class="invoer" id="hoogte" name="hoogte" type="number" inputmode="numeric" min={tarieven.fotobehang.grenzen.minCm} max={tarieven.fotobehang.grenzen.maxHoogteCm} step="1" value="260" required /></div>
+              </div>
+              <p class="hint">Meet je muur op de breedste en hoogste punten. <a href="/inspiratie/hoeveel-behang-nodig/">Zo meet je op</a>.</p>
+              <div class="veld schuif" data-schuifveld>
+                <label for="uitsnede" data-schuif-label>Uitsnede verschuiven</label>
+                <div class="schuif-rij"><Icon naam="verschuif" /><input id="uitsnede" name="uitsnede" type="range" min="0" max="100" value="50" /></div>
+              </div>
+            </fieldset>
+            <fieldset class="groep">
+              <legend>2. Materiaal</legend>
+              <div class="chips">
+                {Object.entries(tarieven.fotobehang.materialen).map(([k, m], i) => (
+                  <label class="chip"><input type="radio" name="materiaal" value={k} checked={i === 0} /><span><b>{m.naam.replace('Premium vlies – ', 'Vlies ')}</b><small>{euro(m.m2Cent)} per m²</small></span></label>
+                ))}
+              </div>
+            </fieldset>
+          </>
+        )}
+
+        {(p.type === 'behangcirkel' || p.type === 'poster' || p.type === 'muursticker') && (
+          <fieldset class="groep">
+            <legend>Kies je formaat</legend>
+            <div class="chips">
+              {prijzen[p.type].map(([k, c], i) => (
+                <label class="chip"><input type="radio" name="maat" value={k} checked={i === 0} /><span><b>{maatLabels[k]}</b><small>{euro(c)}</small></span></label>
+              ))}
+            </div>
+          </fieldset>
+        )}
+
+        {p.type === 'naamsticker' && (
+          <fieldset class="groep">
+            <legend>Jouw naamsticker</legend>
+            <div class="veld"><label for="naam">Naam</label><input class="invoer" id="naam" name="naam" maxlength={NAAM_MAX} placeholder="Bijv. Noor" value="Noor" autocomplete="off" required /></div>
+            <div class="veld-label" style="margin-top:14px">Kleur</div>
+            <div class="kleuren">
+              {Object.entries(kleuren).map(([k, hex], i) => (
+                <label class="kleur" title={k.replace('-', ' ')}><input type="radio" name="kleur" value={k} checked={i === 1} /><span style={`--k:${hex}`}><span class="sr-only">{k.replace('-', ' ')}</span></span></label>
+              ))}
+            </div>
+            <p class="hint">Ca. 60 cm breed in het Wallstories-lettertype (Baloo). Je ontvangt de sticker als één geheel met applicatiefolie.</p>
+          </fieldset>
+        )}
+
+        {(p.type === 'fotobehang' || p.type === 'poster') && (
+          <fieldset class="groep">
+            <legend>{p.type === 'fotobehang' ? '3. Maak het persoonlijk' : 'Maak het persoonlijk'} <span class="optioneel">optioneel</span></legend>
+            <label class="schakel"><input type="checkbox" name="naam-aan" /> <span>Naam van je kind toevoegen (+ {euro(p.type === 'fotobehang' ? tarieven.fotobehang.naamCent : tarieven.poster.naamCent)})</span></label>
+            <div class="veld" data-naamveld hidden>
+              <label for="naam">Naam (max. {NAAM_MAX} tekens)</label>
+              <input class="invoer" id="naam" name="naam" maxlength={NAAM_MAX} placeholder="Bijv. Noor" autocomplete="off" />
+              <p class="hint">Je ontvangt binnen 1 werkdag een digitale proef ter goedkeuring.</p>
+            </div>
+          </fieldset>
+        )}
+
+        <div class="koop">
+          <div class="koop-prijs">
+            <p class="prijs groot" data-prijs aria-live="polite">{euro(p.vanafCent)}</p>
+            <p class="hint" data-detail>{p.type === 'fotobehang' ? '' : 'Incl. btw'}</p>
+          </div>
+          <button type="submit" class="knop knop--groot koop-knop" data-toevoegen>
+            <Icon naam="tas" /> <span class="t-normaal">In winkelwagen</span><span class="t-klaar">Toegevoegd</span>
+          </button>
+        </div>
+        <p class="fout" data-fout role="alert"></p>
+      </form>
+
+      <ul class="zeker">
+        <li><Icon naam="truck" /> <span><b>Levering in {levertijd}</b> · gratis vanaf {euro(winkel.gratisVerzendingVanafCent)}</span></li>
+        {p.maatwerk
+          ? <li><Icon naam="liniaal" /> <span><b>Maatwerk</b> · speciaal voor jou geprint, daarom geen herroepingsrecht. <a href="/verzenden-en-retourneren/">Meer info</a></span></li>
+          : <li><Icon naam="schild" /> <span><b>14 dagen bedenktijd</b> · <a href="/verzenden-en-retourneren/">retourneren</a></span></li>}
+        <li><Icon naam="slot" /> <span><b>Veilig betalen</b> met iDEAL via Mollie</span></li>
+      </ul>
+
+      {p.type === 'fotobehang' && (
+        <div class="proefstaal" id="proefstaal">
+          <div><b>Eerst voelen en kleuren zien?</b><p class="klein zacht">Bestel een A4-proefstaal van deze wereld voor {euro(tarieven.proefstaal.prijsCent)}.</p></div>
+          <button type="button" class="knop knop--rand knop--klein" data-proefstaal data-key={p.key} data-naam={wereld?.naam} data-url={p.url} data-thumb={thumb}>Proefstaal bestellen</button>
+        </div>
+      )}
+    </div>
+  </section>
+
+  <!-- Verhaal + specificaties -->
+  <section class="container sectie--krap detail">
+    <div class="detail-verhaal">
+      {wereld ? (
+        <>
+          <span class="eyebrow">Het verhaal</span>
+          <h2>{wereld.verhaal}</h2>
+          <p class="lead">{wereld.intro}</p>
+          {wereld.alineas.map((a) => <p>{a}</p>)}
+          <a class="link-pijl" href={`/werelden/${wereld.slug}/`}>Alles uit de wereld {wereld.naam} <Icon naam="pijl" /></a>
+        </>
+      ) : personage ? (
+        <>
+          <span class="eyebrow">Over {personage.naam}</span>
+          <h2>{personage.rol}</h2>
+          {personage.verhaal.map((a) => <p>{a}</p>)}
+          <a class="link-pijl" href={`/personages/${personage.slug}/`}>Lees het hele verhaal <Icon naam="pijl" /></a>
+        </>
+      ) : (
+        <>
+          <span class="eyebrow">Persoonlijk</span>
+          <h2>Hun naam, groot op de muur</h2>
+          <p class="lead">Een naamsticker maakt een kamer meteen van hén. Combineer met fotobehang, een behangcirkel of de stickers van onze personages.</p>
+        </>
+      )}
+    </div>
+    <div class="kaart detail-specs">
+      <h2 class="h-klein">Specificaties</h2>
+      <dl class="specs">
+        {p.type === 'fotobehang' && (<>
+          <div><dt>Materiaal</dt><dd>PVC-vrij vliesbehang, mat of linnenstructuur</dd></div>
+          <div><dt>Maat</dt><dd>Op maat tot {tarieven.fotobehang.grenzen.maxBreedteCm} × {tarieven.fotobehang.grenzen.maxHoogteCm} cm, + 5 cm overmaat rondom</dd></div>
+          <div><dt>Banen</dt><dd>50 cm breed, genummerd</dd></div>
+          <div><dt>Aanbrengen</dt><dd>Lijm op de muur (vliesbehanglijm)</dd></div>
+          <div><dt>Minimum</dt><dd>{tarieven.fotobehang.minM2} m² per bestelling</dd></div>
+        </>)}
+        {p.type === 'behangcirkel' && (<>
+          <div><dt>Materiaal</dt><dd>Zelfklevend textiel, herpositioneerbaar</dd></div>
+          <div><dt>Maten</dt><dd>Ø 70, 100 of 125 cm</dd></div>
+          <div><dt>Ondergrond</dt><dd>Gladde, geverfde muur</dd></div>
+        </>)}
+        {p.type === 'poster' && (<>
+          <div><dt>Papier</dt><dd>Mat museumkwaliteit papier, 200 g/m²</dd></div>
+          <div><dt>Formaten</dt><dd>30 × 40, 50 × 70 of 70 × 100 cm</dd></div>
+          <div><dt>Lijst</dt><dd>Niet inbegrepen; past in standaardlijsten</dd></div>
+        </>)}
+        {(p.type === 'muursticker' || p.type === 'naamsticker') && (<>
+          <div><dt>Materiaal</dt><dd>Matte, verwijderbare muursticker</dd></div>
+          <div><dt>Ondergrond</dt><dd>Gladde, geverfde muur (min. 3 weken droog)</dd></div>
+        </>)}
+        <div><dt>Levertijd</dt><dd>{levertijd}</dd></div>
+      </dl>
+      {p.type === 'fotobehang' && <ul class="checklist klein">{specs.map((s) => <li><Icon naam="vink-rond" /> {s}</li>)}</ul>}
+    </div>
+  </section>
+
+  <section class="container sectie--krap">
+    <div class="sectie-kop"><h2>Maak het verhaal compleet</h2></div>
+    <div class="grid verwant">{[...verwant, ...meer].map((x) => <ProductKaart product={x} />)}</div>
+  </section>
+</Basis>
+
+<script>
+  import '@/scripts/configurator';
+</script>
+
+<style>
+  .product { display: grid; grid-template-columns: 1.25fr 1fr; gap: clamp(24px, 4vw, 64px); align-items: start; padding-top: 12px; }
+  .product-visual { position: sticky; top: calc(var(--header-h) + 16px); display: grid; gap: 14px; }
+  .wandpreview { background: var(--zand-100); border-radius: var(--r-lg); padding: clamp(20px, 3vw, 40px) clamp(20px, 3vw, 40px) 16px; }
+  .wand-kader { position: relative; display: grid; justify-items: center; padding: 26px 30px 0 0; }
+  .wand { position: relative; background-size: cover; background-repeat: no-repeat; border-radius: 4px; transition: width 0.25s var(--ease), height 0.25s var(--ease), background-position 0.1s linear;
+    box-shadow: 0 0 0 1px rgb(24 64 58 / 0.12), 0 24px 48px -24px rgb(24 64 58 / 0.55); max-width: 100%; }
+  .wand::after { content: ''; position: absolute; inset: 0; pointer-events: none; border-radius: inherit;
+    background-image: repeating-linear-gradient(to right, transparent 0 calc(var(--baan, 16.66%) - 1px), rgb(255 255 255 / 0.85) calc(var(--baan, 16.66%) - 1px) var(--baan, 16.66%));
+    -webkit-mask: repeating-linear-gradient(to bottom, #000 0 6px, transparent 6px 11px); mask: repeating-linear-gradient(to bottom, #000 0 6px, transparent 6px 11px); opacity: 0.75; }
+  .wand-naam { position: absolute; left: 0; right: 0; top: 8%; text-align: center; font-family: var(--font-kop); font-weight: 800; color: #fff; letter-spacing: 0.02em; text-shadow: 0 2px 0 rgb(24 64 58 / 0.12), 0 4px 18px rgb(24 64 58 / 0.35); z-index: 1; }
+  .maat { position: absolute; font-size: 0.78rem; font-weight: 700; color: var(--groen); background: var(--papier); padding: 2px 8px; border-radius: 999px; box-shadow: var(--schaduw-s); white-space: nowrap; }
+  .maat-b { top: 0; left: 50%; transform: translateX(calc(-50% - 15px)); }
+  .maat-h { right: -6px; top: 50%; transform: translateY(-50%) rotate(90deg); transform-origin: center; }
+  .preview-hint { display: flex; gap: 8px; align-items: center; justify-content: center; margin: 16px 0 0; font-size: 0.8rem; color: var(--tekst-zacht); text-align: center; }
+  .preview-hint :global(svg) { width: 16px; height: 16px; flex: none; }
+  .pv-statisch { position: relative; }
+  .poster-naam { position: absolute; left: 0; right: 0; top: 66%; text-align: center; font-family: var(--font-kop); font-weight: 800; color: var(--groen); font-size: clamp(0.9rem, 1.6vw, 1.3rem); pointer-events: none; }
+  .pv-maatlabel { position: absolute; top: 16px; right: 16px; background: var(--papier); }
+  .miniaturen { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .miniaturen .media { aspect-ratio: 4 / 3; border-radius: var(--r); }
+
+  .wereld-link { text-decoration: none; }
+  .product-info h1 { font-size: clamp(2.1rem, 1.6rem + 2vw, 3.2rem); margin-bottom: 0.15em; }
+  .ondertitel { font-size: 1.1rem; color: var(--tekst-zacht); font-weight: 600; margin-bottom: 24px; }
+  .config { display: grid; gap: 22px; }
+  .groep { border: 0; margin: 0; padding: 0; display: grid; gap: 12px; }
+  .groep legend { font-family: var(--font-kop); font-weight: 700; color: var(--groen); font-size: 1.15rem; margin-bottom: 10px; padding: 0; }
+  .optioneel { font-family: var(--font-tekst); font-size: 0.78rem; font-weight: 600; color: var(--tekst-zacht); margin-left: 6px; }
+  .maatvelden { display: grid; grid-template-columns: 1fr auto 1fr; align-items: end; gap: 10px; }
+  .maal { padding-bottom: 14px; font-weight: 700; color: var(--tekst-zacht); }
+  .schuif-rij { display: flex; align-items: center; gap: 10px; color: var(--groen); }
+  .schuif-rij :global(svg) { width: 22px; height: 22px; flex: none; }
+  input[type='range'] { width: 100%; accent-color: var(--groen); height: 28px; }
+  .schakel { display: flex; align-items: center; gap: 10px; font-weight: 600; cursor: pointer; }
+  .schakel input { width: 20px; height: 20px; accent-color: var(--groen); }
+  .kleuren { display: flex; gap: 10px; }
+  .kleur { position: relative; }
+  .kleur input { position: absolute; opacity: 0; inset: 0; }
+  .kleur > span { display: block; width: 40px; height: 40px; border-radius: 50%; background: var(--k); box-shadow: inset 0 0 0 3px #fff, 0 0 0 1.5px var(--rand-sterk); cursor: pointer; }
+  .kleur input:checked + span { box-shadow: inset 0 0 0 3px #fff, 0 0 0 2.5px var(--groen); }
+  .kleur input:focus-visible + span { outline: 3px solid var(--focus); outline-offset: 3px; }
+
+  .koop { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 20px; background: var(--papier); border-radius: var(--r-lg); box-shadow: var(--schaduw-s); border: 1px solid var(--rand); flex-wrap: wrap; }
+  .prijs.groot { font-size: 2rem; margin: 0; line-height: 1; }
+  .koop-prijs .hint { margin: 6px 0 0; max-width: 32ch; }
+  .koop-knop { flex: 1; max-width: 260px; }
+  .koop-knop .t-klaar { display: none; }
+  .koop-knop:global(.toegevoegd) { --knop-bg: var(--heuvel); --knop-rand: var(--heuvel); }
+  .koop-knop:global(.toegevoegd) .t-normaal { display: none; }
+  .koop-knop:global(.toegevoegd) .t-klaar { display: inline; }
+  .zeker { list-style: none; margin: 22px 0 0; padding: 0; display: grid; gap: 10px; font-size: 0.88rem; }
+  .zeker li { display: flex; gap: 10px; align-items: flex-start; }
+  .zeker :global(svg) { width: 20px; height: 20px; flex: none; color: var(--heuvel); margin-top: 2px; }
+  .zeker a { color: var(--groen); font-weight: 700; }
+  .proefstaal { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-top: 22px; padding: 16px 20px; border-radius: var(--r); border: 1.5px dashed var(--rand-sterk); }
+  .proefstaal p { margin: 2px 0 0; }
+
+  .detail { display: grid; grid-template-columns: 1.3fr 1fr; gap: clamp(24px, 5vw, 72px); align-items: start; padding-top: var(--sectie); }
+  .detail-specs { padding: 28px; }
+  .h-klein { font-size: 1.35rem; }
+  .specs { margin: 0 0 18px; display: grid; }
+  .specs div { display: grid; grid-template-columns: 120px 1fr; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--rand); font-size: 0.9rem; }
+  .specs dt { font-weight: 700; color: var(--groen); }
+  .specs dd { margin: 0; }
+  .verwant { grid-template-columns: repeat(4, 1fr); }
+
+  @media (max-width: 960px) {
+    .product, .detail { grid-template-columns: 1fr; }
+    .product-visual { position: static; }
+    .verwant { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 520px) { .koop-knop { max-width: none; width: 100%; } .proefstaal { flex-direction: column; align-items: flex-start; } }
+</style>

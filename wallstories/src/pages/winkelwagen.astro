@@ -1,0 +1,33 @@
+---
+import Basis from '@/layouts/Basis.astro';
+import Icon from '@/components/Icon.astro';
+---
+<Basis titel="Winkelwagen" beschrijving="Bekijk de producten in je winkelwagen bij Wallstories Kids." noindex>
+  <section class="container sectie--krap">
+    <h1>Jouw winkelwagen</h1>
+    <div class="ww-pagina">
+      <div class="kaart regels" data-pagina-regels></div>
+      <aside class="kaart som">
+        <div data-pagina-totalen></div>
+        <a href="/afrekenen/" class="knop knop--groot knop--blok" data-naar-kassa>Veilig afrekenen <Icon naam="pijl" class="pijl" /></a>
+        <a href="/werelden/" class="link-pijl verder"><Icon naam="pijl-links" /> Verder winkelen</a>
+      </aside>
+    </div>
+  </section>
+</Basis>
+<script>
+  import { winkelwagen, renderRegels, renderTotalen, koppelActies } from '@/scripts/winkelwagen';
+  const r = document.querySelector<HTMLElement>('[data-pagina-regels]')!;
+  const t = document.querySelector<HTMLElement>('[data-pagina-totalen]')!;
+  const kassa = document.querySelector<HTMLAnchorElement>('[data-naar-kassa]')!;
+  const update = () => { renderRegels(r); renderTotalen(t); kassa.toggleAttribute('aria-disabled', winkelwagen.totalen().aantal === 0); kassa.setAttribute('aria-disabled', String(winkelwagen.totalen().aantal === 0)); };
+  koppelActies(r); winkelwagen.bijWijziging(update); update();
+</script>
+<style>
+  h1 { font-size: clamp(2.2rem, 1.5rem + 2.4vw, 3.4rem); }
+  .ww-pagina { display: grid; grid-template-columns: 1.6fr 1fr; gap: 28px; align-items: start; }
+  .regels { padding: 8px 28px; }
+  .som { padding: 28px; display: grid; gap: 16px; position: sticky; top: calc(var(--header-h) + 20px); }
+  .verder { justify-self: center; }
+  @media (max-width: 900px) { .ww-pagina { grid-template-columns: 1fr; } .som { position: static; } }
+</style>

@@ -1,0 +1,93 @@
+---
+/** Zoekvenster met een kleine index die tijdens de build wordt gemaakt (geen externe dienst nodig). */
+import { getCollection } from 'astro:content';
+import { getImage } from 'astro:assets';
+import Icon from './Icon.astro';
+import { producten, categorieen } from '@/data/producten';
+import { werelden } from '@/data/werelden';
+import { personages } from '@/data/personages';
+import { beelden } from '@/lib/beelden';
+const thumb = async (k: keyof typeof beelden) => (await getImage({ src: beelden[k], width: 96, height: 96, fit: 'cover', format: 'webp', quality: 70 })).src;
+const artikelen = await getCollection('inspiratie');
+const index = [
+  ...(await Promise.all(producten.map(async (p) => ({ t: p.naam, s: p.ondertitel, u: p.url, g: 'Product', i: await thumb(p.beeld), k: `${p.naam} ${p.ondertitel} ${p.categorie}` })))),
+  ...(await Promise.all(werelden.map(async (w) => ({ t: `Wereld: ${w.naam}`, s: w.verhaal, u: `/werelden/${w.slug}/`, g: 'Wereld', i: await thumb(w.beeld), k: `${w.naam} ${w.verhaal} ${w.zoekwoorden.join(' ')}` })))),
+  ...(await Promise.all(personages.map(async (c) => ({ t: c.naam, s: c.rol, u: `/personages/${c.slug}/`, g: 'Personage', i: await thumb(c.beeld), k: `${c.naam} ${c.rol} ${c.kort}` })))),
+  ...categorieen.map((c) => ({ t: c.naam, s: c.h1, u: `/${c.slug}/`, g: 'Categorie', i: '', k: `${c.naam} ${c.h1}` })),
+  ...(await Promise.all(artikelen.map(async (a) => ({ t: a.data.titel, s: a.data.categorie, u: `/inspiratie/${a.id}/`, g: 'Inspiratie', i: await thumb(a.data.afbeelding), k: `${a.data.titel} ${a.data.focusKeyword} ${a.data.beschrijving}` })))),
+  { t: 'Gepersonaliseerd met naam', s: 'Behang, posters en stickers met naam', u: '/gepersonaliseerd/', g: 'Pagina', i: '', k: 'naam persoonlijk kraamcadeau' },
+  { t: 'Veelgestelde vragen', s: 'Klantenservice', u: '/veelgestelde-vragen/', g: 'Pagina', i: '', k: 'faq vragen hulp' },
+  { t: 'Verzenden & retourneren', s: 'Klantenservice', u: '/verzenden-en-retourneren/', g: 'Pagina', i: '', k: 'levertijd verzendkosten retour' },
+  { t: 'Zakelijk', s: 'Kinderopvang, wachtkamers, scholen', u: '/zakelijk/', g: 'Pagina', i: '', k: 'kinderopvang wachtkamer school' },
+  { t: 'Ontwerp op maat', s: 'Een eigen wereld laten ontwerpen', u: '/op-maat/', g: 'Pagina', i: '', k: 'eigen ontwerp maatwerk' },
+];
+const populair = ['ruimte', 'dino', 'onderwater', 'naam', 'behangcirkel', 'babykamer'];
+---
+<dialog class="zoek" data-zoek aria-label="Zoeken">
+  <div class="zoek-binnen">
+    <div class="zoek-balk">
+      <Icon naam="zoek" />
+      <label class="sr-only" for="zoekveld">Zoek op wereld, product of onderwerp</label>
+      <input id="zoekveld" type="search" placeholder="Zoek een wereld, product of onderwerp…" autocomplete="off" data-zoek-invoer />
+      <button type="button" class="zoek-sluit" data-zoek-sluit aria-label="Zoeken sluiten"><Icon naam="sluit" /></button>
+    </div>
+    <div class="zoek-populair" data-zoek-populair>
+      <span class="klein zacht">Populair:</span>
+      {populair.map((p) => <button type="button" class="label" data-zoek-term={p}>{p}</button>)}
+    </div>
+    <ul class="zoek-resultaten" data-zoek-resultaten aria-live="polite"></ul>
+  </div>
+</dialog>
+<script type="application/json" id="zoek-index" set:html={JSON.stringify(index)} />
+<script>
+  const dlg = document.querySelector<HTMLDialogElement>('[data-zoek]')!;
+  const inv = dlg.querySelector<HTMLInputElement>('[data-zoek-invoer]')!;
+  const uit = dlg.querySelector<HTMLUListElement>('[data-zoek-resultaten]')!;
+  const pop = dlg.querySelector<HTMLElement>('[data-zoek-populair]')!;
+  type R = { t: string; s: string; u: string; g: string; i: string; k: string };
+  const index: R[] = JSON.parse(document.getElementById('zoek-index')!.textContent || '[]');
+  const norm = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));
+  const zoek = () => {
+    const q = norm(inv.value.trim());
+    pop.hidden = !!q;
+    if (q.length < 2) { uit.innerHTML = ''; return; }
+    const woorden = q.split(/\s+/);
+    const hits = index.map((r) => {
+      const hay = norm(`${r.t} ${r.s} ${r.k}`);
+      if (!woorden.every((w) => hay.includes(w))) return null;
+      return { r, score: (norm(r.t).includes(q) ? 3 : 0) + (r.g === 'Wereld' ? 1 : 0) };
+    }).filter(Boolean).sort((a, b) => b!.score - a!.score).slice(0, 8) as { r: R }[];
+    uit.innerHTML = hits.length ? hits.map(({ r }) => `<li><a href="${r.u}">${r.i ? `<img src="${r.i}" alt="" width="48" height="48">` : '<span class="zoek-leeg-img"></span>'}<span><b>${esc(r.t)}</b><small>${esc(r.g)} · ${esc(r.s)}</small></span></a></li>`).join('')
+      : `<li class="zoek-niets">Geen resultaten voor “${esc(inv.value)}”. Probeer “ruimte” of “behangcirkel”.</li>`;
+  };
+  inv.addEventListener('input', zoek);
+  pop.addEventListener('click', (e) => { const t = (e.target as HTMLElement).closest<HTMLElement>('[data-zoek-term]'); if (t) { inv.value = t.dataset.zoekTerm!; zoek(); inv.focus(); } });
+  document.querySelectorAll('[data-zoek-open]').forEach((b) => b.addEventListener('click', () => { dlg.showModal(); inv.focus(); }));
+  dlg.querySelector('[data-zoek-sluit]')!.addEventListener('click', () => dlg.close());
+  dlg.addEventListener('click', (e) => { if (e.target === dlg) dlg.close(); });
+  document.addEventListener('keydown', (e) => { if ((e.key === '/' || (e.key === 'k' && (e.metaKey || e.ctrlKey))) && !dlg.open && !(e.target as HTMLElement).closest('input,textarea')) { e.preventDefault(); dlg.showModal(); inv.focus(); } });
+</script>
+<style is:global>
+  .zoek { width: min(680px, calc(100vw - 32px)); max-height: min(640px, 85dvh); margin: 10vh auto auto; padding: 0; border: 0; border-radius: var(--r-lg); background: var(--papier); box-shadow: var(--schaduw-l); }
+  .zoek::backdrop { background: rgb(15 47 42 / 0.45); backdrop-filter: blur(3px); }
+  .zoek[open] { animation: zoek-in 0.22s var(--ease); }
+  @keyframes zoek-in { from { opacity: 0; transform: translateY(-8px); } }
+  .zoek-binnen { padding: 14px; }
+  .zoek-balk { display: flex; align-items: center; gap: 10px; padding: 6px 8px 6px 16px; border-radius: 16px; background: var(--wolk); border: 1.5px solid var(--rand); }
+  .zoek-balk > svg { width: 22px; height: 22px; color: var(--groen); flex: none; }
+  .zoek-balk input { flex: 1; min-width: 0; border: 0; background: none; font-size: 1.05rem; font-weight: 600; color: var(--groen); height: 48px; outline: none; }
+  .zoek-balk input::-webkit-search-cancel-button { display: none; }
+  .zoek-sluit { display: grid; place-items: center; width: 40px; height: 40px; border: 0; border-radius: 50%; background: none; color: var(--groen); cursor: pointer; }
+  .zoek-sluit svg { width: 22px; height: 22px; }
+  .zoek-populair { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 14px 6px 4px; }
+  .zoek-populair[hidden] { display: none; }
+  .zoek-populair button { border: 0; cursor: pointer; }
+  .zoek-resultaten { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 2px; }
+  .zoek-resultaten a { display: flex; align-items: center; gap: 14px; padding: 8px 10px; border-radius: 14px; text-decoration: none; }
+  .zoek-resultaten a:hover, .zoek-resultaten a:focus-visible { background: var(--munt-100); }
+  .zoek-resultaten img, .zoek-leeg-img { width: 48px; height: 48px; border-radius: 12px; object-fit: cover; flex: none; background: var(--zand-100); }
+  .zoek-resultaten b { display: block; font-family: var(--font-kop); color: var(--groen); line-height: 1.2; }
+  .zoek-resultaten small { color: var(--tekst-zacht); font-size: 0.8rem; }
+  .zoek-niets { padding: 16px 10px; color: var(--tekst-zacht); font-size: 0.92rem; }
+</style>

@@ -1,0 +1,201 @@
+---
+import { Image } from 'astro:assets';
+import Logo from './Logo.astro';
+import Icon from './Icon.astro';
+import { werelden } from '@/data/werelden';
+import { beelden } from '@/lib/beelden';
+import { winkel } from '@/config';
+import { euro } from '@/lib/prijs';
+
+const producten = [
+  { naam: 'Fotobehang op maat', url: '/fotobehang-kinderkamer/', sub: 'Op exacte muurmaat' },
+  { naam: 'Behangcirkels', url: '/behangcirkels/', sub: 'Zelfklevend, 3 maten' },
+  { naam: 'Posters', url: '/posters/', sub: 'Ook met naam' },
+  { naam: 'Muurstickers', url: '/muurstickers/', sub: 'Personages & naam' },
+  { naam: 'Gepersonaliseerd', url: '/gepersonaliseerd/', sub: 'De naam van je kind' },
+];
+const menu = [
+  { naam: 'Werelden', url: '/werelden/' },
+  { naam: 'Personages', url: '/personages/' },
+  { naam: 'Gepersonaliseerd', url: '/gepersonaliseerd/' },
+  { naam: 'Op maat', url: '/op-maat/' },
+  { naam: 'Zakelijk', url: '/zakelijk/' },
+  { naam: 'Inspiratie', url: '/inspiratie/' },
+];
+const pad = Astro.url.pathname;
+const actief = (url: string) => pad.startsWith(url);
+---
+<div class="aankondiging">
+  <p><Icon naam="truck" /> Gratis verzending vanaf {euro(winkel.gratisVerzendingVanafCent)} <span class="punt verberg-mobiel" aria-hidden="true">·</span> <span class="verberg-mobiel">Elke muur op maat geprint</span> <span class="punt verberg-mobiel" aria-hidden="true">·</span> <span class="verberg-mobiel">PVC-vrij vliesbehang</span></p>
+</div>
+<header class="kop" data-kop>
+  <div class="container kop-binnen">
+    <a href="/" class="kop-logo" aria-label="Wallstories Kids – naar de homepage"><Logo variant="compact" /></a>
+
+    <nav class="hoofdnav" aria-label="Hoofdmenu">
+      <ul>
+        <li class="heeft-mega">
+          <button type="button" class="nav-link" aria-expanded="false" aria-controls="mega-collecties" data-mega-knop>
+            Collecties <Icon naam="omlaag" class="pijltje" />
+          </button>
+          <div class="mega" id="mega-collecties" data-mega>
+            <div class="mega-binnen">
+              <div>
+                <p class="mega-titel">Producten</p>
+                <ul class="mega-lijst">
+                  {producten.map((p) => <li><a href={p.url}><b>{p.naam}</b><span>{p.sub}</span></a></li>)}
+                </ul>
+              </div>
+              <div>
+                <p class="mega-titel">Werelden</p>
+                <ul class="mega-werelden">
+                  {werelden.map((w) => (
+                    <li><a href={`/werelden/${w.slug}/`}>
+                      <Image src={beelden[w.beeld]} alt="" width={112} height={112} widths={[56, 112]} sizes="56px" style={`object-position:${w.focus}`} loading="lazy" />
+                      <span>{w.naam}</span>
+                    </a></li>
+                  ))}
+                </ul>
+              </div>
+              <a class="mega-promo" href="/fotobehang-kinderkamer/">
+                <Image src={beelden['babykamer-walvis']} alt="" widths={[320, 640]} sizes="320px" loading="lazy" />
+                <span class="mega-promo-tekst"><b>Ontwerp jouw muur</b><span class="link-pijl">Vul je muurmaat in <Icon naam="pijl" /></span></span>
+              </a>
+            </div>
+          </div>
+        </li>
+        {menu.map((m) => <li><a class="nav-link" href={m.url} aria-current={actief(m.url) ? 'page' : undefined}>{m.naam}</a></li>)}
+      </ul>
+    </nav>
+
+    <div class="kop-acties">
+      <button type="button" class="icoon-knop" data-zoek-open aria-label="Zoeken"><Icon naam="zoek" /></button>
+      <a href="/favorieten/" class="icoon-knop verberg-mobiel" aria-label="Bewaarlijst"><Icon naam="hart" /><span class="ww-aantal fav-aantal" data-fav-aantal hidden>0</span></a>
+      <a href="/mijn-bestelling/" class="icoon-knop verberg-mobiel" aria-label="Mijn bestelling"><Icon naam="account" /></a>
+      <button type="button" class="icoon-knop" data-ww-open aria-label="Winkelwagen openen">
+        <Icon naam="tas" />
+        <span class="ww-aantal" data-ww-aantal hidden>0</span>
+      </button>
+      <button type="button" class="icoon-knop menu-knop" data-menu-open aria-label="Menu openen" aria-controls="mobiel-menu"><Icon naam="menu" /></button>
+    </div>
+  </div>
+</header>
+
+<dialog class="mobiel-menu" id="mobiel-menu" data-menu aria-label="Menu">
+  <div class="mm-kop">
+    <a href="/" aria-label="Wallstories Kids – homepage" class="mm-logo"><Logo variant="compact" /></a>
+    <button type="button" class="icoon-knop" data-menu-sluit aria-label="Menu sluiten"><Icon naam="sluit" /></button>
+  </div>
+  <nav aria-label="Mobiel menu">
+    <p class="mega-titel">Shop</p>
+    <ul class="mm-lijst">{producten.map((p) => <li><a href={p.url}>{p.naam}<Icon naam="rechts" /></a></li>)}</ul>
+    <p class="mega-titel">Ontdek</p>
+    <ul class="mm-lijst">{menu.filter((m) => m.url !== '/gepersonaliseerd/').map((m) => <li><a href={m.url}>{m.naam}<Icon naam="rechts" /></a></li>)}</ul>
+    <p class="mega-titel">Werelden</p>
+    <ul class="mm-werelden">
+      {werelden.map((w) => (
+        <li><a href={`/werelden/${w.slug}/`}>
+          <Image src={beelden[w.beeld]} alt="" width={160} height={160} widths={[80, 160]} sizes="80px" style={`object-position:${w.focus}`} loading="lazy" />
+          <span>{w.naam}</span></a></li>
+      ))}
+    </ul>
+    <div class="mm-snel">
+      <a href="/favorieten/" class="knop knop--rand"><Icon naam="hart" /> Bewaarlijst</a>
+      <a href="/mijn-bestelling/" class="knop knop--rand"><Icon naam="account" /> Mijn bestelling</a>
+    </div>
+    <a href="/contact/" class="knop knop--rand knop--blok"><Icon naam="mail" /> Contact & klantenservice</a>
+  </nav>
+</dialog>
+
+<script>
+  const kop = document.querySelector<HTMLElement>('[data-kop]');
+  const opScroll = () => kop?.classList.toggle('gescrold', window.scrollY > 8);
+  opScroll(); window.addEventListener('scroll', opScroll, { passive: true });
+
+  // Mega-menu: hover op desktop, klik/toetsenbord overal
+  const knop = document.querySelector<HTMLButtonElement>('[data-mega-knop]');
+  const li = knop?.closest('li');
+  const zet = (open: boolean) => knop?.setAttribute('aria-expanded', String(open));
+  knop?.addEventListener('click', () => zet(knop.getAttribute('aria-expanded') !== 'true'));
+  li?.addEventListener('mouseenter', () => matchMedia('(hover:hover)').matches && zet(true));
+  li?.addEventListener('mouseleave', () => matchMedia('(hover:hover)').matches && zet(false));
+  li?.addEventListener('focusout', (e) => { if (!li.contains(e.relatedTarget as Node)) zet(false); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { zet(false); } });
+
+  // Mobiel menu
+  const menu = document.querySelector<HTMLDialogElement>('[data-menu]');
+  document.querySelector('[data-menu-open]')?.addEventListener('click', () => menu?.showModal());
+  document.querySelector('[data-menu-sluit]')?.addEventListener('click', () => menu?.close());
+  menu?.addEventListener('click', (e) => { if (e.target === menu) menu.close(); });
+</script>
+
+<style>
+  .aankondiging { background: var(--groen); color: #fff; font-size: 0.82rem; font-weight: 600; }
+  .aankondiging p { margin: 0; display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 36px; padding-inline: 16px; text-align: center; }
+  .aankondiging :global(svg) { width: 18px; height: 18px; color: var(--zon); }
+  .punt { opacity: 0.5; }
+
+  .kop { position: sticky; top: 0; z-index: 50; background: rgb(247 244 239 / 0.86); backdrop-filter: saturate(1.4) blur(14px); -webkit-backdrop-filter: saturate(1.4) blur(14px); border-bottom: 1px solid transparent; transition: border-color 0.2s, box-shadow 0.2s; }
+  .kop.gescrold { border-bottom-color: var(--rand); box-shadow: 0 6px 24px -18px rgb(24 64 58 / 0.4); }
+  .kop-binnen { display: flex; align-items: center; gap: 28px; height: var(--header-h); }
+  .kop-logo { flex: none; width: 190px; }
+  .hoofdnav { flex: 1; display: flex; justify-content: center; }
+  .hoofdnav > ul { display: flex; align-items: center; gap: 4px; list-style: none; margin: 0; padding: 0; }
+  .nav-link { display: inline-flex; align-items: center; gap: 4px; padding: 10px 12px; border-radius: 999px; font-weight: 700; font-size: 0.93rem; color: var(--groen); text-decoration: none; background: none; border: 0; cursor: pointer; transition: background-color 0.15s; }
+  .nav-link:hover, .nav-link[aria-current='page'], .nav-link[aria-expanded='true'] { background: rgb(24 64 58 / 0.06); }
+  .nav-link[aria-current='page'] { box-shadow: inset 0 -2px 0 var(--zon); border-radius: 999px 999px 999px 999px; }
+  .nav-link :global(.pijltje) { width: 16px; height: 16px; transition: transform 0.2s var(--ease); }
+  .nav-link[aria-expanded='true'] :global(.pijltje) { transform: rotate(180deg); }
+
+  .heeft-mega { position: static; }
+  .mega { position: absolute; left: 0; right: 0; top: 100%; padding: 0 var(--gutter); visibility: hidden; opacity: 0; transform: translateY(-6px); transition: opacity 0.18s var(--ease), transform 0.18s var(--ease), visibility 0.18s; }
+  [aria-expanded='true'] + .mega { visibility: visible; opacity: 1; transform: none; }
+  .mega-binnen { max-width: var(--container); margin: 8px auto 0; display: grid; grid-template-columns: 1fr 1.4fr 1fr; gap: 36px; padding: 32px; background: var(--papier); border-radius: var(--r-lg); box-shadow: var(--schaduw-l); border: 1px solid var(--rand); }
+  .mega-titel { font-size: var(--fs-xs); font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--koraal-tekst); margin: 0 0 12px; }
+  .mega-lijst { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+  .mega-lijst a { display: grid; padding: 9px 12px; border-radius: 12px; text-decoration: none; transition: background-color 0.15s; }
+  .mega-lijst a:hover { background: var(--munt-100); }
+  .mega-lijst b { font-family: var(--font-kop); color: var(--groen); font-size: 1.05rem; }
+  .mega-lijst span { font-size: 0.82rem; color: var(--tekst-zacht); }
+  .mega-werelden { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .mega-werelden a { display: flex; align-items: center; gap: 12px; padding: 6px; border-radius: 14px; text-decoration: none; font-weight: 700; color: var(--groen); transition: background-color 0.15s; }
+  .mega-werelden a:hover { background: var(--munt-100); }
+  .mega-werelden img { width: 56px; height: 56px; border-radius: 12px; object-fit: cover; }
+  .mega-promo { position: relative; display: block; border-radius: var(--r); overflow: hidden; text-decoration: none; min-height: 220px; }
+  .mega-promo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .mega-promo-tekst { position: absolute; left: 12px; right: 12px; bottom: 12px; display: grid; gap: 2px; padding: 14px 16px; background: rgb(255 253 249 / 0.94); border-radius: 14px; }
+  .mega-promo-tekst b { font-family: var(--font-kop); color: var(--groen); font-size: 1.1rem; }
+
+  .kop-acties { display: flex; align-items: center; gap: 4px; margin-left: auto; }
+  .icoon-knop { position: relative; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; border: 0; background: none; color: var(--groen); cursor: pointer; transition: background-color 0.15s; text-decoration: none; }
+  .icoon-knop:hover { background: rgb(24 64 58 / 0.07); }
+  .icoon-knop :global(svg) { width: 24px; height: 24px; }
+  .ww-aantal { position: absolute; top: 3px; right: 1px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 999px; background: var(--zon); color: var(--groen-700); font-size: 0.72rem; font-weight: 800; display: grid; place-items: center; border: 2px solid var(--wolk); }
+  .ww-aantal[hidden] { display: none; }
+  .menu-knop { display: none; }
+  .fav-aantal { background: var(--koraal); color: #fff; }
+  .mm-snel { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  .mm-snel .knop { padding: 0 12px; }
+
+  .mobiel-menu { width: min(420px, 100vw); max-width: 100vw; height: 100dvh; max-height: 100dvh; margin: 0 0 0 auto; padding: 0 20px 28px; border: 0; background: var(--wolk); overflow-y: auto; }
+  .mobiel-menu::backdrop { background: rgb(15 47 42 / 0.45); backdrop-filter: blur(2px); }
+  .mobiel-menu[open] { animation: inschuif 0.28s var(--ease); }
+  @keyframes inschuif { from { transform: translateX(40px); opacity: 0; } }
+  .mm-kop { position: sticky; top: 0; display: flex; align-items: center; justify-content: space-between; height: 76px; background: var(--wolk); z-index: 1; }
+  .mm-logo { width: 170px; }
+  .mm-lijst { list-style: none; margin: 0 0 24px; padding: 0; border-top: 1px solid var(--rand); }
+  .mm-lijst a { display: flex; align-items: center; justify-content: space-between; padding: 14px 4px; border-bottom: 1px solid var(--rand); font-family: var(--font-kop); font-size: 1.2rem; font-weight: 700; color: var(--groen); text-decoration: none; }
+  .mm-lijst :global(svg) { width: 20px; height: 20px; opacity: 0.6; }
+  .mm-werelden { list-style: none; margin: 0 0 24px; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .mm-werelden a { display: grid; gap: 6px; text-align: center; font-weight: 700; font-size: 0.85rem; color: var(--groen); text-decoration: none; }
+  .mm-werelden img { width: 100%; aspect-ratio: 1; border-radius: 14px; object-fit: cover; }
+
+  @media (max-width: 1180px) { .hoofdnav .nav-link { padding: 10px 9px; font-size: 0.88rem; } .kop-logo { width: 170px; } .kop-binnen { gap: 16px; } }
+  @media (max-width: 1023px) {
+    :root { --header-h: 68px; }
+    .hoofdnav { display: none; }
+    .menu-knop { display: grid; }
+    .kop-logo { width: 158px; }
+  }
+  @media (max-width: 640px) { .verberg-mobiel { display: none !important; } }
+</style>

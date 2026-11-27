@@ -1,0 +1,34 @@
+---
+import Basis from '@/layouts/Basis.astro';
+import Kruimelpad from '@/components/Kruimelpad.astro';
+import AanvraagFormulier from '@/components/AanvraagFormulier.astro';
+import Icon from '@/components/Icon.astro';
+import { merk } from '@/config';
+import { kruimelpad } from '@/lib/schema';
+const kruimels = [{ naam: 'Home', url: '/' }, { naam: 'Contact', url: '/contact/' }];
+---
+<Basis titel="Contact & klantenservice" beschrijving="Vragen over je bestelling, opmeten of aanbrengen? Neem contact op met Wallstories Kids – we reageren binnen één werkdag." jsonLd={[kruimelpad(Astro.site, kruimels)]}>
+  <Kruimelpad items={kruimels} />
+  <section class="container grid-2">
+    <div>
+      <span class="eyebrow">Klantenservice</span>
+      <h1>Hoe kunnen we helpen?</h1>
+      <p class="lead">Vragen over opmeten, je bestelling of het aanbrengen? Stuur ons een bericht – we reageren binnen één werkdag.</p>
+      <ul class="contact">
+        <li><Icon naam="mail" /> <a href={`mailto:${merk.email}`}>{merk.email}</a></li>
+        {merk.telefoon && <li><Icon naam="telefoon" /> <a href={`tel:${merk.telefoon}`}>{merk.telefoon}</a></li>}
+        <li><Icon naam="info" /> <a href="/veelgestelde-vragen/">Bekijk de veelgestelde vragen</a></li>
+      </ul>
+    </div>
+    <AanvraagFormulier soort="contact" extra={['telefoon']} />
+  </section>
+</Basis>
+<style>
+  .grid-2 { display: grid; grid-template-columns: 1fr 1.2fr; gap: clamp(24px, 5vw, 72px); align-items: start; padding-top: 12px; }
+  h1 { font-size: clamp(2.3rem, 1.6rem + 2.6vw, 4rem); }
+  .contact { list-style: none; padding: 0; margin: 24px 0 0; display: grid; gap: 12px; font-weight: 700; }
+  .contact li { display: flex; align-items: center; gap: 10px; }
+  .contact :global(svg) { width: 22px; height: 22px; color: var(--heuvel); }
+  .contact a { color: var(--groen); }
+  @media (max-width: 860px) { .grid-2 { grid-template-columns: 1fr; } }
+</style>

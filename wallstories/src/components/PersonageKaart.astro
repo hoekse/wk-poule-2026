@@ -1,0 +1,31 @@
+---
+import { Image } from 'astro:assets';
+import Icon from './Icon.astro';
+import { beelden } from '@/lib/beelden';
+import type { Personage } from '@/data/personages';
+interface Props { personage: Personage; }
+const { personage: p } = Astro.props;
+const bezittelijk = p.slug === 'bella-ballon' ? 'haar' : 'zijn';
+---
+<a href={`/personages/${p.slug}/`} class="pc" style={`--kaart:${p.kaartKleur}`}>
+  <div class="pc-beeld"><Image src={beelden[p.beeld]} alt={p.alt} widths={[200, 320, 480]} sizes="(max-width: 640px) 40vw, 170px" loading="lazy" /></div>
+  <div class="pc-tekst">
+    <h3>{p.naam}</h3>
+    <p class="pc-rol">{p.rol}</p>
+    <p class="pc-kort">{p.kort}</p>
+    <span class="link-pijl">Lees {bezittelijk} verhaal <Icon naam="pijl" /></span>
+  </div>
+</a>
+
+<style>
+  .pc { position: relative; display: grid; grid-template-columns: 42% 1fr; align-items: center; gap: 8px; min-height: 230px; padding: 18px 24px 18px 10px; border-radius: var(--r-lg);
+    background: var(--kaart); text-decoration: none; color: inherit; overflow: hidden; isolation: isolate; transition: transform 0.35s var(--ease), box-shadow 0.35s var(--ease); }
+  .pc::before { content: ''; position: absolute; width: 70%; aspect-ratio: 1; left: -18%; bottom: -30%; border-radius: 50%; background: rgb(255 255 255 / 0.45); z-index: -1; }
+  .pc:hover { transform: translateY(-4px); box-shadow: var(--schaduw); }
+  .pc-beeld { align-self: end; display: flex; justify-content: center; }
+  .pc-beeld img { width: auto; max-width: 100%; max-height: 210px; object-fit: contain; filter: drop-shadow(0 8px 12px rgb(24 64 58 / 0.18)); transition: transform 0.5s var(--ease); transform-origin: bottom center; }
+  .pc:hover .pc-beeld img { transform: rotate(-2deg) scale(1.03); }
+  .pc h3 { margin: 0; font-size: 1.45rem; }
+  .pc-rol { margin: 0 0 10px; font-weight: 700; color: var(--groen); opacity: 0.8; }
+  .pc-kort { font-size: 0.9rem; color: var(--tekst); margin-bottom: 12px; }
+</style>

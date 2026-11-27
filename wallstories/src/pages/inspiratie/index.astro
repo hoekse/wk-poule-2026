@@ -1,0 +1,53 @@
+---
+import { Image } from 'astro:assets';
+import { getCollection } from 'astro:content';
+import Basis from '@/layouts/Basis.astro';
+import Kruimelpad from '@/components/Kruimelpad.astro';
+import Icon from '@/components/Icon.astro';
+import { beelden } from '@/lib/beelden';
+import { kruimelpad } from '@/lib/schema';
+const artikelen = (await getCollection('inspiratie')).sort((a, b) => +b.data.publicatiedatum - +a.data.publicatiedatum);
+const kruimels = [{ naam: 'Home', url: '/' }, { naam: 'Inspiratie', url: '/inspiratie/' }];
+const [eerste, ...rest] = artikelen;
+---
+<Basis titel="Inspiratie & advies voor de kinderkamer" beschrijving="Ideeën voor de kinderkamer en babykamer, handleidingen voor het aanbrengen van fotobehang en advies over opmeten en veilig behang. Van Wallstories Kids." jsonLd={[kruimelpad(Astro.site, kruimels)]}>
+  <Kruimelpad items={kruimels} />
+  <header class="container">
+    <span class="eyebrow">Inspiratie & advies</span>
+    <h1>Verhalen voor ouders</h1>
+    <p class="lead">Ideeën, handleidingen en eerlijk advies voor een kinderkamer vol fantasie – met tips uit het schildersvak.</p>
+  </header>
+  {eerste && (
+    <section class="container sectie--krap">
+      <a href={`/inspiratie/${eerste.id}/`} class="uitgelicht">
+        <div class="media media--zoom"><Image src={beelden[eerste.data.afbeelding]} alt={eerste.data.afbeeldingAlt} widths={[640, 1000, 1400]} sizes="(max-width: 960px) 92vw, 700px" loading="eager" /></div>
+        <div><span class="label">{eerste.data.categorie}</span><h2>{eerste.data.titel}</h2><p class="zacht">{eerste.data.beschrijving}</p><span class="link-pijl">Lees verder <Icon naam="pijl" /></span></div>
+      </a>
+    </section>
+  )}
+  <section class="container sectie--krap">
+    <ul class="grid lijst">
+      {rest.map((a) => (
+        <li><a href={`/inspiratie/${a.id}/`} class="artikel">
+          <div class="media media--zoom"><Image src={beelden[a.data.afbeelding]} alt={a.data.afbeeldingAlt} widths={[400, 640, 900]} sizes="(max-width: 760px) 92vw, 380px" loading="lazy" /></div>
+          <span class="label">{a.data.categorie} · {a.data.leestijd} min</span>
+          <h2>{a.data.titel}</h2>
+          <p class="zacht klein">{a.data.beschrijving}</p>
+        </a></li>
+      ))}
+    </ul>
+  </section>
+</Basis>
+<style>
+  h1 { font-size: clamp(2.4rem, 1.6rem + 3vw, 4.2rem); }
+  .uitgelicht { display: grid; grid-template-columns: 1.3fr 1fr; gap: clamp(24px, 4vw, 56px); align-items: center; text-decoration: none; color: inherit; }
+  .uitgelicht .media { aspect-ratio: 16 / 10; }
+  .uitgelicht h2 { margin-top: 12px; }
+  .lijst { list-style: none; margin: 0; padding: 0; grid-template-columns: repeat(3, 1fr); row-gap: 40px; }
+  .artikel { display: grid; gap: 10px; justify-items: start; text-decoration: none; color: inherit; }
+  .artikel .media { aspect-ratio: 16 / 10; width: 100%; }
+  .artikel h2 { font-size: 1.3rem; margin: 0; }
+  .artikel p { margin: 0; }
+  @media (max-width: 960px) { .uitgelicht { grid-template-columns: 1fr; } .lijst { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 560px) { .lijst { grid-template-columns: 1fr; } }
+</style>

@@ -1,0 +1,63 @@
+---
+/** Generiek aanvraagformulier → POST /api/aanvraag (opslag in Supabase + optionele e-mailnotificatie). */
+import Icon from './Icon.astro';
+interface Props { soort: 'contact' | 'op-maat' | 'zakelijk' | 'aanbrengen'; knop?: string; extra?: ('organisatie' | 'telefoon' | 'muurmaat' | 'plaats')[]; }
+const { soort, knop = 'Verstuur', extra = [] } = Astro.props;
+---
+<form class="aanvraag kaart" data-aanvraag data-soort={soort} novalidate>
+  <div class="rij">
+    <div class="veld"><label for={`${soort}-naam`}>Naam</label><input class="invoer" id={`${soort}-naam`} name="naam" autocomplete="name" required /></div>
+    <div class="veld"><label for={`${soort}-email`}>E-mailadres</label><input class="invoer" id={`${soort}-email`} name="email" type="email" autocomplete="email" required /></div>
+  </div>
+  {(extra.includes('telefoon') || extra.includes('organisatie')) && (
+    <div class="rij">
+      {extra.includes('organisatie') && <div class="veld"><label for={`${soort}-org`}>Organisatie</label><input class="invoer" id={`${soort}-org`} name="organisatie" autocomplete="organization" /></div>}
+      {extra.includes('telefoon') && <div class="veld"><label for={`${soort}-tel`}>Telefoon <span class="hint">(optioneel)</span></label><input class="invoer" id={`${soort}-tel`} name="telefoon" type="tel" autocomplete="tel" /></div>}
+    </div>
+  )}
+  {(extra.includes('muurmaat') || extra.includes('plaats')) && (
+    <div class="rij">
+      {extra.includes('muurmaat') && <div class="veld"><label for={`${soort}-maat`}>Muurmaat (b × h in cm)</label><input class="invoer" id={`${soort}-maat`} name="muurmaat" placeholder="Bijv. 320 × 260" /></div>}
+      {extra.includes('plaats') && <div class="veld"><label for={`${soort}-plaats`}>Postcode / plaats</label><input class="invoer" id={`${soort}-plaats`} name="plaats" autocomplete="postal-code" /></div>}
+    </div>
+  )}
+  <div class="veld"><label for={`${soort}-bericht`}>Je bericht</label><textarea class="invoer" id={`${soort}-bericht`} name="bericht" required minlength="10"></textarea></div>
+  <div class="honing" aria-hidden="true"><label>Laat leeg<input name="website" tabindex="-1" autocomplete="off" /></label></div>
+  <p class="hint">We gebruiken je gegevens alleen om je aanvraag te beantwoorden. Zie ons <a href="/privacy/">privacybeleid</a>.</p>
+  <button type="submit" class="knop">{knop} <Icon naam="pijl" class="pijl" /></button>
+  <p class="status" data-status role="status"></p>
+</form>
+<script>
+  document.querySelectorAll<HTMLFormElement>('form[data-aanvraag]').forEach((form) => {
+    const status = form.querySelector<HTMLElement>('[data-status]')!;
+    const knop = form.querySelector<HTMLButtonElement>('button[type=submit]')!;
+    const onderwerp = new URLSearchParams(location.search).get('onderwerp');
+    const bericht = form.querySelector<HTMLTextAreaElement>('textarea');
+    if (onderwerp === 'aanbrengen' && bericht && !bericht.value) bericht.value = 'Ik wil graag een offerte voor het laten aanbrengen van mijn behang.\n\nMuurmaat: \nPlaats: ';
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!form.reportValidity()) return;
+      knop.disabled = true; status.className = 'status'; status.textContent = 'Versturen…';
+      try {
+        const data = Object.fromEntries(new FormData(form));
+        const res = await fetch('/api/aanvraag/', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ...data, soort: form.dataset.soort }) });
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(json.fout || 'Versturen mislukt.');
+        form.reset(); status.classList.add('ok'); status.textContent = 'Dank je wel! We reageren binnen één werkdag.';
+      } catch (err) {
+        status.classList.add('fout');
+        status.textContent = (err as Error).message.includes('Failed to fetch') ? 'Geen verbinding. Probeer het later opnieuw.' : (err as Error).message;
+      } finally { knop.disabled = false; }
+    });
+  });
+</script>
+<style>
+  .aanvraag { display: grid; gap: 16px; padding: clamp(20px, 3vw, 36px); }
+  .rij { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .honing { position: absolute; left: -9999px; }
+  .status { margin: 0; font-weight: 700; }
+  .status:global(.ok) { color: #2f6b3f; }
+  .status:global(.fout) { color: #a3321a; }
+  .aanvraag button { justify-self: start; }
+  @media (max-width: 560px) { .rij { grid-template-columns: 1fr; } }
+</style>

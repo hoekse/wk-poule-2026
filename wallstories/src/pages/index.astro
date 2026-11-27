@@ -1,0 +1,371 @@
+---
+import { Image, Picture } from 'astro:assets';
+import { getCollection } from 'astro:content';
+import Basis from '@/layouts/Basis.astro';
+import Icon from '@/components/Icon.astro';
+import Illustratie from '@/components/Illustratie.astro';
+import Spot from '@/components/Spot.astro';
+import WereldTegel from '@/components/WereldTegel.astro';
+import PersonageKaart from '@/components/PersonageKaart.astro';
+import Stappen from '@/components/Stappen.astro';
+import ProductBeeld from '@/components/ProductBeeld.astro';
+import { werelden } from '@/data/werelden';
+import { personages } from '@/data/personages';
+import { productByKey } from '@/data/producten';
+import { faq } from '@/data/faq';
+import { beelden } from '@/lib/beelden';
+import { specs, winkel } from '@/config';
+import { euro } from '@/lib/prijs';
+
+const usps = [
+  { icoon: 'boek-blad', titel: 'Verhalen', tekst: 'Geen losse afbeeldingen, maar complete verhalen die de fantasie prikkelen.' },
+  { icoon: 'personage', titel: 'Personages', tekst: 'Kinderen herkennen en houden van onze avontuurlijke vrienden die echt tot leven komen.' },
+  { icoon: 'kwast', titel: 'Premium kwaliteit', tekst: 'Rijke kleuren op PVC-vrij vlies – mooi én verantwoord voor elke kinderkamer.' },
+  { icoon: 'liniaal', titel: 'Op maat gemaakt', tekst: 'Perfect passend op jouw muur, met eenvoudig bestellen en snelle levering.' },
+] as const;
+
+const vormen = [
+  { titel: 'Fotobehang op maat', tekst: `Vanaf ${euro(4495)} per m²`, url: '/fotobehang-kinderkamer/', product: productByKey('fotobehang-kinderkamer/ruimte')! },
+  { titel: 'Behangcirkels', tekst: `Vanaf ${euro(4995)}`, url: '/behangcirkels/', product: productByKey('behangcirkels/onderwater')! },
+  { titel: 'Posters', tekst: `Vanaf ${euro(1995)}`, url: '/posters/', product: productByKey('posters/sprookjes')! },
+  { titel: 'Muurstickers', tekst: `Vanaf ${euro(1995)}`, url: '/muurstickers/', product: productByKey('muurstickers/kees-komeet')! },
+];
+
+const artikelen = (await getCollection('inspiratie')).sort((a, b) => +b.data.publicatiedatum - +a.data.publicatiedatum).slice(0, 3);
+const vragen = faq.slice(0, 5);
+---
+<Basis
+  titel="Wallstories Kids – Fotobehang & muurdecoratie voor de kinderkamer"
+  volleTitel
+  beschrijving="Premium fotobehang op maat, behangcirkels, posters en muurstickers voor de kinderkamer. Zes verhalende werelden met eigen personages – ook met de naam van je kind.">
+
+  <!-- ============ HERO ============ -->
+  <section class="hero" aria-labelledby="hero-titel">
+    <div class="hero-beeld golf-onder">
+      <Picture src={beelden['hero-schilder']} formats={['avif', 'webp']} widths={[768, 1200, 1600, 2000, 2600, 3200, 3840]} sizes="100vw"
+        alt="Een vriendelijke oude schilder met baret schildert een verhaal op de muur van een zonnige kinderkamer: een luchtballon, een vliegende walvis, een raket en een sprookjesstad"
+        loading="eager" fetchpriority="high" />
+    </div>
+    <div class="container hero-tekst">
+      <h1 id="hero-titel">Maak van iedere muur een <span class="verhaal-tekst">verhaal.</span></h1>
+      <p class="lead">Premium fotobehang en muurdecoratie die kunst, fantasie en avontuur samenbrengen in de kinderkamer.</p>
+      <div class="hero-knoppen">
+        <a href="/werelden/" class="knop knop--groot">Ontdek de werelden <Icon naam="pijl" class="pijl" /></a>
+        <a href="/fotobehang-kinderkamer/" class="knop knop--groot knop--rand">Ontwerp jouw muur <Icon naam="pijl" class="pijl" /></a>
+      </div>
+      <ul class="hero-vertrouwen">
+        <li><Icon naam="vink" /> Op exacte muurmaat</li>
+        <li><Icon naam="vink" /> PVC-vrij vlies</li>
+      </ul>
+    </div>
+    <a href="#usps" class="scroll-hint" aria-label="Scroll naar beneden">
+      <Icon naam="omlaag" /><span>Ontdek de magie</span><span class="muis" aria-hidden="true"></span>
+    </a>
+  </section>
+
+  <!-- ============ USP'S ============ -->
+  <section id="usps" class="container usps" aria-label="Waarom Wallstories">
+    {usps.map((u) => (
+      <div class="usp" data-onthul>
+        <Spot naam={u.icoon} maat={120} class="usp-ill" />
+        <h2 class="usp-titel">{u.titel}</h2>
+        <p>{u.tekst}</p>
+      </div>
+    ))}
+  </section>
+
+  <!-- ============ WERELDEN ============ -->
+  <section class="sectie sectie--krap" aria-labelledby="werelden-titel">
+    <div class="container">
+      <div class="sectie-kop">
+        <div><span class="eyebrow">Ontdek de werelden</span><h2 id="werelden-titel">Welke wereld kies jij?</h2></div>
+        <a href="/werelden/" class="knop knop--rand knop--klein">Bekijk alle werelden <Icon naam="pijl" class="pijl" /></a>
+      </div>
+      <div class="carrousel" data-carrousel>
+        <ul class="carrousel-spoor" data-spoor>
+          {werelden.map((w) => <li><WereldTegel wereld={w} /></li>)}
+        </ul>
+        <button type="button" class="carrousel-knop carrousel-knop--vorige" data-vorige aria-label="Vorige werelden" hidden><Icon naam="links" /></button>
+        <button type="button" class="carrousel-knop" data-volgende aria-label="Volgende werelden"><Icon naam="rechts" /></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ PERSONAGES ============ -->
+  <section class="sectie sectie--krap" aria-labelledby="helden-titel">
+    <div class="container">
+      <div class="sectie-kop">
+        <div><span class="eyebrow">Onze helden</span><h2 id="helden-titel">Maak kennis met onze vrienden</h2></div>
+        <a href="/personages/" class="knop knop--rand knop--klein">Ontdek alle personages <Icon naam="pijl" class="pijl" /></a>
+      </div>
+      <div class="grid personages">
+        {personages.map((p) => <div data-onthul><PersonageKaart personage={p} /></div>)}
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ ZO WERKT HET ============ -->
+  <section class="sectie sectie--krap" aria-labelledby="werkt-titel">
+    <div class="container">
+      <div class="werkt">
+        <div class="werkt-tekst">
+          <span class="eyebrow">Zo eenvoudig is het</span>
+          <h2 id="werkt-titel">Zo werkt het</h2>
+          <Stappen />
+          <a href="/zo-werkt-het/" class="link-pijl werkt-link">Alles over bestellen, opmeten en aanbrengen <Icon naam="pijl" /></a>
+        </div>
+        <div class="werkt-beeld">
+          <div class="media">
+            <Image src={beelden['babykamer-walvis']} alt="Lichte babykamer met een houten bedje en fotobehang van een vliegende walvis, een luchtballon en een kasteelstad" widths={[480, 720, 960, 1200]} sizes="(max-width: 960px) 90vw, 460px" loading="lazy" />
+          </div>
+          <span class="badge-rond werkt-badge"><Icon naam="hart" /> Perfect op jouw muur!</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ VORMEN ============ -->
+  <section class="sectie sectie--krap" aria-labelledby="vormen-titel">
+    <div class="container">
+      <div class="sectie-kop">
+        <div><span class="eyebrow">Eén verhaal, vier vormen</span><h2 id="vormen-titel">Van wandvullend tot klein geluk</h2></div>
+      </div>
+      <ul class="grid vormen">
+        {vormen.map((v) => (
+          <li data-onthul><a href={v.url} class="vorm">
+            <ProductBeeld product={v.product} sizes="(max-width: 640px) 90vw, (max-width: 1100px) 45vw, 290px" />
+            <span class="vorm-tekst"><b>{v.titel}</b><span class="zacht klein">{v.tekst}</span></span>
+            <span class="vorm-pijl" aria-hidden="true"><Icon naam="pijl" /></span>
+          </a></li>
+        ))}
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============ PERSONALISEREN ============ -->
+  <section class="sectie sectie--krap" aria-labelledby="naam-titel">
+    <div class="container">
+      <div class="naamblok">
+        <div class="naamblok-tekst">
+          <span class="eyebrow eyebrow--licht">Gepersonaliseerd</span>
+          <h2 id="naam-titel">Hun naam, in hun eigen verhaal</h2>
+          <p>Zet de naam van je kind in de lucht van het sprookjeskasteel, naast de raket van Kees Komeet of op een poster. Typ maar eens:</p>
+          <label class="sr-only" for="naam-demo">Naam van je kind</label>
+          <input id="naam-demo" class="invoer naam-invoer" maxlength="14" placeholder="Naam van je kind" value="Noor" autocomplete="off" data-naam-demo />
+          <a href="/gepersonaliseerd/" class="knop knop--licht">Maak het persoonlijk <Icon naam="pijl" class="pijl" /></a>
+        </div>
+        <div class="naamblok-beeld">
+          <Image src={beelden.sprookjes} alt="Sprookjeskasteel met een gepersonaliseerde naam in de lucht" widths={[480, 800, 1200]} sizes="(max-width: 960px) 90vw, 560px" loading="lazy" />
+          <span class="naam-overlay" data-naam-uit aria-live="polite">Noor</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ KWALITEIT & AANBRENGEN ============ -->
+  <section class="sectie sectie--krap" aria-labelledby="kwaliteit-titel">
+    <div class="container kwaliteit">
+      <div>
+        <span class="eyebrow">Kwaliteit die je voelt</span>
+        <h2 id="kwaliteit-titel">Gemaakt om lang van te dromen</h2>
+        <p class="lead">Elke muur wordt op bestelling geprint, precies op jouw maat. Zo maken we alleen wat nodig is.</p>
+        <ul class="checklist">{specs.map((s) => <li><Icon naam="vink-rond" /> {s}</li>)}</ul>
+        <p class="klein zacht" style="margin-top:1rem">Twijfel je over kleur of structuur? <a href="/fotobehang-kinderkamer/#proefstaal">Bestel eerst een proefstaal</a> voor {euro(395)}.</p>
+      </div>
+      {winkel.aanbrengservice && (
+        <aside class="kaart aanbreng">
+          <Illustratie naam="schilder" class="aanbreng-ill" />
+          <h3>Liever laten aanbrengen?</h3>
+          <p>Wallstories is ontstaan uit het schildersvak. Wil je het behang niet zelf plakken? Dan brengt een vakschilder het voor je aan – strak, naadloos en zonder gedoe.</p>
+          <a href="/contact/?onderwerp=aanbrengen" class="knop knop--rand">Vraag een offerte aan <Icon naam="pijl" class="pijl" /></a>
+        </aside>
+      )}
+    </div>
+  </section>
+
+  <!-- ============ INSPIRATIE ============ -->
+  {artikelen.length > 0 && (
+    <section class="sectie sectie--krap" aria-labelledby="inspiratie-titel">
+      <div class="container">
+        <div class="sectie-kop">
+          <div><span class="eyebrow">Inspiratie & advies</span><h2 id="inspiratie-titel">Verhalen voor ouders</h2></div>
+          <a href="/inspiratie/" class="knop knop--rand knop--klein">Alle artikelen <Icon naam="pijl" class="pijl" /></a>
+        </div>
+        <ul class="grid artikelen">
+          {artikelen.map((a) => (
+            <li data-onthul><a href={`/inspiratie/${a.id}/`} class="artikel">
+              <div class="media media--zoom"><Image src={beelden[a.data.afbeelding]} alt={a.data.afbeeldingAlt} widths={[400, 640, 900]} sizes="(max-width: 760px) 90vw, 380px" loading="lazy" /></div>
+              <span class="label">{a.data.categorie}</span>
+              <h3>{a.data.titel}</h3>
+              <span class="link-pijl">Lees verder <Icon naam="pijl" /></span>
+            </a></li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  )}
+
+  <!-- ============ FAQ ============ -->
+  <section class="sectie sectie--krap" aria-labelledby="faq-titel">
+    <div class="container faq-blok">
+      <div>
+        <span class="eyebrow">Goed om te weten</span>
+        <h2 id="faq-titel">Veelgestelde vragen</h2>
+        <p class="zacht">Staat je vraag er niet tussen? We helpen je graag persoonlijk.</p>
+        <a href="/veelgestelde-vragen/" class="knop knop--rand">Alle vragen <Icon naam="pijl" class="pijl" /></a>
+      </div>
+      <div class="faq-lijst">
+        {vragen.map((v) => (
+          <details class="faq-item">
+            <summary>{v.vraag}<Icon naam="plus" /></summary>
+            <p set:html={v.antwoord} />
+          </details>
+        ))}
+      </div>
+    </div>
+  </section>
+</Basis>
+
+<script>
+  // Carrousel werelden
+  document.querySelectorAll<HTMLElement>('[data-carrousel]').forEach((c) => {
+    const spoor = c.querySelector<HTMLElement>('[data-spoor]')!;
+    const vorige = c.querySelector<HTMLButtonElement>('[data-vorige]')!;
+    const volgende = c.querySelector<HTMLButtonElement>('[data-volgende]')!;
+    const stap = () => (spoor.querySelector('li')?.getBoundingClientRect().width ?? 200) + 16;
+    const update = () => {
+      vorige.hidden = spoor.scrollLeft < 8;
+      volgende.hidden = spoor.scrollLeft + spoor.clientWidth >= spoor.scrollWidth - 8;
+    };
+    vorige.addEventListener('click', () => spoor.scrollBy({ left: -stap() * 2, behavior: 'smooth' }));
+    volgende.addEventListener('click', () => spoor.scrollBy({ left: stap() * 2, behavior: 'smooth' }));
+    spoor.addEventListener('scroll', update, { passive: true });
+    window.addEventListener('resize', update);
+    update();
+  });
+  // Naam-demo
+  const invoer = document.querySelector<HTMLInputElement>('[data-naam-demo]');
+  const uit = document.querySelector<HTMLElement>('[data-naam-uit]');
+  invoer?.addEventListener('input', () => { if (uit) uit.textContent = invoer.value.trim() || 'Noor'; });
+</script>
+
+<style>
+  /* ---------- Hero ---------- */
+  .hero { position: relative; isolation: isolate; }
+  .hero-beeld { position: absolute; inset: 0 0 0 0; z-index: -1; background: #efe3cf; border-top-right-radius: var(--r-xl); overflow: hidden; --golf-h: clamp(48px, 6.5vw, 96px); }
+  .hero-beeld :global(picture) { height: 100%; }
+  .hero-beeld :global(img) { width: 100%; height: 100%; object-fit: cover; object-position: 12% 50%; }
+  .hero-tekst { min-height: clamp(560px, calc(100vw / 2.2), 780px); display: flex; flex-direction: column; justify-content: center; padding-block: 72px 120px; }
+  .hero h1 { font-size: clamp(2.6rem, 4.6vw, 5.1rem); margin-bottom: 0.35em; max-width: 10.5ch; }
+  .hero .lead { max-width: min(30vw, 440px); color: var(--tekst); }
+  .hero-knoppen { display: flex; flex-wrap: wrap; gap: 12px; margin: 10px 0 22px; max-width: none; }
+  .hero-knoppen .knop--rand { background: rgb(255 253 249 / 0.7); backdrop-filter: blur(6px); }
+  .hero-vertrouwen { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 0.85rem; font-weight: 700; color: var(--groen); max-width: none; }
+  .hero-vertrouwen li { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px 5px 9px; border-radius: 999px; background: rgb(255 253 249 / 0.82); backdrop-filter: blur(6px); box-shadow: var(--schaduw-s); }
+  .hero-vertrouwen :global(svg) { width: 16px; height: 16px; color: var(--heuvel); stroke-width: 2.5; }
+  .scroll-hint { position: absolute; left: 50%; bottom: clamp(30px, 4vw, 58px); transform: translateX(-50%); display: grid; justify-items: center; gap: 4px; color: #fff; text-decoration: none; font-size: 0.78rem; font-weight: 700; text-shadow: 0 1px 6px rgb(0 0 0 / 0.35); }
+  .scroll-hint :global(svg) { width: 18px; height: 18px; animation: wiebel 2.2s var(--ease) infinite; }
+  .muis { width: 20px; height: 30px; border: 2px solid currentColor; border-radius: 12px; position: relative; }
+  .muis::after { content: ''; position: absolute; left: 50%; top: 6px; width: 3px; height: 6px; margin-left: -1.5px; background: currentColor; border-radius: 2px; animation: muis 1.8s ease-in-out infinite; }
+  @keyframes wiebel { 50% { transform: translateY(3px); } }
+  @keyframes muis { 0% { opacity: 1; transform: translateY(0); } 70% { opacity: 0; transform: translateY(8px); } 100% { opacity: 0; } }
+
+  @media (max-width: 1023px) {
+    .hero { display: flex; flex-direction: column-reverse; }
+    .hero-beeld { position: relative; aspect-ratio: 16 / 9; margin: 0 var(--gutter); border-radius: var(--r-lg) var(--r-lg) 0 0; overflow: hidden; --golf-h: 34px; }
+    .hero-beeld :global(img) { object-position: 62% 50%; }
+    .hero-tekst { padding-top: 28px; }
+    .hero-tekst { min-height: 0; padding-block: 36px 28px; }
+    .hero h1 { max-width: 14ch; }
+    .hero .lead { max-width: 640px; }
+    .hero-vertrouwen li { background: var(--papier); }
+    .scroll-hint { display: none; }
+  }
+  @media (max-width: 640px) { .hero-beeld { aspect-ratio: 4 / 3.4; } .hero-beeld :global(img) { object-position: 58% 50%; } }
+
+  /* ---------- USP's ---------- */
+  .usps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 28px; padding-block: 40px 24px; }
+  .usp { text-align: center; display: grid; justify-items: center; gap: 4px; }
+  .usp :global(.usp-ill) { width: 120px; height: 120px; margin-bottom: 4px; }
+  .usp-titel { font-size: 1.4rem; margin: 0; }
+  .usp p { font-size: 0.9rem; color: var(--tekst-zacht); max-width: 26ch; margin: 0; }
+  @media (max-width: 860px) { .usps { grid-template-columns: 1fr 1fr; row-gap: 36px; } }
+
+  /* ---------- Carrousel ---------- */
+  .carrousel { position: relative; }
+  .carrousel-spoor { list-style: none; margin: 0; padding: 4px 0 12px; display: grid; grid-auto-flow: column; grid-auto-columns: calc((100% - 5 * 16px) / 6); gap: 16px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
+  .carrousel-spoor::-webkit-scrollbar { display: none; }
+  .carrousel-spoor > li { scroll-snap-align: start; }
+  .carrousel-knop { position: absolute; top: 46%; right: -22px; width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; border: 0; background: var(--papier); color: var(--groen); box-shadow: var(--schaduw); cursor: pointer; transition: transform 0.2s var(--ease); }
+  .carrousel-knop:hover { transform: scale(1.06); }
+  .carrousel-knop--vorige { right: auto; left: -22px; }
+  .carrousel-knop[hidden] { display: none; }
+  .carrousel-knop :global(svg) { width: 22px; height: 22px; }
+  @media (max-width: 1100px) { .carrousel-spoor { grid-auto-columns: calc((100% - 3 * 16px) / 3.4); } .carrousel-knop { right: 6px; } .carrousel-knop--vorige { left: 6px; } }
+  @media (max-width: 640px) { .carrousel-spoor { grid-auto-columns: 44%; } .carrousel-knop { display: none; } }
+
+  /* ---------- Personages ---------- */
+  .personages { grid-template-columns: repeat(3, 1fr); }
+  @media (max-width: 1023px) { .personages { grid-template-columns: 1fr; max-width: 560px; } }
+
+  /* ---------- Zo werkt het ---------- */
+  .werkt { display: grid; grid-template-columns: 1.35fr 1fr; gap: clamp(24px, 4vw, 56px); align-items: center; background: var(--zand-100); border-radius: var(--r-xl); padding: clamp(24px, 4vw, 48px); }
+  .werkt h2 { margin-bottom: 28px; }
+  .werkt-link { margin-top: 28px; }
+  .werkt-beeld { position: relative; }
+  .werkt-beeld .media { aspect-ratio: 4 / 3.1; box-shadow: var(--schaduw); }
+  .werkt-badge { position: absolute; top: -18px; right: -14px; transform: rotate(8deg); }
+  .werkt-badge :global(svg) { width: 20px; height: 20px; margin: 0 auto 2px; display: block; }
+  @media (max-width: 960px) { .werkt { grid-template-columns: 1fr; } .werkt-badge { right: 8px; } }
+
+  /* ---------- Vormen ---------- */
+  .vormen { list-style: none; margin: 0; padding: 0; grid-template-columns: repeat(4, 1fr); }
+  .vorm { position: relative; display: grid; gap: 12px; text-decoration: none; color: inherit; }
+  .vorm-tekst { display: grid; padding-inline: 4px; }
+  .vorm-tekst b { font-family: var(--font-kop); color: var(--groen); font-size: 1.2rem; }
+  .vorm-pijl { position: absolute; right: 6px; bottom: 6px; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: var(--groen); color: #fff; transition: transform 0.25s var(--ease); }
+  .vorm:hover .vorm-pijl { transform: translateX(3px); }
+  .vorm-pijl :global(svg) { width: 18px; height: 18px; }
+  @media (max-width: 1023px) { .vormen { grid-template-columns: 1fr 1fr; } }
+
+  /* ---------- Naamblok ---------- */
+  .naamblok { display: grid; grid-template-columns: 1fr 1.15fr; gap: clamp(24px, 4vw, 56px); align-items: center; background: var(--groen); color: #e9efe9; border-radius: var(--r-xl); padding: clamp(24px, 4vw, 56px); overflow: hidden; position: relative; isolation: isolate; }
+  .naamblok::before { content: ''; position: absolute; width: 520px; aspect-ratio: 1; border-radius: 50%; left: -180px; top: -260px; background: radial-gradient(circle, rgb(240 180 77 / 0.16), transparent 65%); z-index: -1; }
+  .naamblok h2 { color: #fff; }
+  .eyebrow--licht { color: var(--zon); }
+  .naam-invoer { max-width: 340px; margin: 6px 0 18px; font-family: var(--font-kop); font-size: 1.2rem; display: block; }
+  .naamblok-beeld { position: relative; border-radius: var(--r-lg); overflow: hidden; aspect-ratio: 16 / 10; box-shadow: var(--schaduw-l); }
+  .naamblok-beeld :global(img) { width: 100%; height: 100%; object-fit: cover; }
+  .naam-overlay { position: absolute; left: 0; right: 0; top: 9%; text-align: center; font-family: var(--font-kop); font-weight: 800; font-size: clamp(2.2rem, 5vw, 4.2rem); color: #fff;
+    text-shadow: 0 2px 0 rgb(24 64 58 / 0.15), 0 6px 24px rgb(24 64 58 / 0.35); letter-spacing: 0.02em; }
+  @media (max-width: 960px) { .naamblok { grid-template-columns: 1fr; } }
+
+  /* ---------- Kwaliteit ---------- */
+  .kwaliteit { display: grid; grid-template-columns: 1.2fr 1fr; gap: clamp(24px, 5vw, 72px); align-items: center; }
+  .aanbreng { padding: clamp(24px, 3vw, 40px); text-align: left; }
+  .aanbreng :global(.aanbreng-ill) { width: 80px; height: 80px; margin-bottom: 8px; }
+  .aanbreng p { color: var(--tekst-zacht); }
+  @media (max-width: 960px) { .kwaliteit { grid-template-columns: 1fr; } }
+
+  /* ---------- Artikelen ---------- */
+  .artikelen { list-style: none; margin: 0; padding: 0; grid-template-columns: repeat(3, 1fr); }
+  .artikel { display: grid; gap: 10px; text-decoration: none; color: inherit; justify-items: start; }
+  .artikel .media { aspect-ratio: 16 / 10; width: 100%; }
+  .artikel h3 { margin: 0; font-size: 1.3rem; }
+  @media (max-width: 860px) { .artikelen { grid-template-columns: 1fr; } }
+
+  /* ---------- FAQ ---------- */
+  .faq-blok { display: grid; grid-template-columns: 1fr 1.6fr; gap: clamp(24px, 5vw, 72px); align-items: start; }
+  .faq-lijst { display: grid; gap: 10px; }
+  @media (max-width: 860px) { .faq-blok { grid-template-columns: 1fr; } }
+</style>
+
+<style is:global>
+  .faq-item { background: var(--papier); border-radius: var(--r); border: 1px solid var(--rand); box-shadow: var(--schaduw-s); }
+  .faq-item summary { list-style: none; display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 18px 22px; cursor: pointer; font-family: var(--font-kop); font-weight: 700; color: var(--groen); font-size: 1.08rem; line-height: 1.25; }
+  .faq-item summary::-webkit-details-marker { display: none; }
+  .faq-item summary svg { width: 22px; height: 22px; flex: none; transition: transform 0.25s var(--ease); }
+  .faq-item[open] summary svg { transform: rotate(45deg); }
+  .faq-item p { margin: 0; padding: 0 22px 20px; color: var(--tekst); }
+  .faq-item a { color: var(--groen); font-weight: 700; }
+</style>

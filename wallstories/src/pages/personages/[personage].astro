@@ -1,0 +1,49 @@
+---
+import { Image } from 'astro:assets';
+import Basis from '@/layouts/Basis.astro';
+import Kruimelpad from '@/components/Kruimelpad.astro';
+import ProductKaart from '@/components/ProductKaart.astro';
+import PersonageKaart from '@/components/PersonageKaart.astro';
+import Icon from '@/components/Icon.astro';
+import { personages, type Personage } from '@/data/personages';
+import { producten } from '@/data/producten';
+import { wereldBySlug } from '@/data/werelden';
+import { beelden } from '@/lib/beelden';
+import { kruimelpad } from '@/lib/schema';
+export function getStaticPaths() { return personages.map((personage) => ({ params: { personage: personage.slug }, props: { personage } })); }
+const { personage: p } = Astro.props as { personage: Personage };
+const wereld = p.wereld ? wereldBySlug(p.wereld) : undefined;
+const items = producten.filter((x) => x.personage === p.slug || (p.wereld && x.wereld === p.wereld && x.type !== 'muursticker')).slice(0, 4);
+const kruimels = [{ naam: 'Home', url: '/' }, { naam: 'Personages', url: '/personages/' }, { naam: p.naam, url: `/personages/${p.slug}/` }];
+const anderen = personages.filter((x) => x.slug !== p.slug);
+---
+<Basis titel={p.seoTitel} beschrijving={p.metaBeschrijving} ogBeeld={beelden[p.beeld]} ogAlt={p.alt} jsonLd={[kruimelpad(Astro.site, kruimels)]}>
+  <Kruimelpad items={kruimels} />
+  <section class="container held" style={`--kaart:${p.kaartKleur}`}>
+    <div class="held-beeld"><Image src={beelden[p.beeld]} alt={p.alt} widths={[360, 600, 900]} sizes="(max-width: 860px) 70vw, 420px" loading="eager" /></div>
+    <div>
+      <span class="eyebrow">{p.rol}</span>
+      <h1>{p.naam}</h1>
+      <p class="lead">{p.kort}</p>
+      {p.verhaal.map((a) => <p>{a}</p>)}
+      {wereld && <a href={`/werelden/${wereld.slug}/`} class="knop">Ontdek de wereld {wereld.naam} <Icon naam="pijl" class="pijl" /></a>}
+    </div>
+  </section>
+  <section class="container sectie--krap">
+    <div class="sectie-kop"><h2>{p.naam} in de kinderkamer</h2></div>
+    <div class="grid items">{items.map((x) => <ProductKaart product={x} />)}</div>
+  </section>
+  <section class="container sectie--krap">
+    <div class="sectie-kop"><h2>Ook in het verhaal</h2></div>
+    <div class="grid anderen">{anderen.map((x) => <PersonageKaart personage={x} />)}</div>
+  </section>
+</Basis>
+<style>
+  .held { display: grid; grid-template-columns: 1fr 1.2fr; gap: clamp(24px, 5vw, 72px); align-items: center; }
+  .held-beeld { background: var(--kaart); border-radius: var(--r-xl); display: grid; place-items: end center; padding: 40px 24px 0; min-height: 460px; overflow: hidden; }
+  .held-beeld img { max-height: 520px; width: auto; filter: drop-shadow(0 16px 20px rgb(24 64 58 / 0.2)); }
+  h1 { font-size: clamp(2.6rem, 1.8rem + 3vw, 4.6rem); margin-bottom: 0.1em; }
+  .items { grid-template-columns: repeat(4, 1fr); }
+  .anderen { grid-template-columns: 1fr 1fr; }
+  @media (max-width: 960px) { .held { grid-template-columns: 1fr; } .items { grid-template-columns: 1fr 1fr; } .anderen { grid-template-columns: 1fr; } }
+</style>

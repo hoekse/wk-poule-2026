@@ -1,0 +1,78 @@
+---
+/** Kleine duotone illustraties (64×64) in merkkleuren – vervangen de raster-iconen uit de mockup. */
+interface Props { naam: 'boek' | 'personage' | 'kwast' | 'liniaal' | 'meetlint' | 'scherm' | 'doos' | 'naam' | 'schilder' | 'blad'; class?: string; }
+const { naam, class: klasse } = Astro.props;
+const G = '#18403A', Z = '#E9D6B8', M = '#A8C5B3', B = '#9DC4E0', Y = '#F0B44D', K = '#F08A76', W = '#FFFDF9';
+const s = `stroke="${G}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"`;
+const sparkle = (x: number, y: number, r: number, c: string) =>
+  `<path d="M${x} ${y - r}C${x + r * 0.18} ${y - r * 0.18} ${x + r * 0.18} ${y - r * 0.18} ${x + r} ${y}C${x + r * 0.18} ${y + r * 0.18} ${x + r * 0.18} ${y + r * 0.18} ${x} ${y + r}C${x - r * 0.18} ${y + r * 0.18} ${x - r * 0.18} ${y + r * 0.18} ${x - r} ${y}C${x - r * 0.18} ${y - r * 0.18} ${x - r * 0.18} ${y - r * 0.18} ${x} ${y - r}Z" fill="${c}"/>`;
+const svgs: Record<Props['naam'], string> = {
+  boek: `
+    <path d="M32 18c-6-4-14-5-22-4v32c8-1 16 0 22 4 6-4 14-5 22-4V14c-8-1-16 0-22 4z" fill="${W}" ${s}/>
+    <path d="M32 18v32" ${s}/>
+    <path d="M15 22c4 0 8 .6 11 2M15 28c4 0 8 .6 11 2" stroke="${M}" stroke-width="2" stroke-linecap="round"/>
+    <circle cx="44" cy="27" r="5" fill="${Y}"/>
+    <path d="M37 41c3-4 6-6 9-6s4 2 4 4" stroke="${B}" stroke-width="2.4" stroke-linecap="round" fill="none"/>
+    ${sparkle(12, 8, 3.2, K)}${sparkle(52, 8, 2.6, Y)}${sparkle(58, 18, 2, M)}`,
+  personage: `
+    <circle cx="32" cy="36" r="15" fill="#F6D9C2" ${s}/>
+    <path d="M15 27c2-9 10-13 19-12 8 1 13 5 14 10-6 2-12 2-17 1-6-1-11 0-16 1z" fill="${G}" stroke="${G}" stroke-width="2" stroke-linejoin="round"/>
+    <circle cx="38" cy="13.5" r="2.2" fill="${G}"/>
+    <circle cx="27" cy="36" r="1.8" fill="${G}"/><circle cx="37" cy="36" r="1.8" fill="${G}"/>
+    <path d="M27 42c3 3 7 3 10 0" ${s} fill="none"/>
+    <circle cx="23" cy="41" r="2.6" fill="${K}" opacity=".45"/><circle cx="41" cy="41" r="2.6" fill="${K}" opacity=".45"/>
+    <path d="M49 46c3-1 6 0 7 3-2 2-5 2-7 0" fill="${M}"/>
+    ${sparkle(54, 30, 2.6, Y)}`,
+  kwast: `
+    <path d="M44 8l8 8-17 17-8-8z" fill="${Z}" ${s}/>
+    <path d="M27 25l8 8-4 4-8-8z" fill="#C9CED0" ${s}/>
+    <path d="M23 29l8 8c-2 6-6 10-12 11-5 1-9 4-11 6 0-7 2-12 5-15 3-3 6-4 10-10z" fill="${B}" ${s}/>
+    <path d="M12 50c2-3 5-5 8-6" stroke="${W}" stroke-width="2" stroke-linecap="round"/>
+    ${sparkle(52, 34, 3.4, Y)}${sparkle(44, 46, 2.4, K)}${sparkle(57, 46, 1.8, M)}`,
+  liniaal: `
+    <path d="M10 40L40 10l12 12-30 30z" fill="${Y}" ${s}/>
+    <path d="M17 33l3.5 3.5M22 28l2.5 2.5M27 23l3.5 3.5M32 18l2.5 2.5M37 13l3.5 3.5" ${s}/>
+    <path d="M44 50c0-8 5-13 13-13 0 8-5 13-13 13z" fill="${M}" ${s}/>
+    <path d="M44 50l7-7" ${s}/>
+    <path d="M8 22c0-5 3-8 8-8 0 5-3 8-8 8z" fill="${M}" stroke="${G}" stroke-width="1.6" stroke-linejoin="round"/>`,
+  meetlint: `
+    <rect x="9" y="20" width="30" height="26" rx="8" fill="${Z}" ${s}/>
+    <circle cx="24" cy="33" r="6" fill="${W}" ${s}/>
+    <path d="M39 38h16v8H39" fill="${Y}" ${s}/>
+    <path d="M44 38v3M48 38v4M52 38v3" ${s}/>
+    <circle cx="24" cy="33" r="1.6" fill="${G}"/>
+    ${sparkle(50, 18, 3, K)}`,
+  scherm: `
+    <rect x="6" y="14" width="38" height="26" rx="3" fill="${W}" ${s}/>
+    <rect x="10" y="18" width="30" height="18" rx="1.5" fill="${B}"/>
+    <path d="M10 32l7-6 6 5 5-3 12 8v0H10z" fill="${M}"/>
+    <circle cx="33" cy="23" r="2.6" fill="${Y}"/>
+    <path d="M2 44h46l-3 4H5z" fill="${Z}" ${s}/>
+    <rect x="44" y="24" width="15" height="26" rx="3" fill="${W}" ${s}/>
+    <rect x="46.5" y="28" width="10" height="16" rx="1" fill="${B}"/>
+    <path d="M46.5 41l3.5-3 3 2 3.5-2v6h-10z" fill="${M}"/>`,
+  doos: `
+    <path d="M10 26l22-8 22 8v20l-22 9-22-9z" fill="${Z}" ${s}/>
+    <path d="M10 26l22 9 22-9M32 35v20" ${s}/>
+    <path d="M10 26l-5 8 22 9 5-8M54 26l5 8-22 9-5-8" fill="#F3EADC" ${s}/>
+    <path d="M24 12l2.2 4.4 4.8.7-3.5 3.4.8 4.8-4.3-2.3-4.3 2.3.8-4.8-3.5-3.4 4.8-.7z" fill="${Y}" stroke="${G}" stroke-width="1.6" stroke-linejoin="round"/>
+    ${sparkle(42, 10, 3, K)}${sparkle(50, 18, 2, M)}`,
+  naam: `
+    <rect x="8" y="18" width="48" height="28" rx="14" fill="${W}" ${s}/>
+    <path d="M18 38V26l5 7 5-7v12" stroke="${K}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <path d="M38 32a4 4 0 1 1 0 .1M42 28v10" stroke="${M}" stroke-width="2.6" stroke-linecap="round" fill="none"/>
+    <path d="M47 38V26" stroke="${B}" stroke-width="2.6" stroke-linecap="round"/>
+    ${sparkle(54, 12, 3.2, Y)}${sparkle(10, 52, 2.4, K)}`,
+  schilder: `
+    <path d="M31 9C16 9 5 19 5 31c0 9 7 15 14 14 5-.6 6-5 10-5 3.2 0 4.5 2.6 4.5 5.6 0 4.6 3.6 7.8 9.6 6.8C52 51 59 42 59 31 59 19 46 9 31 9z" fill="${Z}" ${s}/>
+    <circle cx="19" cy="25" r="4" fill="${K}"/><circle cx="30" cy="19" r="4" fill="${Y}"/><circle cx="42" cy="21" r="4" fill="${B}"/><circle cx="49" cy="31" r="4" fill="${M}"/>
+    <circle cx="20" cy="36" r="3.6" fill="${W}" ${s}/>
+    <path d="M38 55L56 33" stroke="${G}" stroke-width="3.2" stroke-linecap="round"/>
+    <path d="M56 33l3-3.5c1.2-1.4 3.3-.3 2.6 1.4L60 35z" fill="${K}" ${s}/>
+    ${sparkle(55, 10, 3, Y)}`,
+  blad: `
+    <path d="M12 52C12 30 26 14 52 12c0 26-16 40-40 40z" fill="${M}" ${s}/>
+    <path d="M12 52l26-26" ${s}/>`,
+};
+---
+<svg class={klasse} viewBox="0 0 64 64" fill="none" aria-hidden="true" focusable="false" set:html={svgs[naam]} />

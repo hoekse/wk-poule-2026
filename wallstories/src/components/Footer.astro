@@ -1,0 +1,109 @@
+---
+import Logo from './Logo.astro';
+import Icon from './Icon.astro';
+import { merk, winkel } from '@/config';
+import { werelden } from '@/data/werelden';
+import { euro } from '@/lib/prijs';
+const jaar = new Date().getFullYear();
+const usps = [
+  { icoon: 'kwast', titel: 'Premium muurdecoratie', tekst: 'PVC-vrij vlies, rijke kleuren' },
+  { icoon: 'liniaal', titel: 'Op maat gemaakt', tekst: 'Precies passend op jouw muur' },
+  { icoon: 'truck', titel: 'Gratis verzending', tekst: `Vanaf ${euro(winkel.gratisVerzendingVanafCent)} in Nederland` },
+  { icoon: 'hart', titel: 'Voor kleine dromers', tekst: 'Werelden om in weg te dromen' },
+] as const;
+const kolommen = [
+  { titel: 'Shop', links: [
+    ['Fotobehang op maat', '/fotobehang-kinderkamer/'], ['Behangcirkels', '/behangcirkels/'], ['Posters', '/posters/'],
+    ['Muurstickers', '/muurstickers/'], ['Gepersonaliseerd', '/gepersonaliseerd/'], ['Proefstaal bestellen', '/fotobehang-kinderkamer/#proefstaal'],
+  ] },
+  { titel: 'Werelden', links: werelden.map((w) => [w.naam, `/werelden/${w.slug}/`]) },
+  { titel: 'Wallstories', links: [
+    ['Over ons', '/over-ons/'], ['Personages', '/personages/'], ['Zo werkt het', '/zo-werkt-het/'], ['Ontwerp op maat', '/op-maat/'],
+    ['Zakelijk', '/zakelijk/'], ['Inspiratie', '/inspiratie/'],
+  ] },
+  { titel: 'Klantenservice', links: [
+    ['Contact', '/contact/'], ['Veelgestelde vragen', '/veelgestelde-vragen/'], ['Verzenden & retourneren', '/verzenden-en-retourneren/'],
+    ['Behang aanbrengen', '/inspiratie/fotobehang-aanbrengen/'], ['Algemene voorwaarden', '/algemene-voorwaarden/'], ['Privacy', '/privacy/'],
+  ] },
+];
+---
+<footer class="voet">
+  <div class="usp-band">
+    <ul class="container usp-lijst">
+      {usps.map((u) => (
+        <li><span class="usp-icoon"><Icon naam={u.icoon} /></span><span><b>{u.titel}</b><small>{u.tekst}</small></span></li>
+      ))}
+    </ul>
+  </div>
+  <div class="voet-hoofd">
+    <div class="container voet-grid">
+      <div class="voet-merk">
+        <a href="/" aria-label="Wallstories Kids – homepage" class="voet-logo"><Logo variant="gestapeld" /></a>
+        <p class="klein zacht">Fotobehang en muurdecoratie die kunst, fantasie en avontuur samenbrengen in de kinderkamer.</p>
+        <div class="social">
+          <a class="social-knop" href={merk.social.instagram} rel="noopener" target="_blank" aria-label="Wallstories Kids op Instagram"><Icon naam="instagram" /></a>
+          <a class="social-knop" href={merk.social.pinterest} rel="noopener" target="_blank" aria-label="Wallstories Kids op Pinterest"><Icon naam="pinterest" /></a>
+          <a class="social-knop" href={`mailto:${merk.email}`} aria-label={`Mail ons: ${merk.email}`}><Icon naam="mail" /></a>
+        </div>
+      </div>
+      {kolommen.map((k) => (
+        <nav class="voet-kolom" aria-label={k.titel}>
+          <p class="voet-titel">{k.titel}</p>
+          <ul>{k.links.map(([t, u]) => <li><a href={u}>{t}</a></li>)}</ul>
+        </nav>
+      ))}
+    </div>
+    <div class="container voet-onder">
+      <p>© {jaar} {merk.naam} <span aria-hidden="true">·</span> KvK {merk.kvk} <span aria-hidden="true">·</span> Prijzen incl. {winkel.btwPercentage}% btw</p>
+      <ul class="betaal" aria-label="Betaalmethoden">
+        <li><Icon naam="slot" /> Veilig betalen via Mollie</li>
+        <li class="betaal-chip">iDEAL</li><li class="betaal-chip">Creditcard</li><li class="betaal-chip">Apple Pay</li>
+      </ul>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .voet { margin-top: var(--sectie); }
+  .usp-band { position: relative; background: var(--munt-100); padding: 52px 0 32px; }
+  .usp-band::before { content: ''; position: absolute; left: 0; right: 0; top: -1px; height: 28px; background: var(--wolk);
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 28' preserveAspectRatio='none'%3E%3Cpath d='M0 0H1440V8C1380 18 1320 24 1240 18S1100 2 1000 6 840 26 720 24 560 6 440 6 300 22 200 22 60 12 0 8Z'/%3E%3C/svg%3E") 0 0/100% 100%;
+            mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 28' preserveAspectRatio='none'%3E%3Cpath d='M0 0H1440V8C1380 18 1320 24 1240 18S1100 2 1000 6 840 26 720 24 560 6 440 6 300 22 200 22 60 12 0 8Z'/%3E%3C/svg%3E") 0 0/100% 100%; }
+  .usp-lijst { list-style: none; margin: 0 auto; display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+  .usp-lijst li { display: flex; align-items: center; gap: 14px; }
+  .usp-lijst li + li { border-left: 1.5px dashed rgb(24 64 58 / 0.2); padding-left: 20px; }
+  .usp-icoon { display: grid; place-items: center; width: 46px; height: 46px; flex: none; border-radius: 50%; background: var(--papier); color: var(--groen); box-shadow: var(--schaduw-s); }
+  .usp-icoon :global(svg) { width: 24px; height: 24px; }
+  .usp-lijst b { display: block; font-family: var(--font-kop); color: var(--groen); font-size: 1rem; line-height: 1.2; }
+  .usp-lijst small { color: var(--tekst-zacht); font-size: 0.82rem; }
+
+  .voet-hoofd { background: var(--zand-100); padding: 64px 0 28px; }
+  .voet-grid { display: grid; grid-template-columns: 1.3fr repeat(4, 1fr); gap: 32px; }
+  .voet-logo { display: block; width: 190px; margin-bottom: 16px; }
+  .voet-merk p { max-width: 26ch; }
+  .social { display: flex; gap: 8px; }
+  .social-knop { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 50%; background: var(--papier); color: var(--groen); box-shadow: var(--schaduw-s); transition: transform 0.2s var(--ease), background-color 0.2s; }
+  .social-knop:hover { transform: translateY(-2px); background: #fff; }
+  .social-knop :global(svg) { width: 20px; height: 20px; }
+  .voet-titel { font-family: var(--font-kop); font-weight: 700; color: var(--groen); font-size: 1.08rem; margin: 0 0 12px; }
+  .voet-kolom ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+  .voet-kolom a { color: var(--tekst); text-decoration: none; font-size: 0.92rem; }
+  .voet-kolom a:hover { color: var(--groen); text-decoration: underline; }
+  .voet-onder { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--rand-sterk); font-size: 0.82rem; color: var(--tekst-zacht); }
+  .voet-onder p { margin: 0; }
+  .betaal { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; list-style: none; margin: 0; padding: 0; }
+  .betaal li:first-child { display: inline-flex; align-items: center; gap: 6px; margin-right: 4px; }
+  .betaal :global(svg) { width: 16px; height: 16px; }
+  .betaal-chip { padding: 4px 10px; border-radius: 8px; background: var(--papier); border: 1px solid var(--rand); font-weight: 700; color: var(--groen); font-size: 0.76rem; }
+
+  @media (max-width: 1023px) {
+    .usp-lijst { grid-template-columns: 1fr 1fr; row-gap: 24px; }
+    .usp-lijst li:nth-child(3) { border-left: 0; padding-left: 0; }
+    .voet-grid { grid-template-columns: 1fr 1fr; }
+    .voet-merk { grid-column: 1 / -1; }
+  }
+  @media (max-width: 560px) {
+    .usp-lijst { grid-template-columns: 1fr; }
+    .usp-lijst li + li { border-left: 0; padding-left: 0; }
+  }
+</style>

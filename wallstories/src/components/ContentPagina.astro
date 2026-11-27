@@ -1,0 +1,26 @@
+---
+import { getEntry, render } from 'astro:content';
+import Basis from '@/layouts/Basis.astro';
+import Kruimelpad from './Kruimelpad.astro';
+import { kruimelpad } from '@/lib/schema';
+interface Props { id: string; }
+const entry = await getEntry('paginas', Astro.props.id);
+if (!entry) throw new Error(`Pagina ${Astro.props.id} ontbreekt`);
+const { Content } = await render(entry);
+const d = entry.data;
+const url = `/${Astro.props.id}/`;
+const kruimels = [{ naam: 'Home', url: '/' }, { naam: d.titel, url }];
+---
+<Basis titel={d.seoTitel ?? d.titel} beschrijving={d.beschrijving} jsonLd={[kruimelpad(Astro.site, kruimels)]}>
+  <Kruimelpad items={kruimels} />
+  <article class="container pagina">
+    <h1>{d.titel}</h1>
+    {d.intro && <p class="lead">{d.intro}</p>}
+    <p class="zacht klein">Laatst bijgewerkt: {d.bijgewerkt.toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+    <div class="proza"><Content /></div>
+  </article>
+</Basis>
+<style>
+  .pagina { max-width: calc(760px + 2 * var(--gutter)); }
+  h1 { font-size: clamp(2.2rem, 1.5rem + 2.4vw, 3.6rem); }
+</style>

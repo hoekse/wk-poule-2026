@@ -1,0 +1,52 @@
+---
+import Basis from '@/layouts/Basis.astro';
+import Icon from '@/components/Icon.astro';
+import Spot from '@/components/Spot.astro';
+---
+<Basis titel="Bedankt voor je bestelling" beschrijving="Je bestelling bij Wallstories Kids." noindex>
+  <section class="container sectie bedankt" data-bedankt>
+    <Spot naam="doos" maat={140} class="ill" />
+    <h1 data-titel>We controleren je betaling…</h1>
+    <p class="lead" data-tekst>Een ogenblik geduld, we ontvangen de bevestiging van je bank.</p>
+    <p class="nummer" data-nummer hidden></p>
+    <div class="knoppen" data-knoppen hidden>
+      <a href="/werelden/" class="knop">Verder kijken <Icon naam="pijl" class="pijl" /></a>
+      <a href="/inspiratie/fotobehang-aanbrengen/" class="knop knop--rand">Tips voor het aanbrengen</a>
+    </div>
+    <div class="knoppen" data-opnieuw hidden><a href="/afrekenen/" class="knop">Opnieuw proberen <Icon naam="pijl" class="pijl" /></a></div>
+  </section>
+</Basis>
+<script>
+  import { winkelwagen } from '@/scripts/winkelwagen';
+  const q = new URLSearchParams(location.search);
+  const nr = q.get('nr'), t = q.get('t');
+  const $ = (s: string) => document.querySelector<HTMLElement>(s)!;
+  const toon = (titel: string, tekst: string) => { $('[data-titel]').textContent = titel; $('[data-tekst]').textContent = tekst; };
+  let pogingen = 0;
+  async function check() {
+    if (!nr || !t) { toon('Bedankt!', 'We hebben je bestelling ontvangen.'); $('[data-knoppen]').hidden = false; return; }
+    try {
+      const r = await fetch(`/api/bestelling-status/?nr=${encodeURIComponent(nr)}&t=${encodeURIComponent(t)}`);
+      const j = await r.json();
+      $('[data-nummer]').hidden = false; $('[data-nummer]').textContent = `Bestelnummer ${nr}`;
+      if (j.status === 'betaald') {
+        winkelwagen.leeg();
+        toon('Bedankt! Je verhaal is onderweg.', 'Je ontvangt zo een orderbevestiging per e-mail. Bij personalisatie sturen we binnen 1 werkdag een digitale proef.');
+        $('[data-knoppen]').hidden = false;
+      } else if (['mislukt', 'geannuleerd', 'verlopen'].includes(j.status)) {
+        toon('Je betaling is niet gelukt', 'Geen zorgen: je winkelwagen staat nog klaar. Probeer het gerust opnieuw.');
+        $('[data-opnieuw]').hidden = false;
+      } else if (pogingen++ < 10) { setTimeout(check, 2500); }
+      else toon('Je betaling wordt nog verwerkt', 'Dit kan een paar minuten duren. Je ontvangt een e-mail zodra de betaling binnen is.');
+    } catch { toon('Bedankt!', 'We verwerken je bestelling. Je ontvangt een bevestiging per e-mail.'); }
+  }
+  check();
+</script>
+<style>
+  .bedankt { display: grid; justify-items: center; text-align: center; max-width: 720px; }
+  .bedankt :global(.ill) { width: 140px; height: 140px; margin-bottom: 12px; }
+  h1 { font-size: clamp(2.2rem, 1.5rem + 2.4vw, 3.4rem); }
+  .nummer { font-weight: 700; color: var(--groen); background: var(--munt-100); padding: 8px 16px; border-radius: 999px; }
+  .knoppen { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-top: 12px; }
+  .knoppen[hidden] { display: none; }
+</style>

@@ -1,0 +1,47 @@
+---
+import { Image } from 'astro:assets';
+import Basis from '@/layouts/Basis.astro';
+import Kruimelpad from '@/components/Kruimelpad.astro';
+import Stappen from '@/components/Stappen.astro';
+import Icon from '@/components/Icon.astro';
+import { beelden } from '@/lib/beelden';
+import { kruimelpad } from '@/lib/schema';
+import { winkel } from '@/config';
+import { euro, tarieven } from '@/lib/prijs';
+const kruimels = [{ naam: 'Home', url: '/' }, { naam: 'Zo werkt het', url: '/zo-werkt-het/' }];
+---
+<Basis titel="Zo werkt het – bestellen, opmeten en aanbrengen" beschrijving="Van wereld kiezen tot behang aanbrengen: zo bestel je fotobehang op maat bij Wallstories Kids. Met tips voor opmeten, levertijden en de proefstaal." jsonLd={[kruimelpad(Astro.site, kruimels)]}>
+  <Kruimelpad items={kruimels} />
+  <header class="container">
+    <span class="eyebrow">Zo eenvoudig is het</span>
+    <h1>Zo werkt het</h1>
+    <p class="lead">Van verhaal kiezen tot het moment dat je kind de kamer binnenloopt. Dit is wat je kunt verwachten.</p>
+  </header>
+  <section class="container sectie--krap"><div class="werkt"><Stappen /></div></section>
+  <section class="container sectie--krap uitleg">
+    <div class="proza">
+      <h2>1. Kies een verhaal</h2>
+      <p>Elke wereld heeft zijn eigen sfeer: rustig blauw onder water, warm goud in het museum, avontuurlijk in de ruimte. <a href="/werelden/">Bekijk alle werelden</a> of laat je inspireren door <a href="/inspiratie/kinderkamer-inspiratie/">kinderkamerideeën</a>.</p>
+      <h2>2. Meet je muur op</h2>
+      <p>Meet de breedte en hoogte van de muur op de breedste en hoogste punten, in centimeters. Ramen en deuren hoef je niet af te trekken: wij printen de hele muur en jij snijdt ze uit. We voegen automatisch {tarieven.fotobehang.overmaatCm} cm overmaat rondom toe. <a href="/inspiratie/hoeveel-behang-nodig/">Lees de volledige opmeetgids</a>.</p>
+      <h2>3. Bekijk je preview</h2>
+      <p>In de configurator zie je direct hoe de wereld op jouw muurmaat valt. Schuif de uitsnede tot het mooiste stuk precies boven het bed staat. De stippellijnen laten zien waar de banen van 50 cm samenkomen.</p>
+      <h2>4. Ontvang en breng aan</h2>
+      <p>Je behang wordt op bestelling geprint en binnen {winkel.levertijd.maatwerk} geleverd, met genummerde banen. Aanbrengen gaat met de plak-de-muur-methode: lijm op de muur, baan ertegen, klaar. <a href="/inspiratie/fotobehang-aanbrengen/">Bekijk het stappenplan</a>.</p>
+      <blockquote><b>Twijfel je over kleur of structuur?</b> Bestel eerst een proefstaal voor {euro(tarieven.proefstaal.prijsCent)}. Zo zie je de kleuren in het licht van jouw kamer.</blockquote>
+    </div>
+    <aside class="zij">
+      <div class="media"><Image src={beelden['babykamer-walvis']} alt="Babykamer met fotobehang van een walvis en een luchtballon" widths={[480, 800]} sizes="(max-width: 960px) 92vw, 420px" loading="lazy" /></div>
+      <a href="/fotobehang-kinderkamer/" class="knop knop--blok">Start met ontwerpen <Icon naam="pijl" class="pijl" /></a>
+    </aside>
+  </section>
+</Basis>
+<style>
+  h1 { font-size: clamp(2.4rem, 1.6rem + 3vw, 4.2rem); }
+  .werkt { background: var(--zand-100); border-radius: var(--r-xl); padding: clamp(24px, 4vw, 48px); }
+  .uitleg { display: grid; grid-template-columns: 1.5fr 1fr; gap: clamp(24px, 5vw, 72px); align-items: start; }
+  .uitleg .proza :global(h2:first-child) { margin-top: 0; }
+  .zij { position: sticky; top: calc(var(--header-h) + 24px); display: grid; gap: 16px; }
+  .zij .media { aspect-ratio: 4 / 3; }
+  @media (max-width: 960px) { .uitleg { grid-template-columns: 1fr; } .zij { position: static; } }
+</style>

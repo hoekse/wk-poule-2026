@@ -1,0 +1,86 @@
+---
+import '@/styles/global.css';
+import { getImage } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+import Header from '@/components/Header.astro';
+import Footer from '@/components/Footer.astro';
+import Winkelwagen from '@/components/Winkelwagen.astro';
+import Zoeken from '@/components/Zoeken.astro';
+import { merk } from '@/config';
+import { beelden } from '@/lib/beelden';
+import { graph, organisatie, website } from '@/lib/schema';
+
+interface Props {
+  titel: string;            // zonder merknaam; wordt "Titel | Wallstories Kids"
+  beschrijving: string;
+  ogBeeld?: ImageMetadata;
+  ogAlt?: string;
+  jsonLd?: object[];
+  noindex?: boolean;
+  volleTitel?: boolean;     // titel exact gebruiken (homepage)
+  type?: 'website' | 'article' | 'product';
+}
+const { titel, beschrijving, ogBeeld = beelden['hero-schilder'], ogAlt = 'Een schilder tovert een verhaal op de muur van een kinderkamer', jsonLd = [], noindex = false, volleTitel = false, type = 'website' } = Astro.props;
+const paginaTitel = volleTitel ? titel : `${titel} | ${merk.naam}`;
+const canonical = new URL(Astro.url.pathname, Astro.site).toString();
+const og = await getImage({ src: ogBeeld, width: 1200, height: 630, fit: 'cover', format: 'jpg', quality: 82 });
+const ogUrl = new URL(og.src, Astro.site).toString();
+const ld = graph(organisatie(Astro.site), website(Astro.site), ...jsonLd);
+---
+<!doctype html>
+<html lang="nl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>{paginaTitel}</title>
+    <meta name="description" content={beschrijving} />
+    <link rel="canonical" href={canonical} />
+    {noindex && <meta name="robots" content="noindex, follow" />}
+    <meta name="theme-color" content="#F7F4EF" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon-48.png" sizes="48x48" type="image/png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+
+    <meta property="og:type" content={type === 'product' ? 'product' : type} />
+    <meta property="og:site_name" content={merk.naam} />
+    <meta property="og:locale" content="nl_NL" />
+    <meta property="og:title" content={paginaTitel} />
+    <meta property="og:description" content={beschrijving} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogUrl} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={ogAlt} />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <script type="application/ld+json" set:html={JSON.stringify(ld)} />
+    <script is:inline>document.documentElement.classList.add('js');</script>
+    <slot name="head" />
+  </head>
+  <body>
+    <a class="skip" href="#inhoud">Naar de inhoud</a>
+    <Header />
+    <main id="inhoud">
+      <slot />
+    </main>
+    <Footer />
+    <Winkelwagen />
+    <Zoeken />
+    <script>
+      import '@/scripts/winkelwagen';
+      import '@/scripts/favorieten';
+      // Subtiele onthulling bij scrollen
+      const io = 'IntersectionObserver' in window ? new IntersectionObserver((entries) => {
+        for (const e of entries) if (e.isIntersecting) { e.target.classList.add('zichtbaar'); io?.unobserve(e.target); }
+      }, { rootMargin: '0px 0px -8% 0px' }) : null;
+      document.querySelectorAll('[data-onthul]').forEach((el) => (io ? io.observe(el) : el.classList.add('zichtbaar')));
+    </script>
+  </body>
+</html>
+
+<style>
+  .skip { position: absolute; left: 16px; top: -60px; z-index: 100; background: var(--groen); color: #fff; padding: 10px 16px; border-radius: 10px; font-weight: 700; text-decoration: none; }
+  .skip:focus { top: 12px; }
+</style>

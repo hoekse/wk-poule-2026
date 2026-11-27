@@ -1,0 +1,44 @@
+---
+import { Image } from 'astro:assets';
+import Basis from '@/layouts/Basis.astro';
+import Kruimelpad from '@/components/Kruimelpad.astro';
+import AanvraagFormulier from '@/components/AanvraagFormulier.astro';
+import Spot from '@/components/Spot.astro';
+import { beelden } from '@/lib/beelden';
+import { kruimelpad } from '@/lib/schema';
+const kruimels = [{ naam: 'Home', url: '/' }, { naam: 'Ontwerp op maat', url: '/op-maat/' }];
+const punten = [
+  { icoon: 'personage', titel: 'Jullie eigen personage', tekst: 'Je kind als held in het verhaal, of een knuffel die meereist met Bella Ballon.' },
+  { icoon: 'kwast', titel: 'Een eigen wereld', tekst: 'Een boerderij, een voetbalstadion of jullie eigen dorp – in de Wallstories-stijl.' },
+  { icoon: 'liniaal', titel: 'Lastige muren', tekst: 'Schuine wanden, nissen, deuren en ramen: we passen de compositie aan op jouw ruimte.' },
+] as const;
+---
+<Basis titel="Ontwerp op maat – jullie eigen verhaal op de muur" beschrijving="Een volledig eigen muurontwerp in de stijl van Wallstories Kids: met jullie eigen personage, wereld of ruimte. Vraag vrijblijvend een voorstel aan." jsonLd={[kruimelpad(Astro.site, kruimels)]}>
+  <Kruimelpad items={kruimels} />
+  <section class="container grid-2">
+    <div>
+      <span class="eyebrow">Ontwerp op maat</span>
+      <h1>Jullie eigen verhaal, geschilderd op de muur</h1>
+      <p class="lead">Past geen van onze werelden precies? Dan ontwerpen we er één speciaal voor jullie. Vertel ons over je kind, de kamer en de dromen – wij maken er een verhaal van.</p>
+      <ul class="punten">
+        {punten.map((p) => <li><Spot naam={p.icoon} maat={72} class="ill" /><div><h2 class="h-klein">{p.titel}</h2><p>{p.tekst}</p></div></li>)}
+      </ul>
+      <p class="zacht klein">Je ontvangt binnen 3 werkdagen een voorstel met prijsindicatie. Pas na jouw akkoord gaan we tekenen.</p>
+    </div>
+    <div class="stapel">
+      <div class="media beeld"><Image src={beelden['rembrandt-museum']} alt="Rembrandt 2.0 schildert in zijn atelier" widths={[480, 800]} sizes="(max-width: 960px) 92vw, 520px" loading="eager" /></div>
+      <AanvraagFormulier soort="op-maat" knop="Vraag een voorstel aan" extra={['telefoon', 'muurmaat']} />
+    </div>
+  </section>
+</Basis>
+<style>
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(24px, 5vw, 72px); align-items: start; padding-top: 12px; }
+  h1 { font-size: clamp(2.3rem, 1.6rem + 2.6vw, 4rem); }
+  .punten { list-style: none; padding: 0; margin: 28px 0; display: grid; gap: 18px; }
+  .punten li { display: grid; grid-template-columns: 72px 1fr; gap: 16px; align-items: start; }
+  .punten :global(.ill) { width: 72px; height: 72px; }
+  .h-klein { font-size: 1.2rem; margin: 4px 0 2px; }
+  .punten p { margin: 0; color: var(--tekst-zacht); }
+  .beeld { aspect-ratio: 16 / 9; margin-bottom: 20px; }
+  @media (max-width: 960px) { .grid-2 { grid-template-columns: 1fr; } }
+</style>

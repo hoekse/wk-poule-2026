@@ -1,0 +1,64 @@
+---
+import { Image } from 'astro:assets';
+import { getCollection, render, type CollectionEntry } from 'astro:content';
+import Basis from '@/layouts/Basis.astro';
+import Kruimelpad from '@/components/Kruimelpad.astro';
+import ProductKaart from '@/components/ProductKaart.astro';
+import Icon from '@/components/Icon.astro';
+import { beelden } from '@/lib/beelden';
+import { producten } from '@/data/producten';
+import { merk } from '@/config';
+import { kruimelpad, absoluut } from '@/lib/schema';
+export async function getStaticPaths() {
+  return (await getCollection('inspiratie')).map((artikel) => ({ params: { slug: artikel.id }, props: { artikel } }));
+}
+const { artikel } = Astro.props as { artikel: CollectionEntry<'inspiratie'> };
+const { Content, headings } = await render(artikel);
+const d = artikel.data;
+const url = `/inspiratie/${artikel.id}/`;
+const kruimels = [{ naam: 'Home', url: '/' }, { naam: 'Inspiratie', url: '/inspiratie/' }, { naam: d.titel, url }];
+const datum = (x: Date) => x.toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' });
+const tips = (d.wereld ? producten.filter((p) => p.wereld === d.wereld) : producten.filter((p) => p.type === 'fotobehang')).slice(0, 3);
+const inhoud = headings.filter((h) => h.depth === 2);
+const ld = [kruimelpad(Astro.site, kruimels), {
+  '@type': 'BlogPosting', headline: d.titel, description: d.beschrijving, inLanguage: 'nl-NL',
+  datePublished: d.publicatiedatum.toISOString(), dateModified: (d.bijgewerkt ?? d.publicatiedatum).toISOString(),
+  mainEntityOfPage: absoluut(Astro.site, url), author: { '@type': 'Organization', name: merk.naam }, publisher: { '@id': absoluut(Astro.site, '/#organisatie') },
+  keywords: d.focusKeyword,
+}];
+---
+<Basis titel={d.seoTitel ?? d.titel} beschrijving={d.beschrijving} ogBeeld={beelden[d.afbeelding]} ogAlt={d.afbeeldingAlt} type="article" jsonLd={ld}>
+  <Kruimelpad items={kruimels} />
+  <article>
+    <header class="container art-kop">
+      <span class="label">{d.categorie} · {d.leestijd} min lezen</span>
+      <h1>{d.titel}</h1>
+      <p class="zacht klein">Gepubliceerd op <time datetime={d.publicatiedatum.toISOString()}>{datum(d.publicatiedatum)}</time>{d.bijgewerkt && <> · bijgewerkt {datum(d.bijgewerkt)}</>}</p>
+      <div class="media art-beeld"><Image src={beelden[d.afbeelding]} alt={d.afbeeldingAlt} widths={[640, 1000, 1400, 2000]} sizes="(max-width: 1100px) 92vw, 1040px" loading="eager" fetchpriority="high" /></div>
+    </header>
+    <div class="container art-grid">
+      <aside class="toc">
+        {inhoud.length > 2 && (<nav aria-label="Inhoud"><p class="toc-titel">In dit artikel</p><ol>{inhoud.map((h) => <li><a href={`#${h.slug}`}>{h.text}</a></li>)}</ol></nav>)}
+      </aside>
+      <div class="proza"><Content /></div>
+    </div>
+  </article>
+  <section class="container sectie--krap">
+    <div class="sectie-kop"><h2>Uit de shop</h2><a href="/werelden/" class="link-pijl">Alle werelden <Icon naam="pijl" /></a></div>
+    <div class="grid tips">{tips.map((p) => <ProductKaart product={p} />)}</div>
+  </section>
+</Basis>
+<style>
+  .art-kop { max-width: calc(1040px + 2 * var(--gutter)); }
+  .art-kop h1 { font-size: clamp(2.2rem, 1.5rem + 2.6vw, 3.8rem); margin: 14px 0 8px; max-width: 20ch; }
+  .art-beeld { aspect-ratio: 16 / 8; margin-top: 24px; box-shadow: var(--schaduw); }
+  .art-grid { display: grid; grid-template-columns: 240px 1fr; gap: 56px; padding-top: 48px; max-width: calc(1040px + 2 * var(--gutter)); }
+  .toc nav { position: sticky; top: calc(var(--header-h) + 24px); }
+  .toc-titel { font-weight: 700; font-size: var(--fs-xs); letter-spacing: 0.12em; text-transform: uppercase; color: var(--koraal-tekst); }
+  .toc ol { padding-left: 1.1em; margin: 0; display: grid; gap: 8px; font-size: 0.88rem; }
+  .toc a { color: var(--tekst); text-decoration: none; }
+  .toc a:hover { color: var(--groen); text-decoration: underline; }
+  .tips { grid-template-columns: repeat(3, 1fr); }
+  @media (max-width: 960px) { .art-grid { grid-template-columns: 1fr; gap: 0; } .toc { display: none; } .tips { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 560px) { .tips { grid-template-columns: 1fr; } }
+</style>

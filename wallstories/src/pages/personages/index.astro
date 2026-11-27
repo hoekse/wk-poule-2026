@@ -1,0 +1,22 @@
+---
+import Basis from '@/layouts/Basis.astro';
+import Kruimelpad from '@/components/Kruimelpad.astro';
+import PersonageKaart from '@/components/PersonageKaart.astro';
+import { personages } from '@/data/personages';
+import { kruimelpad } from '@/lib/schema';
+const kruimels = [{ naam: 'Home', url: '/' }, { naam: 'Personages', url: '/personages/' }];
+---
+<Basis titel="Onze personages – helden voor de kinderkamer" beschrijving="Maak kennis met Rembrandt 2.0, Bella Ballon en Kees Komeet: de helden van Wallstories Kids die terugkomen in behang, posters, cirkels en stickers." jsonLd={[kruimelpad(Astro.site, kruimels)]}>
+  <Kruimelpad items={kruimels} />
+  <header class="container">
+    <span class="eyebrow">Onze helden</span>
+    <h1>Maak kennis met onze vrienden</h1>
+    <p class="lead">Kinderen hechten zich aan figuren die ze herkennen. Daarom komen onze personages terug in elke wereld en elk product – van behang tot sticker. Zo groeit het verhaal mee met je kind.</p>
+  </header>
+  <section class="container sectie--krap"><div class="grid lijst">{personages.map((p) => <PersonageKaart personage={p} />)}</div></section>
+</Basis>
+<style>
+  h1 { font-size: clamp(2.4rem, 1.6rem + 3vw, 4.2rem); }
+  .lijst { grid-template-columns: repeat(3, 1fr); }
+  @media (max-width: 1023px) { .lijst { grid-template-columns: 1fr; max-width: 560px; } }
+</style>

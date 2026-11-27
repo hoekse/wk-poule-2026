@@ -1,0 +1,74 @@
+---
+import { Image } from 'astro:assets';
+import Basis from '@/layouts/Basis.astro';
+import Kruimelpad from '@/components/Kruimelpad.astro';
+import ProductKaart from '@/components/ProductKaart.astro';
+import WereldTegel from '@/components/WereldTegel.astro';
+import Icon from '@/components/Icon.astro';
+import { werelden, type Wereld } from '@/data/werelden';
+import { productenInWereld } from '@/data/producten';
+import { personageBySlug } from '@/data/personages';
+import { beelden } from '@/lib/beelden';
+import { kruimelpad, absoluut } from '@/lib/schema';
+export function getStaticPaths() { return werelden.map((wereld) => ({ params: { wereld: wereld.slug }, props: { wereld } })); }
+const { wereld: w } = Astro.props as { wereld: Wereld };
+const items = productenInWereld(w.slug);
+const personage = w.personage ? personageBySlug(w.personage) : undefined;
+const kruimels = [{ naam: 'Home', url: '/' }, { naam: 'Werelden', url: '/werelden/' }, { naam: w.naam, url: `/werelden/${w.slug}/` }];
+const anderen = werelden.filter((x) => x.slug !== w.slug);
+const ld = [kruimelpad(Astro.site, kruimels), { '@type': 'CollectionPage', name: w.h1, description: w.metaBeschrijving, url: absoluut(Astro.site, `/werelden/${w.slug}/`),
+  mainEntity: { '@type': 'ItemList', itemListElement: items.map((x, i) => ({ '@type': 'ListItem', position: i + 1, url: absoluut(Astro.site, x.url), name: x.naam })) } }];
+---
+<Basis titel={w.seoTitel} beschrijving={w.metaBeschrijving} ogBeeld={beelden[w.beeld]} ogAlt={w.alt} jsonLd={ld}>
+  <Kruimelpad items={kruimels} />
+  <section class="container wereld-held">
+    <div class="wh-tekst">
+      <span class="eyebrow">Wereld · {w.verhaal}</span>
+      <h1>{w.h1}</h1>
+      <p class="lead">{w.intro}</p>
+      <div class="knoppen">
+        <a href={`/fotobehang-kinderkamer/${w.slug}/`} class="knop">Ontwerp jouw muur <Icon naam="pijl" class="pijl" /></a>
+        <a href="#producten" class="knop knop--rand">Alle producten</a>
+      </div>
+    </div>
+    <div class="wh-beeld media"><Image src={beelden[w.beeld]} alt={w.alt} widths={[640, 960, 1400, 2000, 2752]} sizes="(max-width: 960px) 92vw, 760px" loading="eager" fetchpriority="high" /></div>
+  </section>
+
+  <section id="producten" class="container sectie--krap">
+    <div class="sectie-kop"><h2>{w.naam} in jouw kamer</h2></div>
+    <div class="grid producten">{items.map((x) => <ProductKaart product={x} />)}</div>
+  </section>
+
+  <section class="container sectie--krap verhaal-blok">
+    <div class="proza">
+      <h2>Het verhaal: {w.verhaal}</h2>
+      {w.alineas.map((a) => <p>{a}</p>)}
+      <p>Zoek je inspiratie? Lees onze <a href="/inspiratie/kinderkamer-inspiratie/">ideeën voor de kinderkamer</a> of ontdek <a href="/inspiratie/hoeveel-behang-nodig/">hoeveel behang je nodig hebt</a>.</p>
+    </div>
+    {personage && (
+      <a href={`/personages/${personage.slug}/`} class="kaart held" style={`background:${personage.kaartKleur}`}>
+        <Image src={beelden[personage.beeld]} alt={personage.alt} widths={[200, 320]} sizes="160px" loading="lazy" />
+        <div><span class="eyebrow">De held van deze wereld</span><h3>{personage.naam}</h3><p>{personage.kort}</p><span class="link-pijl">Maak kennis <Icon naam="pijl" /></span></div>
+      </a>
+    )}
+  </section>
+
+  <section class="container sectie--krap">
+    <div class="sectie-kop"><h2>Ontdek ook</h2></div>
+    <ul class="anderen">{anderen.map((x) => <li><WereldTegel wereld={x} sizes="(max-width: 640px) 45vw, 230px" /></li>)}</ul>
+  </section>
+</Basis>
+<style>
+  .wereld-held { display: grid; grid-template-columns: 1fr 1.35fr; gap: clamp(24px, 4vw, 56px); align-items: center; padding-top: 12px; }
+  .wh-tekst h1 { font-size: clamp(2.3rem, 1.6rem + 2.6vw, 4rem); }
+  .knoppen { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
+  .wh-beeld { aspect-ratio: 16 / 10; box-shadow: var(--schaduw-l); }
+  .producten { grid-template-columns: repeat(3, 1fr); }
+  .verhaal-blok { display: grid; grid-template-columns: 1.4fr 1fr; gap: clamp(24px, 5vw, 72px); align-items: center; }
+  .held { display: grid; grid-template-columns: 120px 1fr; gap: 16px; align-items: center; padding: 24px; text-decoration: none; color: inherit; }
+  .held img { max-height: 180px; width: auto; object-fit: contain; filter: drop-shadow(0 8px 12px rgb(24 64 58 / 0.18)); }
+  .held h3 { margin: 0 0 6px; }
+  .anderen { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; }
+  @media (max-width: 960px) { .wereld-held, .verhaal-blok { grid-template-columns: 1fr; } .producten { grid-template-columns: 1fr 1fr; } .anderen { grid-template-columns: repeat(3, 1fr); } }
+  @media (max-width: 560px) { .producten { grid-template-columns: 1fr; } .anderen { grid-template-columns: 1fr 1fr; } }
+</style>

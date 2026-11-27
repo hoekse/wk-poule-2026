@@ -1,0 +1,58 @@
+---
+import { Image } from 'astro:assets';
+import Basis from '@/layouts/Basis.astro';
+import Kruimelpad from '@/components/Kruimelpad.astro';
+import ProductKaart from '@/components/ProductKaart.astro';
+import Icon from '@/components/Icon.astro';
+import { producten, productByKey } from '@/data/producten';
+import { beelden } from '@/lib/beelden';
+import { euro, tarieven } from '@/lib/prijs';
+import { kruimelpad } from '@/lib/schema';
+const kruimels = [{ naam: 'Home', url: '/' }, { naam: 'Gepersonaliseerd', url: '/gepersonaliseerd/' }];
+const uitgelicht = [productByKey('fotobehang-kinderkamer/sprookjes')!, productByKey('posters/ruimte')!, productByKey('muurstickers/naamsticker')!];
+const alleBehang = producten.filter((p) => p.type === 'fotobehang');
+---
+<Basis titel="Gepersonaliseerd behang & posters met naam" beschrijving="Behang, posters en muurstickers met de naam van je kind, in de verhalende werelden van Wallstories Kids. Met digitale proef vooraf. Ook een mooi kraamcadeau." jsonLd={[kruimelpad(Astro.site, kruimels)]}>
+  <Kruimelpad items={kruimels} />
+  <section class="container held">
+    <div>
+      <span class="eyebrow">Gepersonaliseerd</span>
+      <h1>Hun naam, in hun eigen verhaal</h1>
+      <p class="lead">Een kamer wordt pas echt van je kind als zijn of haar naam erin staat. Voeg de naam toe aan elk fotobehang ({euro(tarieven.fotobehang.naamCent)}) of poster ({euro(tarieven.poster.naamCent)}), of kies een losse naamsticker.</p>
+      <ol class="stappen-klein">
+        <li><b>Kies je product</b> en vink “naam toevoegen” aan.</li>
+        <li><b>Typ de naam</b> en zie hem direct in de preview.</li>
+        <li><b>Ontvang een digitale proef</b> binnen 1 werkdag – pas na jouw akkoord printen we.</li>
+      </ol>
+    </div>
+    <div class="beeld media">
+      <Image src={beelden.ruimte} alt="Ruimtewereld met Kees Komeet en een naam in de sterrenhemel" widths={[640, 1000, 1400]} sizes="(max-width: 960px) 92vw, 640px" loading="eager" />
+      <span class="naam">Finn</span>
+    </div>
+  </section>
+  <section class="container sectie--krap">
+    <div class="sectie-kop"><h2>Populair om te personaliseren</h2></div>
+    <div class="grid drie">{uitgelicht.map((p) => <ProductKaart product={p} />)}</div>
+  </section>
+  <section class="container sectie--krap">
+    <div class="sectie-kop"><h2>Fotobehang met naam – kies je wereld</h2></div>
+    <div class="grid drie">{alleBehang.map((p) => <ProductKaart product={p} />)}</div>
+  </section>
+  <section class="container sectie--krap proza">
+    <h2>Een persoonlijk kraamcadeau</h2>
+    <p>Een poster met naam is een kraamcadeau dat jarenlang blijft hangen. Kies een wereld die past bij de babykamer, voeg de naam toe en wij printen hem op mat museumkwaliteit papier. Wil je het als verrassing laten bezorgen? Vermeld het afleveradres van de ouders bij het afrekenen.</p>
+    <p>Let op: gepersonaliseerde producten worden speciaal voor jou gemaakt en vallen daarom niet onder het herroepingsrecht. Daarom sturen we altijd eerst een digitale proef. <a href="/verzenden-en-retourneren/">Lees meer over retourneren</a>.</p>
+    <a href="/posters/" class="link-pijl">Bekijk alle posters <Icon naam="pijl" /></a>
+  </section>
+</Basis>
+<style>
+  .held { display: grid; grid-template-columns: 1fr 1.15fr; gap: clamp(24px, 5vw, 64px); align-items: center; padding-top: 12px; }
+  h1 { font-size: clamp(2.3rem, 1.6rem + 2.6vw, 4rem); }
+  .stappen-klein { padding-left: 1.2em; display: grid; gap: 8px; margin: 20px 0 0; }
+  .stappen-klein li::marker { color: var(--koraal); font-weight: 800; font-family: var(--font-kop); }
+  .beeld { position: relative; aspect-ratio: 16 / 10; box-shadow: var(--schaduw-l); }
+  .naam { position: absolute; left: 0; right: 0; top: 10%; text-align: center; font-family: var(--font-kop); font-weight: 800; font-size: clamp(2.4rem, 5vw, 4.4rem); color: #fff; text-shadow: 0 4px 24px rgb(0 0 0 / 0.35); }
+  .drie { grid-template-columns: repeat(3, 1fr); row-gap: 40px; }
+  @media (max-width: 960px) { .held { grid-template-columns: 1fr; } .drie { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 560px) { .drie { grid-template-columns: 1fr; } }
+</style>

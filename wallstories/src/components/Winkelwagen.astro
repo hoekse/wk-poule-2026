@@ -1,0 +1,55 @@
+---
+import Icon from './Icon.astro';
+---
+<dialog class="ww-lade" data-ww-lade aria-labelledby="ww-titel">
+  <div class="ww-kop">
+    <h2 id="ww-titel">Jouw winkelwagen</h2>
+    <button type="button" class="ww-sluit" data-ww-sluit aria-label="Winkelwagen sluiten"><Icon naam="sluit" /></button>
+  </div>
+  <div class="ww-inhoud" data-ww-regels></div>
+  <div class="ww-voet" data-ww-voet hidden>
+    <div data-ww-totalen></div>
+    <a href="/afrekenen/" class="knop knop--groot knop--blok">Veilig afrekenen <Icon naam="pijl" class="pijl" /></a>
+    <a href="/winkelwagen/" class="ww-bekijk">Bekijk winkelwagen</a>
+  </div>
+</dialog>
+
+<style is:global>
+  .ww-lade { width: min(460px, 100vw); max-width: 100vw; height: 100dvh; max-height: 100dvh; margin: 0 0 0 auto; padding: 0; border: 0; background: var(--wolk); display: none; flex-direction: column; }
+  .ww-lade[open] { display: flex; animation: inschuif-ww 0.3s var(--ease); }
+  @keyframes inschuif-ww { from { transform: translateX(48px); opacity: 0; } }
+  .ww-lade::backdrop { background: rgb(15 47 42 / 0.45); backdrop-filter: blur(2px); }
+  .ww-kop { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px; border-bottom: 1px solid var(--rand); }
+  .ww-kop h2 { font-size: 1.5rem; margin: 0; }
+  .ww-sluit { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 50%; border: 0; background: var(--papier); color: var(--groen); cursor: pointer; box-shadow: var(--schaduw-s); }
+  .ww-sluit svg { width: 22px; height: 22px; }
+  .ww-inhoud { flex: 1; overflow-y: auto; padding: 8px 24px; }
+  .ww-voet { padding: 18px 24px 24px; border-top: 1px solid var(--rand); background: var(--papier); display: grid; gap: 12px; }
+  .ww-voet[hidden] { display: none; }
+  .ww-bekijk { text-align: center; font-weight: 700; font-size: 0.9rem; color: var(--groen); }
+
+  .ww-leeg { text-align: center; padding: 48px 12px; }
+  .ww-regels { list-style: none; margin: 0; padding: 0; }
+  .ww-regel { display: grid; grid-template-columns: 80px 1fr auto; gap: 14px; padding: 18px 0; border-bottom: 1px solid var(--rand); align-items: start; }
+  .ww-thumb { width: 80px; height: 80px; border-radius: 14px; overflow: hidden; background: var(--zand-100); display: block; }
+  .ww-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .ww-naam { font-family: var(--font-kop); font-weight: 700; color: var(--groen); text-decoration: none; font-size: 1.05rem; line-height: 1.2; }
+  .ww-details { list-style: none; margin: 4px 0 10px; padding: 0; font-size: 0.82rem; color: var(--tekst-zacht); line-height: 1.45; }
+  .ww-maatwerk { color: var(--koraal-tekst); font-weight: 600; }
+  .ww-acties { display: flex; align-items: center; gap: 14px; }
+  .ww-prijs { margin: 0; font-size: 1.05rem; white-space: nowrap; }
+  .ww-verwijder { background: none; border: 0; padding: 0; font-size: 0.82rem; color: var(--tekst-zacht); text-decoration: underline; cursor: pointer; }
+  .stepper { display: inline-flex; align-items: center; border: 1.5px solid var(--rand-sterk); border-radius: 999px; background: #fff; height: 36px; }
+  .stepper button { width: 34px; height: 100%; border: 0; background: none; font-size: 1.1rem; font-weight: 700; color: var(--groen); cursor: pointer; border-radius: 999px; }
+  .stepper button:disabled { opacity: 0.3; cursor: default; }
+  .stepper span { min-width: 22px; text-align: center; font-weight: 700; color: var(--groen); }
+
+  .ww-verzendbalk p { margin: 0 0 6px; }
+  .balk { height: 8px; border-radius: 99px; background: var(--zand-100); overflow: hidden; }
+  .balk span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--munt), var(--heuvel)); transition: width 0.4s var(--ease); }
+  .ww-som { margin: 10px 0 0; display: grid; gap: 6px; font-size: 0.92rem; }
+  .ww-som div { display: flex; justify-content: space-between; }
+  .ww-som dt, .ww-som dd { margin: 0; }
+  .ww-totaal { padding-top: 8px; border-top: 1px dashed var(--rand-sterk); font-family: var(--font-kop); font-weight: 700; color: var(--groen); font-size: 1.2rem; }
+  .ww-totaal small { font-family: var(--font-tekst); font-weight: 600; font-size: 0.75rem; color: var(--tekst-zacht); }
+</style>

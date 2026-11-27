@@ -1,0 +1,21 @@
+---
+import Basis from '@/layouts/Basis.astro';
+import WereldTegel from '@/components/WereldTegel.astro';
+import Icon from '@/components/Icon.astro';
+import { werelden } from '@/data/werelden';
+---
+<Basis titel="Pagina niet gevonden" beschrijving="Deze pagina bestaat niet (meer)." noindex>
+  <section class="container sectie centreer">
+    <span class="eyebrow">404</span>
+    <h1>Dit verhaal is nog niet geschreven</h1>
+    <p class="lead">De pagina die je zoekt bestaat niet (meer). Misschien vind je hier een nieuwe favoriet?</p>
+    <a href="/" class="knop">Naar de homepage <Icon naam="pijl" class="pijl" /></a>
+    <ul class="tegels">{werelden.slice(0, 6).map((w) => <li><WereldTegel wereld={w} sizes="160px" /></li>)}</ul>
+  </section>
+</Basis>
+<style>
+  .centreer { text-align: center; display: grid; justify-items: center; }
+  h1 { font-size: clamp(2.2rem, 1.5rem + 2.4vw, 3.6rem); }
+  .tegels { list-style: none; padding: 0; margin: 48px 0 0; display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; width: 100%; }
+  @media (max-width: 760px) { .tegels { grid-template-columns: repeat(3, 1fr); } }
+</style>

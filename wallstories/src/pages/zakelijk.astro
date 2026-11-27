@@ -1,0 +1,53 @@
+---
+import { Image } from 'astro:assets';
+import Basis from '@/layouts/Basis.astro';
+import Kruimelpad from '@/components/Kruimelpad.astro';
+import AanvraagFormulier from '@/components/AanvraagFormulier.astro';
+import Icon from '@/components/Icon.astro';
+import { beelden } from '@/lib/beelden';
+import { kruimelpad } from '@/lib/schema';
+import { winkel } from '@/config';
+const kruimels = [{ naam: 'Home', url: '/' }, { naam: 'Zakelijk', url: '/zakelijk/' }];
+const sectoren = [
+  { titel: 'Kinderopvang & bso', tekst: 'Groepsruimtes en slaapkamers met een rustig, herkenbaar verhaal.' },
+  { titel: 'Wachtkamers', tekst: 'Tandarts, huisarts, fysio of ziekenhuis: afleiding die kinderen geruststelt.' },
+  { titel: 'Scholen & bibliotheken', tekst: 'Leeshoeken en gangen die uitnodigen tot verhalen en ontdekken.' },
+  { titel: 'Hotels & horeca', tekst: 'Familiekamers en kinderhoeken die gasten bijblijven.' },
+];
+---
+<Basis titel="Zakelijk – muurdecoratie voor kinderopvang en wachtkamers" beschrijving="Wallstories Kids voor kinderopvang, wachtkamers, scholen en hotels: fotobehang op maat in grote oplagen, eigen ontwerpen en professioneel aanbrengen." jsonLd={[kruimelpad(Astro.site, kruimels)]}>
+  <Kruimelpad items={kruimels} />
+  <section class="container held">
+    <div>
+      <span class="eyebrow">Zakelijk</span>
+      <h1>Ruimtes waar kinderen zich thuis voelen</h1>
+      <p class="lead">Voor kinderopvang, zorg, onderwijs en hospitality maken we muren die rust en verwondering brengen. Van één wand tot een compleet gebouw – inclusief ontwerp en, op aanvraag, professioneel aanbrengen.</p>
+      <ul class="checklist">
+        <li><Icon naam="vink-rond" /> Ontwerp afgestemd op jullie ruimte en huisstijl</li>
+        <li><Icon naam="vink-rond" /> PVC-vrij vliesbehang, geschikt voor intensief gebruik</li>
+        {winkel.aanbrengservice && <li><Icon naam="vink-rond" /> Aanbrengen door een vakschilder (op aanvraag)</li>}
+        <li><Icon naam="vink-rond" /> Factuur op naam van de organisatie</li>
+      </ul>
+    </div>
+    <div class="media beeld"><Image src={beelden.onderwater} alt="Onderwaterwereld met een walvis en een duikertje" widths={[640, 1000, 1400]} sizes="(max-width: 960px) 92vw, 600px" loading="eager" /></div>
+  </section>
+  <section class="container sectie--krap">
+    <ul class="sectoren">{sectoren.map((s) => <li class="kaart"><h2 class="h-klein">{s.titel}</h2><p>{s.tekst}</p></li>)}</ul>
+  </section>
+  <section class="container sectie--krap form-blok">
+    <div><h2>Vraag een offerte aan</h2><p class="zacht">Vertel ons over de ruimte, het aantal wanden en de gewenste planning. We nemen binnen één werkdag contact op.</p></div>
+    <AanvraagFormulier soort="zakelijk" knop="Vraag een offerte aan" extra={['organisatie', 'telefoon', 'muurmaat', 'plaats']} />
+  </section>
+</Basis>
+<style>
+  .held { display: grid; grid-template-columns: 1fr 1.1fr; gap: clamp(24px, 5vw, 64px); align-items: center; padding-top: 12px; }
+  h1 { font-size: clamp(2.3rem, 1.6rem + 2.6vw, 4rem); }
+  .beeld { aspect-ratio: 16 / 10; box-shadow: var(--schaduw); }
+  .sectoren { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+  .sectoren li { padding: 24px; }
+  .h-klein { font-size: 1.2rem; }
+  .sectoren p { margin: 0; color: var(--tekst-zacht); font-size: 0.92rem; }
+  .form-blok { display: grid; grid-template-columns: 1fr 1.6fr; gap: clamp(24px, 5vw, 72px); align-items: start; }
+  @media (max-width: 960px) { .held, .form-blok { grid-template-columns: 1fr; } .sectoren { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 560px) { .sectoren { grid-template-columns: 1fr; } }
+</style>

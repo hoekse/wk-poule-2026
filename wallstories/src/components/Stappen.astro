@@ -1,0 +1,33 @@
+---
+import Spot from './Spot.astro';
+const stappen = [
+  { icoon: 'boek', titel: 'Kies een verhaal', tekst: 'Ontdek onze werelden en kies jullie favoriet.' },
+  { icoon: 'meetlint', titel: 'Vul je muurmaat in', tekst: 'Wij maken je behang precies passend, met 5 cm extra rondom.' },
+  { icoon: 'preview', titel: 'Bekijk je preview', tekst: 'Zie direct hoe het eruit komt te zien en schuif je uitsnede.' },
+  { icoon: 'doos', titel: 'Ontvang jouw verhaal', tekst: 'Zorgvuldig geprint en verpakt, klaar om aan te brengen.' },
+] as const;
+---
+<ol class="stappen">
+  {stappen.map((s, i) => (
+    <li>
+      <span class="nr">{i + 1}</span>
+      <Spot naam={s.icoon} maat={96} class="st-ill" />
+      <h3>{s.titel}</h3>
+      <p>{s.tekst}</p>
+    </li>
+  ))}
+</ol>
+
+<style>
+  .stappen { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); }
+  .stappen li { display: grid; justify-items: center; text-align: center; align-content: start; gap: 6px; padding: 0 14px; }
+  .stappen li + li { border-left: 1.5px solid rgb(24 64 58 / 0.12); }
+  .nr { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: var(--heuvel); color: #fff; font-family: var(--font-kop); font-weight: 700; font-size: 1rem; box-shadow: 0 0 0 5px rgb(141 179 148 / 0.22); }
+  .stappen :global(.st-ill) { width: 96px; height: 96px; margin: 6px 0 2px; }
+  .stappen h3 { font-size: 1.02rem; margin: 0; font-family: var(--font-kop); }
+  .stappen p { font-size: 0.84rem; color: var(--tekst-zacht); margin: 0; line-height: 1.5; }
+  @media (max-width: 760px) {
+    .stappen { grid-template-columns: 1fr 1fr; row-gap: 28px; }
+    .stappen li:nth-child(3) { border-left: 0; }
+  }
+</style>

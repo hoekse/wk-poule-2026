@@ -1,0 +1,38 @@
+---
+import ProductBeeld from './ProductBeeld.astro';
+import Icon from './Icon.astro';
+import type { Product } from '@/data/producten';
+import { euro } from '@/lib/prijs';
+interface Props { product: Product; kop?: 'h2' | 'h3'; }
+const { product: p, kop: Kop = 'h3' } = Astro.props;
+const eenheid = p.type === 'fotobehang' ? ' (min. 3 m²)' : '';
+---
+<article class="pk">
+  <a href={p.url} class="pk-link">
+    <ProductBeeld product={p} />
+    <div class="pk-tekst">
+      <p class="pk-sub">{p.ondertitel}</p>
+      <Kop class="pk-naam">{p.naam}</Kop>
+      <p class="pk-prijs"><span class="zacht klein">vanaf</span> <span class="prijs">{p.type === 'fotobehang' ? `${euro(4495)} /m²` : euro(p.vanafCent)}</span>{eenheid && <span class="sr-only">{eenheid}</span>}</p>
+      <span class="link-pijl">{p.maatwerk && p.type === 'fotobehang' ? 'Ontwerp jouw muur' : 'Bekijk'} <Icon naam="pijl" /></span>
+    </div>
+    {p.personaliseerbaar && <span class="label label--zon pk-label">Met naam mogelijk</span>}
+  </a>
+  <button type="button" class="pk-fav" data-fav={p.key} aria-pressed="false" aria-label="Bewaar in je bewaarlijst"><Icon naam="hart" /></button>
+</article>
+
+<style>
+  .pk { position: relative; }
+  .pk-link { display: grid; gap: 14px; text-decoration: none; color: inherit; }
+  .pk-tekst { display: grid; gap: 2px; padding-inline: 4px; }
+  .pk-sub { margin: 0; font-size: 0.84rem; color: var(--tekst-zacht); font-weight: 600; }
+  .pk-naam { margin: 0; font-size: 1.25rem; }
+  .pk-prijs { margin: 2px 0 6px; }
+  .pk-prijs .prijs { font-size: 1.1rem; }
+  .pk-label { position: absolute; top: 14px; left: 14px; }
+  .pk-fav { position: absolute; top: 12px; right: 12px; width: 40px; height: 40px; display: grid; place-items: center; border-radius: 50%; border: 0; background: rgb(255 253 249 / 0.92); color: var(--groen); cursor: pointer; box-shadow: var(--schaduw-s); transition: transform 0.2s var(--ease), color 0.2s; }
+  .pk-fav:hover { transform: scale(1.08); }
+  .pk-fav :global(svg) { width: 20px; height: 20px; }
+  .pk-fav[aria-pressed='true'] { color: var(--koraal); }
+  .pk-fav[aria-pressed='true'] :global(svg) { fill: currentColor; }
+</style>

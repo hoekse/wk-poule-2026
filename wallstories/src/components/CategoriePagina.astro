@@ -1,0 +1,108 @@
+---
+import { Image } from 'astro:assets';
+import Basis from '@/layouts/Basis.astro';
+import Kruimelpad from './Kruimelpad.astro';
+import ProductKaart from './ProductKaart.astro';
+import Icon from './Icon.astro';
+import Stappen from './Stappen.astro';
+import { categorieen, productenInCategorie } from '@/data/producten';
+import { faq } from '@/data/faq';
+import { beelden } from '@/lib/beelden';
+import { kruimelpad, absoluut } from '@/lib/schema';
+
+interface Props { slug: string; }
+const cat = categorieen.find((c) => c.slug === Astro.props.slug)!;
+const items = productenInCategorie(cat.slug);
+const kruimels = [{ naam: 'Home', url: '/' }, { naam: cat.naam, url: `/${cat.slug}/` }];
+
+/** Categorie-specifieke SEO-tekst (onderaan de pagina, na de producten). */
+const seo: Record<string, { kop: string; tekst: string[] }[]> = {
+  'fotobehang-kinderkamer': [
+    { kop: 'Fotobehang voor de kinderkamer: een hele muur vol verhaal', tekst: [
+      'Met fotobehang maak je van één wand het middelpunt van de kinderkamer. Bij Wallstories Kids kies je geen los plaatje, maar een complete wereld: een walvis die door de oceaan zwemt, Kees Komeet tussen de planeten of een sprookjeskasteel achter de heuvels. Elke wereld is zo getekend dat er altijd iets nieuws te ontdekken valt.',
+      'Omdat we elke muur op bestelling printen, betaal je alleen voor wat je nodig hebt: je vult de breedte en hoogte in en ziet direct je uitsnede. Wij voegen 5 cm overmaat rondom toe, zodat je het behang strak kunt afsnijden langs plafond, plint en hoeken.',
+    ] },
+    { kop: 'Babykamer, kinderkamer of speelkamer', tekst: [
+      'Voor een babykamer kiezen veel ouders een rustige wereld zoals Onderwater of Sprookjes. Peuters en kleuters zijn vaak dol op Dino of Bouwplaats, en de Ruimte groeit mee tot ver in de basisschool. Twijfel je? Bestel eerst een proefstaal en bekijk de kleuren in het licht van de kamer.',
+    ] },
+    { kop: 'Veilig en verantwoord', tekst: [
+      'Ons fotobehang is PVC-vrij vliesbehang, gedrukt met watergedragen latexinkt. Het is ademend, geurarm en droog afneembaar wanneer je kind toe is aan een nieuw verhaal. Lees meer in ons artikel over <a href="/inspiratie/veilig-behang-babykamer/">veilig behang in de babykamer</a>.',
+    ] },
+  ],
+  behangcirkels: [
+    { kop: 'Een behangcirkel: klein formaat, groot verhaal', tekst: [
+      'Een behangcirkel is ideaal als je niet een hele wand wilt bekleden, of als je huurt. De zelfklevende cirkels breng je zonder lijm aan en kun je herpositioneren tot hij precies goed hangt.',
+      'Hang een cirkel boven het bedje, achter een leeshoek of als blikvanger naast de kast. Ze zijn er in Ø 70, 100 en 125 cm en passen bij het fotobehang en de posters uit dezelfde wereld.',
+    ] },
+  ],
+  posters: [
+    { kop: 'Posters voor de kinderkamer, ook met naam', tekst: [
+      'Met een poster breng je een wereld van Wallstories naar elke hoek van het huis: in de babykamer, de speelhoek of de gang. Elke poster wordt geprint op mat museumkwaliteit papier en past in standaard lijsten.',
+      'Voeg de naam van je kind toe voor een persoonlijke poster – een geliefd kraamcadeau of verjaardagscadeau.',
+    ] },
+  ],
+  muurstickers: [
+    { kop: 'Muurstickers met karakter', tekst: [
+      'Laat Rembrandt 2.0, Bella Ballon of Kees Komeet uit het behang stappen. De matte muurstickers zijn makkelijk aan te brengen en weer te verwijderen, zodat de kamer mee kan groeien met je kind.',
+      'Met een naamsticker zet je de naam van je kind in het Wallstories-lettertype op de muur – in één van onze merkkleuren.',
+    ] },
+  ],
+};
+const relevanteFaq = faq.filter((f) => (cat.type === 'fotobehang' ? ['Maatwerk & opmeten', 'Aanbrengen', 'Materiaal & veiligheid'] : ['Verzenden & retour', 'Bestellen', 'Personaliseren']).includes(f.categorie)).slice(0, 4);
+const ld = [
+  kruimelpad(Astro.site, kruimels),
+  { '@type': 'CollectionPage', name: cat.h1, url: absoluut(Astro.site, `/${cat.slug}/`), description: cat.metaBeschrijving,
+    mainEntity: { '@type': 'ItemList', itemListElement: items.map((x, i) => ({ '@type': 'ListItem', position: i + 1, url: absoluut(Astro.site, x.url), name: x.naam })) } },
+];
+---
+<Basis titel={cat.seoTitel} beschrijving={cat.metaBeschrijving} jsonLd={ld} ogBeeld={beelden[items[0].beeld]}>
+  <Kruimelpad items={kruimels} />
+  <header class="container cat-kop">
+    <h1>{cat.h1}</h1>
+    <p class="lead">{cat.intro}</p>
+    <ul class="cat-usps">{cat.usp.map((u) => <li><Icon naam="vink" /> {u}</li>)}</ul>
+  </header>
+
+  <section class="container sectie--krap" aria-label="Producten">
+    <div class="grid cat-grid">{items.map((x) => <ProductKaart product={x} kop="h2" />)}</div>
+  </section>
+
+  {cat.type === 'fotobehang' && (
+    <section class="container sectie--krap">
+      <div class="werkt-kaart"><span class="eyebrow">Zo werkt het</span><h2>In vier stappen een muur vol verhaal</h2><Stappen /></div>
+    </section>
+  )}
+
+  <section class="container sectie seo-blok">
+    <div class="proza">
+      {seo[cat.slug]?.map((b) => (<><h2>{b.kop}</h2>{b.tekst.map((t) => <p set:html={t} />)}</>))}
+    </div>
+    <aside class="seo-zij">
+      <div class="media"><Image src={beelden['babykamer-walvis']} alt="Babykamer met fotobehang van Wallstories Kids" widths={[400, 700]} sizes="(max-width: 960px) 90vw, 380px" loading="lazy" /></div>
+      {relevanteFaq.length > 0 && (
+        <div class="faq-lijst">
+          <h2 class="h-klein">Veelgestelde vragen</h2>
+          {relevanteFaq.map((v) => <details class="faq-item"><summary>{v.vraag}<Icon naam="plus" /></summary><p set:html={v.antwoord} /></details>)}
+        </div>
+      )}
+    </aside>
+  </section>
+</Basis>
+
+<style>
+  .cat-kop { padding-top: 16px; }
+  .cat-kop h1 { font-size: clamp(2.2rem, 1.5rem + 2.6vw, 3.8rem); max-width: 18ch; }
+  .cat-usps { list-style: none; margin: 18px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+  .cat-usps li { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 999px; background: var(--papier); border: 1px solid var(--rand); font-weight: 700; font-size: 0.85rem; color: var(--groen); }
+  .cat-usps :global(svg) { width: 16px; height: 16px; color: var(--heuvel); stroke-width: 2.5; }
+  .cat-grid { grid-template-columns: repeat(3, 1fr); row-gap: 44px; }
+  .werkt-kaart { background: var(--zand-100); border-radius: var(--r-xl); padding: clamp(24px, 4vw, 48px); }
+  .seo-blok { display: grid; grid-template-columns: 1.4fr 1fr; gap: clamp(24px, 5vw, 72px); align-items: start; }
+  .seo-blok .proza :global(h2:first-child) { margin-top: 0; }
+  .seo-zij { display: grid; gap: 24px; }
+  .seo-zij .media { aspect-ratio: 4 / 3; }
+  .faq-lijst { display: grid; gap: 10px; }
+  .h-klein { font-size: 1.4rem; margin-bottom: 4px; }
+  @media (max-width: 960px) { .cat-grid { grid-template-columns: 1fr 1fr; } .seo-blok { grid-template-columns: 1fr; } }
+  @media (max-width: 560px) { .cat-grid { grid-template-columns: 1fr; } }
+</style>

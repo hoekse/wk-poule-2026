@@ -1,0 +1,54 @@
+---
+import Basis from '@/layouts/Basis.astro';
+import Icon from '@/components/Icon.astro';
+---
+<Basis titel="Mijn bestelling" beschrijving="Bekijk de status van je bestelling bij Wallstories Kids met je bestelnummer en e-mailadres." noindex>
+  <section class="container sectie--krap smal">
+    <span class="eyebrow">Klantenservice</span>
+    <h1>Mijn bestelling</h1>
+    <p class="lead">Vul je bestelnummer en e-mailadres in om de status van je bestelling te bekijken. Je vindt het bestelnummer in je orderbevestiging.</p>
+    <form class="kaart form" data-zoek-bestelling novalidate>
+      <div class="veld"><label for="nr">Bestelnummer</label><input class="invoer" id="nr" name="nr" placeholder="WS-261127-AB12" required pattern="WS-\d{6}-[A-Za-z0-9]{4}" autocomplete="off" /></div>
+      <div class="veld"><label for="mail">E-mailadres</label><input class="invoer" id="mail" name="email" type="email" autocomplete="email" required /></div>
+      <button type="submit" class="knop">Bekijk status <Icon naam="pijl" class="pijl" /></button>
+      <p class="fout" data-fout role="alert"></p>
+    </form>
+    <div class="kaart resultaat" data-resultaat hidden></div>
+  </section>
+</Basis>
+<script>
+  const form = document.querySelector<HTMLFormElement>('[data-zoek-bestelling]')!;
+  const fout = form.querySelector<HTMLElement>('[data-fout]')!;
+  const res = document.querySelector<HTMLElement>('[data-resultaat]')!;
+  const stappen = [['betaald', 'Betaling ontvangen'], ['proef_verstuurd', 'Digitale proef verstuurd'], ['in_productie', 'In productie'], ['verzonden', 'Verzonden'], ['afgerond', 'Afgeleverd']];
+  const volgorde = ['nieuw', 'proef_verstuurd', 'proef_akkoord', 'in_productie', 'verzonden', 'afgerond'];
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault(); fout.textContent = ''; res.hidden = true;
+    if (!form.reportValidity()) return;
+    const f = new FormData(form);
+    try {
+      const r = await fetch('/api/bestelling-zoeken/', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ nr: String(f.get('nr')).toUpperCase().trim(), email: f.get('email') }) });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.fout || 'Bestelling niet gevonden.');
+      const p = volgorde.indexOf(j.productie_status);
+      res.innerHTML = `<h2>Bestelling ${j.bestelnummer}</h2><ol class="tijdlijn">${stappen.map(([k, t], i) => {
+        const klaar = i === 0 ? j.status === 'betaald' : p >= volgorde.indexOf(k);
+        return `<li class="${klaar ? 'klaar' : ''}">${t}</li>`;
+      }).join('')}</ol>${j.track_trace ? `<p><b>Track & trace:</b> <a href="${j.track_trace}" rel="noopener" target="_blank">volg je pakket</a></p>` : ''}${j.status !== 'betaald' ? `<p class="zacht">Betaalstatus: ${j.status}</p>` : ''}`;
+      res.hidden = false;
+    } catch (err) { fout.textContent = (err as Error).message; }
+  });
+</script>
+<style>
+  .smal { max-width: calc(720px + 2 * var(--gutter)); }
+  h1 { font-size: clamp(2.2rem, 1.5rem + 2.4vw, 3.4rem); }
+  .form { padding: 28px; display: grid; gap: 16px; margin-top: 24px; }
+  .form button { justify-self: start; }
+  .resultaat { padding: 28px; margin-top: 20px; }
+  .resultaat :global(h2) { font-size: 1.4rem; }
+  .resultaat :global(.tijdlijn) { list-style: none; padding: 0; margin: 0 0 12px; display: grid; gap: 12px; }
+  .resultaat :global(.tijdlijn li) { position: relative; padding-left: 34px; color: var(--tekst-zacht); font-weight: 600; }
+  .resultaat :global(.tijdlijn li::before) { content: ''; position: absolute; left: 0; top: 2px; width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--rand-sterk); background: #fff; }
+  .resultaat :global(.tijdlijn li.klaar) { color: var(--groen); }
+  .resultaat :global(.tijdlijn li.klaar::before) { background: var(--heuvel); border-color: var(--heuvel); box-shadow: inset 0 0 0 4px #fff; }
+</style>

@@ -1,0 +1,16 @@
+---
+import horizontaal from '@/assets/brand/logo-horizontaal.svg?raw';
+import compact from '@/assets/brand/logo-horizontaal-compact.svg?raw';
+import gestapeld from '@/assets/brand/logo-gestapeld.svg?raw';
+import embleem from '@/assets/brand/embleem.svg?raw';
+interface Props { variant?: 'horizontaal' | 'compact' | 'gestapeld' | 'embleem'; class?: string; }
+const { variant = 'horizontaal', class: klasse } = Astro.props;
+const svg = { horizontaal, compact, gestapeld, embleem }[variant]
+  // unieke clipPath-id's per instantie voorkomen conflicten als het logo vaker op een pagina staat
+  .replace(/id="(ws\w)"/g, `id="$1-${variant}"`).replace(/url\(#(ws\w)\)/g, `url(#$1-${variant})`);
+---
+<span class:list={['logo', `logo--${variant}`, klasse]} set:html={svg} />
+<style>
+  .logo { display: inline-block; line-height: 0; }
+  .logo :global(svg) { width: 100%; height: auto; }
+</style>

@@ -1,0 +1,58 @@
+---
+/**
+ * Productvisual per type, opgebouwd uit het wereldbeeld + CSS (geen extra foto's nodig, altijd scherp).
+ *  fotobehang → wandvullend · behangcirkel → cirkel op een muur · poster → ingelijst · sticker → uitgesneden personage
+ */
+import { Image } from 'astro:assets';
+import { beelden } from '@/lib/beelden';
+import type { Product } from '@/data/producten';
+interface Props { product: Product; groot?: boolean; eager?: boolean; sizes?: string; }
+const { product: p, groot = false, eager = false, sizes = '(max-width: 640px) 90vw, (max-width: 1100px) 45vw, 380px' } = Astro.props;
+const src = beelden[p.beeld];
+const laad = eager ? 'eager' : 'lazy';
+const muren: Record<string, string> = { behangcirkel: '#EDE3D3', poster: '#E4EEE7', muursticker: '#E1EDF5', naamsticker: '#F3EADC' };
+const breedtes = groot ? [480, 800, 1200, 1600, 2200] : [320, 480, 640, 900];
+---
+<div class:list={['pb', `pb--${p.type}`, { 'pb--groot': groot }]} style={`--muur:${muren[p.type] ?? 'var(--zand-100)'}`}>
+  {p.type === 'fotobehang' && (
+    <Image src={src} alt={p.alt} widths={breedtes} sizes={sizes} loading={laad} fetchpriority={eager ? 'high' : 'auto'} class="pb-vol" style={`object-position:${p.focus}`} />
+  )}
+  {p.type === 'behangcirkel' && (
+    <div class="pb-cirkel"><Image src={src} alt={p.alt} widths={breedtes} sizes={sizes} loading={laad} style={`object-position:${p.focus}`} /></div>
+  )}
+  {p.type === 'poster' && (
+    <div class="pb-lijst"><div class="pb-passe"><Image src={src} alt={p.alt} widths={breedtes} sizes={sizes} loading={laad} style={`object-position:${p.focus}`} /></div></div>
+  )}
+  {p.type === 'muursticker' && (
+    <Image src={src} alt={p.alt} widths={breedtes.map((w) => Math.round(w * 0.7))} sizes={sizes} loading={laad} class="pb-sticker" />
+  )}
+  {p.type === 'naamsticker' && (
+    <div class="pb-naam" aria-hidden="true"><span style="color:#F0B44D">N</span><span style="color:#F08A76">o</span><span style="color:#A8C5B3">o</span><span style="color:#9DC4E0">r</span></div>
+  )}
+  {p.type !== 'fotobehang' && <span class="pb-plint" aria-hidden="true" />}
+</div>
+
+<style>
+  .pb { position: relative; aspect-ratio: 4 / 3; border-radius: var(--r-lg); overflow: hidden; background: var(--muur); isolation: isolate; display: grid; place-items: center; }
+  .pb--groot { aspect-ratio: 5 / 4; }
+  .pb img { transition: transform 0.7s var(--ease); }
+  a:hover .pb img { transform: scale(1.04); }
+  .pb-vol { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  /* subtiele wandtextuur */
+  .pb:not(.pb--fotobehang)::before { content: ''; position: absolute; inset: 0; background: radial-gradient(120% 80% at 30% 20%, rgb(255 255 255 / 0.55), transparent 60%); z-index: -1; }
+  .pb-plint { position: absolute; left: 0; right: 0; bottom: 0; height: 9%; background: linear-gradient(#dcc9aa, #cdb68f); box-shadow: 0 -1px 0 rgb(0 0 0 / 0.06); }
+  .pb-plint::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 4px; background: #f6efe4; }
+
+  .pb-cirkel { width: 62%; aspect-ratio: 1; border-radius: 50%; overflow: hidden; margin-top: -6%; box-shadow: 0 1px 2px rgb(0 0 0 / 0.08), 0 18px 36px -20px rgb(24 64 58 / 0.55); }
+  .pb-cirkel img { width: 100%; height: 100%; object-fit: cover; }
+
+  .pb-lijst { width: 44%; aspect-ratio: 3 / 4; margin-top: -6%; padding: 3.2%; background: linear-gradient(135deg, #b88c5c, #8f6638); border-radius: 3px;
+    box-shadow: 0 1px 0 rgb(255 255 255 / 0.3) inset, 0 2px 3px rgb(0 0 0 / 0.15), 0 22px 40px -18px rgb(24 64 58 / 0.6); }
+  .pb-passe { width: 100%; height: 100%; padding: 10%; background: #fffdf8; box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.05), inset 0 2px 6px rgb(0 0 0 / 0.08); }
+  .pb-passe img { width: 100%; height: 100%; object-fit: cover; }
+
+  .pb-sticker { width: auto; height: 74%; object-fit: contain; margin-top: -6%; filter: drop-shadow(0 10px 14px rgb(24 64 58 / 0.18)); }
+
+  .pb-naam { font-family: var(--font-kop); font-weight: 800; font-size: clamp(3rem, 9vw, 6.5rem); letter-spacing: 0.02em; margin-top: -6%; text-shadow: 0 6px 18px rgb(24 64 58 / 0.12); }
+  .pb--groot .pb-naam { font-size: clamp(4rem, 12vw, 9rem); }
+</style>

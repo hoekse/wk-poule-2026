@@ -1,0 +1,38 @@
+import { defineCollection, z } from 'astro:content';
+import { glob } from 'astro/loaders';
+
+/** Beeldsleutels die artikelen mogen gebruiken (zie src/lib/beelden.ts). */
+export const beeldSleutels = [
+  'hero-schilder', 'babykamer-walvis',
+  'rembrandt-museum', 'onderwater', 'ruimte', 'dino', 'bouwplaats', 'sprookjes',
+] as const;
+
+const inspiratie = defineCollection({
+  loader: glob({ pattern: '**/*.md', base: './src/content/inspiratie' }),
+  schema: z.object({
+    titel: z.string().max(70),
+    seoTitel: z.string().max(60).optional(),
+    beschrijving: z.string().min(110).max(160),
+    focusKeyword: z.string(),
+    categorie: z.enum(['Inspiratie', 'Handleiding', 'Advies']),
+    publicatiedatum: z.coerce.date(),
+    bijgewerkt: z.coerce.date().optional(),
+    leestijd: z.number().int(),
+    afbeelding: z.enum(beeldSleutels),
+    afbeeldingAlt: z.string(),
+    wereld: z.string().optional(),
+  }),
+});
+
+const paginas = defineCollection({
+  loader: glob({ pattern: '**/*.md', base: './src/content/paginas' }),
+  schema: z.object({
+    titel: z.string(),
+    seoTitel: z.string().max(60).optional(),
+    beschrijving: z.string().max(160),
+    bijgewerkt: z.coerce.date(),
+    intro: z.string().optional(),
+  }),
+});
+
+export const collections = { inspiratie, paginas };

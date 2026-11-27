@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-6 -2 112 134" role="img" aria-label="Wallstories Kids">
+  <defs><clipPath id="wse"><path d="M8,124V52A42,42 0 0 1 92,52V124Z"/></clipPath></defs>
+  <g clip-path="url(#wse)">
+    <rect x="0" y="0" width="100" height="130" fill="#FFFDF9"/>
+    <circle cx="33" cy="66" r="12.5" fill="#F0B44D"/>
+    <path d="M67.00,27.40L69.00,32.25L74.23,32.65L70.23,36.05L71.47,41.15L67.00,38.40L62.53,41.15L63.77,36.05L59.77,32.65L65.00,32.25Z" fill="#F08A76" stroke="#F08A76" stroke-width="1.6" stroke-linejoin="round"/>
+    <path d="M38,124C47,98 60,83 75,80.5C84,79 90,81 94,83V124Z" fill="#9DC4E0"/>
+    <path d="M2,99C15,89 33,87.5 47,95C56,100 62,109 64,124H2Z" fill="#8DB394"/>
+    <path d="M24,124C38,112 54,104 66,100C74,97.5 79,100 83,105.5C87,110.5 91,112 92,112V124H24Z" fill="#9DC4E0"/>
+    <path d="M24,124C38,112 54,104 66,100C74,97.5 79,100 83,105.5C87,110.5 91,112 92,112" fill="none" stroke="#18403A" stroke-width="2.6" stroke-linecap="round"/>
+  </g>
+  <path d="M8,124V52A42,42 0 0 1 92,52V124Z" fill="none" stroke="#18403A" stroke-width="5" stroke-linejoin="round"/></svg>
