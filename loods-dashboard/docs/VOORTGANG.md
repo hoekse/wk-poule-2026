@@ -1,12 +1,52 @@
 # Voortgang Loods Dashboard
 
-*Laatst bijgewerkt: 9 november 2026*
+*Laatst bijgewerkt: 27 november 2026*
 
 | Fase | Status |
 |---|---|
 | **Fase 1 – Registratie (scan-app)** | ✅ Gebouwd en getest. **Klaar om door Dennis getest te worden** (zie `TESTPLAN-FASE1.md`). |
 | Fase 2 – 3D-tv-dashboard | ⏸ Wacht op goedkeuring van fase 1. Handleiding Raspberry Pi staat al klaar. |
 | Fase 3 – Slimme meldingen | ⏸ Datamodel is er al op voorbereid (keuringen, dagen weg, minimum). |
+| **Extra – Kleurvoorbeeld** | ✅ Gebouwd en getest met testfoto's. **Klaar om met echte foto's te testen** (zie hieronder). |
+
+---
+
+## Kleurvoorbeeld (extra, 27 november 2026)
+
+Op het startscherm staat de knop **Kleurvoorbeeld**. Daarmee maak je bij de klant een kleurvoorstel op een foto.
+
+**Zo werkt het**
+1. Kies wat er op de foto staat (voorgevel, achtergevel, woonkamer, slaapkamer, kantoor …) en eventueel het project of adres.
+2. **Foto maken** of **Foto kiezen**. De app zoekt in ongeveer een seconde zelf de kleurvlakken (bijvoorbeeld *Gebroken wit*, *Antraciet*, *Roodbruin*) en zet ze als onderdelen onder de foto.
+3. Tik op een onderdeel → **Nieuwe kleur kiezen**: veelgebruikte RAL-kleuren, alle 215 RAL-kleuren (zoeken op nummer of naam), **Mijn kleuren**, of **Eigen kleur** (bijv. een Sikkens- of Flexa-code met een kleur erbij, of een kleur uit de foto pakken). Eigen kleuren blijven op de telefoon bewaard.
+4. Klopt de selectie niet helemaal? Gereedschap onder de foto:
+   - **Vlak erbij / Vlak eraf**: tik op een vlak (toverstaf). Stopt vanzelf bij randen, zoals kozijn → muur. Met *Gevoeligheid* stel je in hoe ruim, met *Ook losse plekken* pak je die kleur in de hele foto.
+   - **Penseel / Gum**: met je vinger schilderen of weghalen. Het penseel blijft standaard binnen dezelfde kleur (niet over de rand).
+   - Inzoomen met twee vingers; **Hele foto** zet het terug.
+   - **Nieuw onderdeel** voor iets dat dezelfde kleur heeft als iets anders maar een eigen kleur krijgt (bijv. de voordeur in een wit kozijn).
+   - **Ongedaan maken** (pijltje rechtsboven), tot 12 stappen terug.
+5. **Voor / na**: schuif over de foto om de huidige en de nieuwe kleuren te vergelijken.
+6. **Delen** (rechtsboven): één afbeelding met voor en na (of alleen nieuw), de lijst met onderdelen en kleurcodes en de Hoeksema-kopregel. Via WhatsApp, mail of opslaan in de foto's.
+7. Staat er restverf in de gekozen kleurcode in de loods, dan meldt de app dat ("Restverf op voorraad: 2 bussen met 9001").
+
+**Techniek en keuzes**
+- Alles gebeurt op de telefoon zelf: de foto wordt niet geüpload en er is geen internet nodig voor de beeldbewerking. Geen kosten per foto.
+- Kleurvlakken zoeken met kleurgroepering (k-means) op kleur, met minder gewicht voor licht/schaduw; de toverstaf kijkt ook naar randen in de foto.
+- Inkleuren met behoud van licht en schaduw: een muur die in de schaduw ligt, wordt in de nieuwe kleur ook donkerder. Randen worden zacht gemengd, zodat er geen lichte randjes om een kozijn blijven.
+- RAL-kleuren met Nederlandse namen; schermkleuren zijn een benadering (dat staat ook op de gedeelde afbeelding).
+- Het scherm wordt pas geladen als iemand het opent, dus de scan-app blijft even snel.
+- Code: `apps/scan/src/kleur/` (rekenwerk en onderdelen) en `apps/scan/src/pages/Kleurvoorbeeld.tsx`.
+
+**Beperkingen (eerlijk)**
+- De app herkent kleuren, geen voorwerpen. Witte wolken of een witte schutting kunnen bij de groep van de witte kozijnen zitten; haal ze weg met *Vlak eraf* of de gum.
+- Getest met nagemaakte testfoto's (gevel en woonkamer), omdat de testomgeving geen echte foto's kon downloaden. **Graag met echte foto's testen** en voorbeelden sturen waar het misgaat; dan stel ik de herkenning bij.
+- Een kleurvoorbeeld wordt nog niet bewaard: na sluiten is het weg (wel eerst een waarschuwing). Delen of opslaan als afbeelding kan altijd.
+
+**Vragen voor Dennis**
+1. Wil je kleurvoorbeelden **bewaren bij een project** (in Supabase), zodat je ze later terugziet en verder kunt bewerken?
+2. Welke kleurwaaiers gebruik je naast RAL (Sikkens 5051, Sigma, Flexa, NCS)? Merkkleuren mag ik niet zelf verzinnen; als je een kleurenlijst van de leverancier hebt (met kleurwaarden), zet ik die erin. Tot dan: *Eigen kleur* met code.
+3. Moet het logo op de gedeelde afbeelding? Dat kan zodra `Hoeksema_Logo_Transparant.png` er is.
+4. Mogen alle medewerkers het kleurvoorbeeld gebruiken, of alleen jij?
 
 ---
 
