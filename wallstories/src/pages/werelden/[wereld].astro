@@ -10,12 +10,14 @@ import { productenInWereld } from '@/data/producten';
 import { personageBySlug } from '@/data/personages';
 import { beelden } from '@/lib/beelden';
 import { kruimelpad, absoluut } from '@/lib/schema';
+import { alleVerhalen } from '@/lib/verhalen';
 export function getStaticPaths() { return werelden.map((wereld) => ({ params: { wereld: wereld.slug }, props: { wereld } })); }
 const { wereld: w } = Astro.props as { wereld: Wereld };
 const items = productenInWereld(w.slug);
 const personage = w.personage ? personageBySlug(w.personage) : undefined;
 const kruimels = [{ naam: 'Home', url: '/' }, { naam: 'Werelden', url: '/werelden/' }, { naam: w.naam, url: `/werelden/${w.slug}/` }];
 const anderen = werelden.filter((x) => x.slug !== w.slug);
+const heeftVerhaal = (await alleVerhalen()).some((v) => v.data.wereld === w.slug);
 const ld = [kruimelpad(Astro.site, kruimels), { '@type': 'CollectionPage', name: w.h1, description: w.metaBeschrijving, url: absoluut(Astro.site, `/werelden/${w.slug}/`),
   mainEntity: { '@type': 'ItemList', itemListElement: items.map((x, i) => ({ '@type': 'ListItem', position: i + 1, url: absoluut(Astro.site, x.url), name: x.naam })) } }];
 ---
@@ -41,9 +43,9 @@ const ld = [kruimelpad(Astro.site, kruimels), { '@type': 'CollectionPage', name:
 
   <section class="container sectie--krap verhaal-blok">
     <div class="proza">
-      <h2>Het verhaal: {w.verhaal}</h2>
+      <h2>{heeftVerhaal ? 'Het verhaal: ' : ''}{w.verhaal}</h2>
       {w.alineas.map((a) => <p>{a}</p>)}
-      <p><a href={`/verhalen/${w.slug}/`}>Lees het voorleesverhaal van deze wereld</a>: ongeveer vier minuten, voor kinderen van 3 tot 7 jaar.</p>
+      {heeftVerhaal && <p><a href={`/verhalen/${w.slug}/`}>Lees het voorleesverhaal van deze wereld</a>: ongeveer vier minuten, voor kinderen van 3 tot 7 jaar.</p>}
       <p class="zoek-penseel"><b>Zoekplaatje:</b> kater Penseel verstopt zich ergens in deze wereld. Wie vindt hem als eerste?</p>
       <p>Zoek je inspiratie? Lees onze <a href="/inspiratie/kinderkamer-inspiratie/">ideeën voor de kinderkamer</a> of ontdek <a href="/inspiratie/hoeveel-behang-nodig/">hoeveel behang je nodig hebt</a>.</p>
     </div>

@@ -7,6 +7,9 @@ import ruimte from '@/assets/werelden/ruimte.jpg';
 import dino from '@/assets/werelden/dino.jpg';
 import bouwplaats from '@/assets/werelden/bouwplaats.jpg';
 import sprookjes from '@/assets/werelden/sprookjes.jpg';
+import hertenbos from '@/assets/werelden/hertenbos.jpg';
+import jungle from '@/assets/werelden/jungle.jpg';
+import safari from '@/assets/werelden/safari.jpg';
 import pRembrandt from '@/assets/personages/rembrandt.png';
 import pBella from '@/assets/personages/bella-ballon.png';
 import pKees from '@/assets/personages/kees-komeet.png';
@@ -23,6 +26,9 @@ export const beelden = {
   dino,
   bouwplaats,
   sprookjes,
+  hertenbos,
+  jungle,
+  safari,
   'personage-rembrandt-2-0': pRembrandt,
   'personage-bella-ballon': pBella,
   'personage-kees-komeet': pKees,

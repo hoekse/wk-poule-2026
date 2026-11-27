@@ -130,6 +130,63 @@ export const werelden: Wereld[] = [
     zoekwoorden: ['sprookjes behang', 'kasteel behang', 'prinsessen behang'],
     alt: 'Illustratie van een pastelkasteel met rozen, Pien die in een boom klimt en Bella Ballon in haar gestreepte luchtballon',
   },
+  // ---- Dierenwerelden (trendstijlen: waterverf, toile in zandtinten, lijntekening) ----
+  {
+    slug: 'hertenbos',
+    naam: 'Hertenbos',
+    verhaal: 'De hertjes in het herfstbos',
+    beeld: 'hertenbos',
+    focus: '50% 50%',
+    kleur: '#B07A45',
+    seoTitel: 'Bosbehang kinderkamer – hertjes & bosdieren',
+    metaBeschrijving: 'Bosbehang voor de kinderkamer met hertjes, een vos, egel en uiltje in zachte waterverf. Fotobehang op maat, behangcirkels en posters. Pvc-vrij.',
+    h1: 'Bosbehang met hertjes voor de kinderkamer',
+    intro: 'In een zacht herfstbos staat een hertenfamilie op een open plek. Een vos slaapt opgerold, een egel scharrelt door de blaadjes en een uiltje houdt de wacht.',
+    alineas: [
+      'Waterverf in oker, salie en stoffig blauw: rustig genoeg voor een babykamer en warm genoeg om jaren mee te gaan.',
+      'Kijk goed: hoog in de lucht zweeft Bella Ballon voorbij, en tussen de gevallen blaadjes verstopt kater Penseel zich.',
+    ],
+    zoekwoorden: ['bosbehang kinderkamer', 'hertjes behang', 'dieren behang', 'bosdieren behang babykamer'],
+    alt: 'Waterverfillustratie van een hertenfamilie in een zacht herfstbos met een vos, egel, konijnen en een uiltje',
+  },
+  {
+    slug: 'jungle',
+    naam: 'Jungle',
+    verhaal: 'Een middag in de stille jungle',
+    beeld: 'jungle',
+    focus: '50% 50%',
+    kleur: '#B49A78',
+    seoTitel: 'Jungle behang kinderkamer – dieren in zandtinten',
+    metaBeschrijving: 'Jungle behang voor de kinderkamer in rustige zandtinten: giraffe, olifantje, zebra en toekan tussen palmbladeren. Fotobehang op maat, pvc-vrij.',
+    h1: 'Jungle behang voor de kinderkamer',
+    intro: 'Tussen grote palmbladeren staan een jonge giraf en een babyolifant zij aan zij. Een aapje slingert aan een liaan en een toekan kijkt nieuwsgierig toe.',
+    alineas: [
+      'Alles in warme zand-, beige- en taupetinten, als een moderne toile. Een neutrale keuze die past bij hout, linnen en rotan en die meegroeit tot in de tienerjaren.',
+      'De bladeren buigen samen tot een boog, net als het verhalenraam. Wie goed zoekt, vindt ook Penseel tussen het groen.',
+    ],
+    zoekwoorden: ['jungle behang kinderkamer', 'dieren behang babykamer', 'neutraal behang babykamer', 'safari behang'],
+    alt: 'Illustratie in zandtinten van een jungle met een giraf, babyolifant, zebra, aapje en toekan tussen palmbladeren',
+  },
+  {
+    slug: 'safari',
+    naam: 'Safari',
+    verhaal: 'Op safari met potlood en papier',
+    beeld: 'safari',
+    focus: '50% 50%',
+    kleur: '#7F8A5E',
+    seoTitel: 'Safari behang – dieren in lijntekening',
+    metaBeschrijving: 'Safari behang met dieren in fijne lijntekening: giraffe, zebra, olifant en leeuwtje op een rustige crème achtergrond. Fotobehang op maat, pvc-vrij.',
+    h1: 'Safari behang met dieren in lijntekening',
+    intro: 'Een giraf steekt zijn nek in de wolken, een olifant wandelt met haar kalfje en een leeuwtje ligt lui in het gras. Getekend met fijne lijnen en veel rust eromheen.',
+    alineas: [
+      'Minimalistisch en licht, in olijfgroen en warm grijs op crème. Ideaal als je een rustige muur wilt waarop toch veel te ontdekken valt.',
+      'Ook hier zweeft Bella Ballon in de lucht, en heeft kater Penseel een plekje in het gras gevonden.',
+    ],
+    zoekwoorden: ['safari behang', 'lijntekening behang', 'giraffe behang', 'dieren behang kinderkamer'],
+    alt: 'Lijntekening van safaridieren op crème: een giraf, zebra, olifant met kalfje, leeuwtje en toekan tussen palmbomen',
+  },
 ];
 
 export const wereldBySlug = (slug: string) => werelden.find((w) => w.slug === slug);
+/** Werelden met dieren in de hoofdrol (voor de landingspagina Dierenbehang). */
+export const dierenWerelden = ['hertenbos', 'jungle', 'safari', 'onderwater', 'dino'];

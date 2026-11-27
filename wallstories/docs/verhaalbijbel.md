@@ -125,3 +125,13 @@ Bella Ballon en Kees Komeet reizen door de zes werelden om uit te zoeken waarom.
 | Producten | Posters en stickers tonen de vaste personages; behang laat Penseel ergens verstopt zitten |
 | Social | Reeks "Wat Rembrandt vannacht zag": korte fragmenten uit de verhalen |
 | Ontwerp op maat | Gepresenteerd als "jouw zevende raam" |
+
+## 10. Dierenwerelden (nieuwe hoofdstukken)
+
+Drie werelden in populaire, rustige stijlen. Ze volgen dezelfde regels: Bella Ballon zweeft klein in de lucht, kater Penseel verstopt zich, en het verhalenraam zit verwerkt als boog. Voorleesverhalen volgen nog.
+
+| Wereld | Stijl | Kleuren | Dieren | Verhalenraam |
+|---|---|---|---|---|
+| **Hertenbos** | Zachte waterverf | Oker, amber, salie, stoffig blauw | Hertenfamilie, vos, egel, konijnen, uiltje | Twee bomen die samen een boog vormen |
+| **Jungle** | Tonaal, als een moderne toile | Zand, beige, crème, taupe | Giraf, babyolifant, zebra, aapje, toekan, papegaaien, leeuwtje | Gebogen palmbladeren |
+| **Safari** | Fijne lijntekening met wat waterverf | Olijfgroen, warm grijs op crème | Giraf, zebra, olifant met kalf, leeuwtje, toekan | Een rotsboog |

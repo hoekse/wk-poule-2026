@@ -8,7 +8,7 @@ import { beelden } from '@/lib/beelden';
 import { kruimelpad } from '@/lib/schema';
 const kruimels = [{ naam: 'Home', url: '/' }, { naam: 'Werelden', url: '/werelden/' }];
 ---
-<Basis titel="Alle werelden – thema's voor de kinderkamer" beschrijving="Ontdek de zes werelden van Wallstories Kids: Rembrandts Atelier, Onderwater, Ruimte, Dino, Bouwplaats en Sprookjes. Als fotobehang, behangcirkel, poster en sticker." jsonLd={[kruimelpad(Astro.site, kruimels)]}>
+<Basis titel="Alle werelden – thema's voor de kinderkamer" beschrijving="Ontdek de werelden van Wallstories Kids: van Ruimte en Dino tot Hertenbos, Jungle en Safari. Als fotobehang op maat, behangcirkel, poster en sticker." jsonLd={[kruimelpad(Astro.site, kruimels)]}>
   <Kruimelpad items={kruimels} />
   <header class="container kop">
     <span class="eyebrow">Ontdek de werelden</span>
@@ -35,7 +35,8 @@ const kruimels = [{ naam: 'Home', url: '/' }, { naam: 'Werelden', url: '/werelde
 </Basis>
 <style>
   .kop h1 { font-size: clamp(2.4rem, 1.6rem + 3vw, 4.2rem); }
-  .werelden { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 48px 32px; }
+  .werelden { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 48px 28px; }
+  @media (max-width: 1023px) { .werelden { grid-template-columns: 1fr 1fr; } }
   .wereld { display: grid; gap: 18px; text-decoration: none; color: inherit; }
   .wereld .media { aspect-ratio: 16 / 9; }
   .wereld h2 { margin: 0; }
