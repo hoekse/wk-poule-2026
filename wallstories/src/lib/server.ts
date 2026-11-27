@@ -22,7 +22,8 @@ export async function db<T = any>(pad: string, init: RequestInit = {}): Promise<
   if (!url || !key) throw new Error('Supabase is niet geconfigureerd');
   const res = await fetch(`${url}/rest/v1/${pad}`, {
     ...init,
-    headers: { apikey: key, Authorization: `Bearer ${key}`, 'Content-Type': 'application/json', Prefer: 'return=representation', ...(init.headers ?? {}) },
+    // Nieuwe Supabase-sleutels (sb_secret_…) gaan alleen in de apikey-header; de oude service_role-JWT ook als Bearer.
+    headers: { apikey: key, ...(key.startsWith('sb_') ? {} : { Authorization: `Bearer ${key}` }), 'Content-Type': 'application/json', Prefer: 'return=representation', ...(init.headers ?? {}) },
   });
   if (!res.ok) throw new Error(`Supabase ${res.status}: ${await res.text()}`);
   const tekst = await res.text();

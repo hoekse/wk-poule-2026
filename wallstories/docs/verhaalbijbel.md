@@ -38,7 +38,7 @@ Het logo van Wallstories is geen toevallig plaatje. Het boogvormige raam met de 
 |---|---|
 | **Echte naam** | Remmert van den Brandt. Omdat hij schildert als de oude meester, noemen alle kinderen hem *Rembrandt 2.0*. |
 | **Leeftijd** | "Ouder dan zijn baret en jonger dan zijn kwast." Ongeveer 70. |
-| **Uiterlijk (vast)** | Grijs krullend haar, volle grijze baard en snor, vriendelijke bruine ogen. Donker blauwgrijze baret met een steeltje. Okergele schildersjas met opgerolde mouwen en een paar verfvlekken, wit overhemd, donkerblauw gilet, ruime bruine broek met spetters, bruine veterlaarzen. Altijd een houten palet en een lange kwast. |
+| **Uiterlijk (vast)** | Grijs krullend haar, volle grijze baard en snor, vriendelijke bruine ogen. Donker blauwgrijze baret met een steeltje. Okerbruine schildersjas met opgerolde mouwen en een paar verfvlekken, wit overhemd, donkerblauw gilet, ruime bruine broek met spetters, bruine veterlaarzen. Altijd een houten palet en een lange kwast. |
 | **Karakter** | Geduldig, warm, een beetje vergeetachtig. Neuriet tijdens het schilderen. Heeft altijd een vlekje verf op zijn neus. |
 | **Gewoonte** | Zoekt zijn kwast terwijl die achter zijn oor zit. |
 | **Uitspraak** | "Elke muur heeft een verhaal. Je moet alleen goed kijken." |

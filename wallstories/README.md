@@ -33,6 +33,23 @@ Zonder sleutels draait de site volledig, alleen afrekenen staat dan in **demo-mo
 | `src/pages/api/` | `bestelling` (Mollie-betaling starten), `mollie-webhook`, `bestelling-status`, `bestelling-zoeken`, `aanvraag` |
 | `supabase/migrations/` | Database: `bestellingen` en `aanvragen` (RLS aan, alleen server-toegang) |
 
+## Testomgeving (staat klaar)
+
+| Onderdeel | Waar |
+|---|---|
+| Database | Supabase-project **wallstories-kids** (EU Frankfurt), tabellen `bestellingen` en `aanvragen` zijn aangemaakt |
+| Hosting | Vercel-project **wallstories-kids**, bouwt automatisch bij elke push (map `wallstories`) |
+| Al ingesteld in Vercel | `SUPABASE_URL`, `SITE_URL` (productie) |
+
+**Nog door jou in te stellen** (Vercel → wallstories-kids → Settings → Environment Variables, type *Sensitive*):
+
+1. `SUPABASE_SERVICE_ROLE_KEY` – Supabase → wallstories-kids → Project Settings → API Keys → *secret key* (`sb_secret_…`) of de legacy *service_role*-sleutel.
+2. `MOLLIE_API_KEY` – Mollie Dashboard → Ontwikkelaars → API-sleutels → de **test**-sleutel (`test_…`).
+3. Optioneel `RESEND_API_KEY` voor e-mails.
+4. Vercel → Settings → Deployment Protection → **Protection Bypass for Automation** aanzetten, zodat Mollie de webhook van de (beveiligde) testversie kan bereiken.
+
+Daarna opnieuw deployen (Deployments → … → Redeploy).
+
 ## Livegang in 6 stappen
 
 1. **Supabase**: maak een project in regio *EU (Frankfurt)*, voer `supabase/migrations/*.sql` uit (SQL-editor), noteer `SUPABASE_URL` en de *service role key*.
