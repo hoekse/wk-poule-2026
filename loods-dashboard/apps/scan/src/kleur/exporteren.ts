@@ -108,25 +108,19 @@ function plaatje(g: CanvasRenderingContext2D, tekst: string, x: number, y: numbe
   g.fillText(tekst, x + 14 * u, y + h / 2);
 }
 
-/** Deelt via het deelmenu van de telefoon (WhatsApp, mail …) of downloadt als dat niet kan. */
-export async function deelOfDownload(blob: Blob, bestandsnaam: string): Promise<'gedeeld' | 'gedownload' | 'geannuleerd'> {
+/**
+ * Deelt via het deelmenu van de telefoon (WhatsApp, mail …).
+ * Kan dat niet (bijv. op een computer), dan 'niet-mogelijk': het scherm toont de afbeelding dan met een knop Opslaan.
+ */
+export async function deelAfbeelding(blob: Blob, bestandsnaam: string): Promise<'gedeeld' | 'geannuleerd' | 'niet-mogelijk'> {
   const bestand = new File([blob], bestandsnaam, { type: 'image/jpeg' });
   const nav = navigator as Navigator & { canShare?: (d: ShareData) => boolean };
-  if (nav.share && nav.canShare?.({ files: [bestand] })) {
-    try {
-      await nav.share({ files: [bestand], title: 'Kleurvoorbeeld' });
-      return 'gedeeld';
-    } catch (e) {
-      if (e instanceof DOMException && e.name === 'AbortError') return 'geannuleerd';
-    }
+  if (!nav.share || !nav.canShare?.({ files: [bestand] })) return 'niet-mogelijk';
+  try {
+    await nav.share({ files: [bestand], title: 'Kleurvoorbeeld' });
+    return 'gedeeld';
+  } catch (e) {
+    if (e instanceof DOMException && e.name === 'AbortError') return 'geannuleerd';
+    return 'niet-mogelijk';
   }
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = bestandsnaam;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 10_000);
-  return 'gedownload';
 }

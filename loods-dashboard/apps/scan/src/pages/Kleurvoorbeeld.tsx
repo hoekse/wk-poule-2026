@@ -39,7 +39,7 @@ import { Weergave, leesFoto } from '../kleur/weergave';
 import { FotoVenster, type Gereedschap } from '../kleur/FotoVenster';
 import { KleurKiezer } from '../kleur/KleurKiezer';
 import { kleurLabel, onderdeelNamenBinnen, onderdeelNamenBuiten, ruimtes, type GekozenKleur } from '../kleur/paletten';
-import { deelOfDownload, maakAfbeelding } from '../kleur/exporteren';
+import { deelAfbeelding, maakAfbeelding } from '../kleur/exporteren';
 
 type Onderdeel = {
   id: number;
@@ -82,6 +82,12 @@ export function Kleurvoorbeeld() {
   const [pipetKleur, setPipetKleur] = useState<GekozenKleur | null>(null);
   const [aantalOngedaan, setAantalOngedaan] = useState(0);
   const [bezigMetDelen, setBezigMetDelen] = useState(false);
+  /** Gemaakte afbeelding die niet via het deelmenu kon: tonen met een knop Opslaan. */
+  const [afbeelding, setAfbeelding] = useState<{ url: string; naam: string } | null>(null);
+
+  useEffect(() => () => {
+    if (afbeelding) URL.revokeObjectURL(afbeelding.url);
+  }, [afbeelding]);
 
   const historie = useRef<Stand[]>([]);
   const schaal = useRef(3);
@@ -323,9 +329,12 @@ export function Kleurvoorbeeld() {
         regels,
       });
       const naam = `kleurvoorbeeld-${(project.trim() || ruimte.naam).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}-${vandaag.toISOString().slice(0, 10)}.jpg`;
-      const uitkomst = await deelOfDownload(blob, naam);
-      if (uitkomst === 'gedownload') melding('ok', 'Afbeelding opgeslagen');
-      if (uitkomst !== 'geannuleerd') setBlad(null);
+      const uitkomst = await deelAfbeelding(blob, naam);
+      if (uitkomst === 'gedeeld') setBlad(null);
+      if (uitkomst === 'niet-mogelijk') {
+        setAfbeelding({ url: URL.createObjectURL(blob), naam });
+        setBlad(null);
+      }
     } catch (e) {
       melding('fout', e instanceof Error ? e.message : String(e));
     } finally {
@@ -601,6 +610,16 @@ export function Kleurvoorbeeld() {
             Alleen het nieuwe kleurvoorbeeld
           </button>
           {bezigMetDelen && <Laden tekst="Afbeelding maken…" />}
+        </Blad>
+      )}
+
+      {afbeelding && (
+        <Blad titel="Kleurvoorbeeld" sluit={() => setAfbeelding(null)}>
+          <p className="uitleg">Delen via het deelmenu kan hier niet. Sla de afbeelding op en stuur hem daarna door.</p>
+          <img className="kv-afbeelding" src={afbeelding.url} alt="Kleurvoorbeeld met voor en na en de gekozen kleuren" />
+          <a className="knop blauw breed" href={afbeelding.url} download={afbeelding.naam}>
+            Afbeelding opslaan
+          </a>
         </Blad>
       )}
     </>

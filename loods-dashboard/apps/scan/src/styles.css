@@ -406,6 +406,7 @@ button.regel:active, a.regel:active { background: var(--raised); }
 .kleurvak { height: 96px; border-radius: 14px; border: 2px solid var(--line-strong); position: relative; overflow: hidden; display: block; }
 .kleurvak input { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; border: 0; padding: 0; }
 label.knop { position: relative; cursor: pointer; }
+.kv-afbeelding { width: 100%; height: auto; border-radius: 12px; border: 1px solid var(--line-strong); background: #fff; }
 
 /* Tablet en computer: foto links, bediening rechts. */
 @media (min-width: 900px) {
