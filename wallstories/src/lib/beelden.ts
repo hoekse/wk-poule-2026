@@ -10,6 +10,9 @@ import sprookjes from '@/assets/werelden/sprookjes.jpg';
 import hertenbos from '@/assets/werelden/hertenbos.jpg';
 import jungle from '@/assets/werelden/jungle.jpg';
 import safari from '@/assets/werelden/safari.jpg';
+import walvisbaai from '@/assets/werelden/walvisbaai.jpg';
+import koraalrif from '@/assets/werelden/koraalrif.jpg';
+import zeeleven from '@/assets/werelden/zeeleven.jpg';
 import pRembrandt from '@/assets/personages/rembrandt.png';
 import pBella from '@/assets/personages/bella-ballon.png';
 import pKees from '@/assets/personages/kees-komeet.png';
@@ -29,6 +32,9 @@ export const beelden = {
   hertenbos,
   jungle,
   safari,
+  walvisbaai,
+  koraalrif,
+  zeeleven,
   'personage-rembrandt-2-0': pRembrandt,
   'personage-bella-ballon': pBella,
   'personage-kees-komeet': pKees,

@@ -11,6 +11,7 @@ import PersonageKaart from '@/components/PersonageKaart.astro';
 import Stappen from '@/components/Stappen.astro';
 import ProductBeeld from '@/components/ProductBeeld.astro';
 import { werelden } from '@/data/werelden';
+import { aantalWoord } from '@/lib/tekst';
 import { personages } from '@/data/personages';
 import { productByKey } from '@/data/producten';
 import { faq } from '@/data/faq';
@@ -38,7 +39,7 @@ const vragen = faq.slice(0, 5);
 <Basis
   titel="Wallstories Kids – Fotobehang & muurdecoratie voor de kinderkamer"
   volleTitel
-  beschrijving="Premium fotobehang op maat, behangcirkels, posters en muurstickers voor de kinderkamer. Negen verhalende werelden met eigen personages – ook met de naam van je kind.">
+  beschrijving={`Premium fotobehang op maat, behangcirkels, posters en muurstickers voor de kinderkamer. ${aantalWoord(werelden.length, true)} verhalende werelden met eigen personages – ook met de naam van je kind.`}>
 
   <!-- ============ HERO ============ -->
   <section class="hero" aria-labelledby="hero-titel">

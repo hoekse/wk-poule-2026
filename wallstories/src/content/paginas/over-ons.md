@@ -20,7 +20,7 @@ Wallstories begon bij een schilder. Iemand die jarenlang muren heeft voorbereid,
 
 Achter Wallstories staan de vakmensen van [Schildersbedrijf Hoeksema](https://www.schildersbedrijfhoeksema.nl) en [Multiwalls](https://www.multiwalls.nl) uit Kampen: schilders en behangers die dagelijks muren mooier maken. Die achtergrond zie je terug in alles wat we doen. We weten hoe een muur zich gedraagt, waarom een naad soms zichtbaar wordt en welke kleuren een kamer rustiger maken. Die kennis delen we graag, op onze pagina over [hoe het werkt](/zo-werkt-het/) en in onze artikelen vol tips van de vakschilder.
 
-## Drie personages, negen werelden
+## Drie personages, een wereld vol verhalen
 
 In onze werelden kom je steeds dezelfde vrienden tegen.
 
@@ -28,7 +28,7 @@ In onze werelden kom je steeds dezelfde vrienden tegen.
 - **Bella Ballon**, de ontdekker. Met haar vliegeniersmuts en haar gestreepte luchtballon vliegt ze naar plekken die niemand anders ziet.
 - **Kees Komeet**, de avonturier. Een astronautje dat door de ruimte schiet en altijd als eerste op ontdekkingstocht gaat.
 
-Samen reizen ze door zes werelden: van een gouden schildersatelier tot de diepe oceaan, van een sterrenhemel vol raketten tot een jungle met een vrolijke T-rex, een drukke bouwplaats en een pastelkleurig sprookjeskasteel. En sinds kort ook door een herfstbos vol hertjes, een stille jungle in zandtinten en een savanne in lijntekening. Omdat de personages terugkomen op fotobehang, behangcirkels, posters en muurstickers, bouw je een kamer op waarin alles bij elkaar hoort. Maak kennis met [onze personages](/personages/) of ontdek [alle werelden](/werelden/).
+Samen reizen ze door zes werelden: van een gouden schildersatelier tot de diepe oceaan, van een sterrenhemel vol raketten tot een jungle met een vrolijke T-rex, een drukke bouwplaats en een pastelkleurig sprookjeskasteel. En sinds kort ook door een herfstbos vol hertjes, een stille jungle, een savanne in lijntekening en drie nieuwe onderwaterwerelden. Omdat de personages terugkomen op fotobehang, behangcirkels, posters en muurstickers, bouw je een kamer op waarin alles bij elkaar hoort. Maak kennis met [onze personages](/personages/) of ontdek [alle werelden](/werelden/).
 
 ## Kwaliteit en zorg
 

@@ -135,3 +135,8 @@ Drie werelden in populaire, rustige stijlen. Ze volgen dezelfde regels: Bella Ba
 | **Hertenbos** | Zachte waterverf | Oker, amber, salie, stoffig blauw | Hertenfamilie, vos, egel, konijnen, uiltje | Twee bomen die samen een boog vormen |
 | **Jungle** | Tonaal, als een moderne toile | Zand, beige, crème, taupe | Giraf, babyolifant, zebra, aapje, toekan, papegaaien, leeuwtje | Gebogen palmbladeren |
 | **Safari** | Fijne lijntekening met wat waterverf | Olijfgroen, warm grijs op crème | Giraf, zebra, olifant met kalf, leeuwtje, toekan | Een rotsboog |
+| **Walvisbaai** | Zachte waterverf | Pastelblauw, mint, aqua, zand | Walter de walvis met een kalfje, Duikje, schildpad, kwallen, zeepaardje | Een boog van koraal |
+| **Koraalrif** | Tonaal, als een moderne toile | Gedempt zeeblauw, teal, zand, crème | Octopus, zeeschildpad, zeepaardjes, rog, kogelvis, vissen | Een boog van koraal en rots |
+| **Zeeleven** | Fijne lijntekening met wat waterverf | Stoffig blauw, warm grijs op crème | Walvis, octopus, zeepaardje, schildpad, kwallen | Een rotsboog |
+
+In alle onderwaterwerelden drijft Penseel in een luchtbel (zoals in het voorleesverhaal *Op reis met de grote walvis*) en zweeft Bella Ballon boven het wateroppervlak.

@@ -1,0 +1,100 @@
+---
+/** Thema-landingspagina (bijv. Dierenbehang, Onderwaterbehang): stijlkeuze, producten en SEO-tekst. */
+import { Image } from 'astro:assets';
+import Basis from '@/layouts/Basis.astro';
+import Kruimelpad from './Kruimelpad.astro';
+import ProductKaart from './ProductKaart.astro';
+import Icon from './Icon.astro';
+import { werelden } from '@/data/werelden';
+import { producten } from '@/data/producten';
+import { beelden } from '@/lib/beelden';
+import { kruimelpad, absoluut } from '@/lib/schema';
+
+export type Stijl = { wereld: string; titel: string; voor: string; tekst: string };
+interface Props {
+  pad: string; naam: string; seoTitel: string; beschrijving: string; h1: string; lead: string;
+  collage: [string, string, string]; stijlen: Stijl[]; proza: { kop: string; html: string }[];
+}
+const p = Astro.props;
+const kruimels = [{ naam: 'Home', url: '/' }, { naam: p.naam, url: p.pad }];
+const slugs = p.stijlen.map((s) => s.wereld);
+const behang = slugs.map((s) => producten.find((x) => x.wereld === s && x.type === 'fotobehang')).filter(Boolean) as typeof producten;
+const extra = producten.filter((x) => slugs.includes(x.wereld ?? '') && x.type !== 'fotobehang').slice(0, 6);
+const w = (slug: string) => werelden.find((x) => x.slug === slug)!;
+const ld = [kruimelpad(Astro.site, kruimels), {
+  '@type': 'CollectionPage', name: p.h1, url: absoluut(Astro.site, p.pad),
+  mainEntity: { '@type': 'ItemList', itemListElement: behang.map((x, i) => ({ '@type': 'ListItem', position: i + 1, url: absoluut(Astro.site, x.url), name: x.naam })) },
+}];
+const kolommen = Math.min(p.stijlen.length, 5);
+---
+<Basis titel={p.seoTitel} beschrijving={p.beschrijving} jsonLd={ld} ogBeeld={beelden[w(p.collage[0]).beeld]}>
+  <Kruimelpad items={kruimels} />
+  <section class="container held">
+    <div>
+      <span class="eyebrow">{p.naam}</span>
+      <h1>{p.h1}</h1>
+      <p class="lead">{p.lead}</p>
+      <ul class="usps">
+        <li><Icon naam="vink" /> Op exacte muurmaat</li>
+        <li><Icon naam="vink" /> Pvc-vrij vlies of naadloos textiel</li>
+        <li><Icon naam="vink" /> Naam van je kind toevoegen</li>
+      </ul>
+    </div>
+    <div class="collage">
+      <div class="media c1"><Image src={beelden[w(p.collage[0]).beeld]} alt={w(p.collage[0]).alt} widths={[480, 800, 1200]} sizes="(max-width: 960px) 92vw, 560px" loading="eager" fetchpriority="high" /></div>
+      <div class="media c2"><Image src={beelden[w(p.collage[1]).beeld]} alt="" widths={[320, 640]} sizes="(max-width: 960px) 45vw, 270px" loading="eager" /></div>
+      <div class="media c3"><Image src={beelden[w(p.collage[2]).beeld]} alt="" widths={[320, 640]} sizes="(max-width: 960px) 45vw, 270px" loading="eager" /></div>
+    </div>
+  </section>
+
+  <section class="container sectie--krap">
+    <div class="sectie-kop"><h2>Welke stijl past bij jullie kamer?</h2></div>
+    <ul class="stijlen" style={`--kol:${kolommen}`}>
+      {p.stijlen.map((s) => {
+        const x = w(s.wereld);
+        return (
+          <li><a href={`/werelden/${x.slug}/`} class="stijl">
+            <div class="media media--zoom"><Image src={beelden[x.beeld]} alt={x.alt} widths={[400, 640]} sizes="(max-width: 760px) 46vw, 240px" loading="lazy" style={`object-position:${x.focus}`} /></div>
+            <span class="label">{x.naam}</span>
+            <h3>{s.titel}</h3>
+            <p class="klein zacht"><b>Mooi voor:</b> {s.voor}</p>
+            <p class="klein">{s.tekst}</p>
+          </a></li>
+        );
+      })}
+    </ul>
+  </section>
+
+  <section class="container sectie--krap">
+    <div class="sectie-kop"><h2>{p.naam} op maat</h2><a href="/fotobehang-kinderkamer/" class="link-pijl">Alle fotobehang <Icon naam="pijl" /></a></div>
+    <div class="grid raster">{behang.map((x) => <ProductKaart product={x} />)}</div>
+  </section>
+
+  <section class="container sectie--krap">
+    <div class="sectie-kop"><h2>Ook als behangcirkel of poster</h2></div>
+    <div class="grid raster">{extra.map((x) => <ProductKaart product={x} />)}</div>
+  </section>
+
+  <section class="container sectie proza">
+    {p.proza.map((b) => (<><h2>{b.kop}</h2><p set:html={b.html} /></>))}
+  </section>
+</Basis>
+<style>
+  .held { display: grid; grid-template-columns: 1fr 1.1fr; gap: clamp(24px, 5vw, 64px); align-items: center; padding-top: 12px; }
+  h1 { font-size: clamp(2.3rem, 1.6rem + 2.6vw, 4rem); }
+  .usps { list-style: none; padding: 0; margin: 18px 0 0; display: flex; flex-wrap: wrap; gap: 8px; }
+  .usps li { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 999px; background: var(--papier); border: 1px solid var(--rand); font-weight: 700; font-size: 0.85rem; color: var(--groen); }
+  .usps :global(svg) { width: 16px; height: 16px; color: var(--heuvel); stroke-width: 2.5; }
+  .collage { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .c1 { grid-column: 1 / -1; aspect-ratio: 16 / 8; box-shadow: var(--schaduw); }
+  .c2, .c3 { aspect-ratio: 16 / 10; }
+  .stijlen { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(var(--kol), 1fr); gap: 20px; }
+  .stijl { display: grid; gap: 8px; justify-items: start; text-decoration: none; color: inherit; }
+  .stijl .media { aspect-ratio: 3 / 4; width: 100%; }
+  .stijl h3 { margin: 0; font-size: 1.15rem; }
+  .stijl p { margin: 0; }
+  .raster { grid-template-columns: repeat(3, 1fr); row-gap: 40px; }
+  @media (max-width: 1100px) { .stijlen { grid-template-columns: repeat(min(var(--kol), 3), 1fr); } }
+  @media (max-width: 960px) { .held { grid-template-columns: 1fr; } .raster { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 560px) { .stijlen, .raster { grid-template-columns: 1fr 1fr; } }
+</style>

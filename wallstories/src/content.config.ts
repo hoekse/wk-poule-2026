@@ -4,7 +4,7 @@ import { glob } from 'astro/loaders';
 /** Beeldsleutels die artikelen mogen gebruiken (zie src/lib/beelden.ts). */
 export const beeldSleutels = [
   'hero-schilder', 'babykamer-walvis',
-  'rembrandts-atelier', 'onderwater', 'ruimte', 'dino', 'bouwplaats', 'sprookjes', 'hertenbos', 'jungle', 'safari',
+  'rembrandts-atelier', 'onderwater', 'ruimte', 'dino', 'bouwplaats', 'sprookjes', 'hertenbos', 'jungle', 'safari', 'walvisbaai', 'koraalrif', 'zeeleven',
 ] as const;
 
 const inspiratie = defineCollection({

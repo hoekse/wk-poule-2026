@@ -16,7 +16,7 @@ const { wereld: w } = Astro.props as { wereld: Wereld };
 const items = productenInWereld(w.slug);
 const personage = w.personage ? personageBySlug(w.personage) : undefined;
 const kruimels = [{ naam: 'Home', url: '/' }, { naam: 'Werelden', url: '/werelden/' }, { naam: w.naam, url: `/werelden/${w.slug}/` }];
-const anderen = werelden.filter((x) => x.slug !== w.slug);
+const anderen = werelden.filter((x) => x.slug !== w.slug).slice(0, 10);
 const heeftVerhaal = (await alleVerhalen()).some((v) => v.data.wereld === w.slug);
 const ld = [kruimelpad(Astro.site, kruimels), { '@type': 'CollectionPage', name: w.h1, description: w.metaBeschrijving, url: absoluut(Astro.site, `/werelden/${w.slug}/`),
   mainEntity: { '@type': 'ItemList', itemListElement: items.map((x, i) => ({ '@type': 'ListItem', position: i + 1, url: absoluut(Astro.site, x.url), name: x.naam })) } }];

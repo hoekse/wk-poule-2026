@@ -1,103 +1,24 @@
 ---
-import { Image } from 'astro:assets';
-import Basis from '@/layouts/Basis.astro';
-import Kruimelpad from '@/components/Kruimelpad.astro';
-import ProductKaart from '@/components/ProductKaart.astro';
-import Icon from '@/components/Icon.astro';
-import { werelden, dierenWerelden } from '@/data/werelden';
-import { producten } from '@/data/producten';
-import { beelden } from '@/lib/beelden';
-import { kruimelpad, absoluut } from '@/lib/schema';
-
-const kruimels = [{ naam: 'Home', url: '/' }, { naam: 'Dierenbehang', url: '/dierenbehang/' }];
-const dw = dierenWerelden.map((s) => werelden.find((w) => w.slug === s)!).filter(Boolean);
-const behang = dw.map((w) => producten.find((p) => p.wereld === w.slug && p.type === 'fotobehang')!);
-const extra = producten.filter((p) => dierenWerelden.includes(p.wereld ?? '') && p.type !== 'fotobehang').slice(0, 6);
-const stijlen = [
-  { wereld: 'hertenbos', titel: 'Zachte waterverf', voor: 'Babykamer, rustige slaapkamer', tekst: 'Een herfstbos met hertjes, vos en egel in oker, salie en stoffig blauw. Dromerig en warm.' },
-  { wereld: 'jungle', titel: 'Tonaal in zandtinten', voor: 'Neutrale babykamer, meegroeikamer', tekst: 'Giraf, olifantje en zebra tussen palmbladeren, helemaal in beige en taupe. Tijdloos en rustig.' },
-  { wereld: 'safari', titel: 'Fijne lijntekening', voor: 'Minimalistisch interieur, kleine kamers', tekst: 'Safaridieren in olijfgroen en warm grijs op crème, met veel lucht eromheen. Licht en luchtig.' },
-  { wereld: 'onderwater', titel: 'Zeegroen en verhalend', voor: 'Slaapkamer, kinderen 0–6 jaar', tekst: 'Walvis Walter en duikertje Duikje bij de koraalboog. Rustig blauwgroen met veel te ontdekken.' },
-  { wereld: 'dino', titel: 'Stoer maar vriendelijk', voor: 'Peuters en kleuters', tekst: 'Rex de T-rex met een vlinder op zijn neus in een groen dal. Avontuurlijk, nergens eng.' },
-];
-const ld = [kruimelpad(Astro.site, kruimels), {
-  '@type': 'CollectionPage', name: 'Dierenbehang voor de kinderkamer', url: absoluut(Astro.site, '/dierenbehang/'),
-  mainEntity: { '@type': 'ItemList', itemListElement: behang.map((p, i) => ({ '@type': 'ListItem', position: i + 1, url: absoluut(Astro.site, p.url), name: p.naam })) },
-}];
+import ThemaPagina from '@/components/ThemaPagina.astro';
 ---
-<Basis titel="Dierenbehang kinderkamer – hertjes, jungle & safari" beschrijving="Dierenbehang voor de kinderkamer en babykamer: hertjes in waterverf, een jungle in zandtinten, safaridieren in lijntekening, een walvis en een dino. Op maat, pvc-vrij." jsonLd={ld} ogBeeld={beelden.hertenbos}>
-  <Kruimelpad items={kruimels} />
-  <section class="container held">
-    <div>
-      <span class="eyebrow">Dierenbehang</span>
-      <h1>Dierenbehang voor de kinderkamer</h1>
-      <p class="lead">Hertjes in een herfstbos, een giraf tussen de palmbladeren of een walvis die een slaapliedje zingt. Kies de stijl die bij jullie kamer past; wij printen hem op de exacte maat van je muur.</p>
-      <ul class="usps">
-        <li><Icon naam="vink" /> Op exacte muurmaat</li>
-        <li><Icon naam="vink" /> Pvc-vrij vlies of naadloos textiel</li>
-        <li><Icon naam="vink" /> Naam van je kind toevoegen</li>
-      </ul>
-    </div>
-    <div class="collage">
-      <div class="media c1"><Image src={beelden.hertenbos} alt={werelden.find((w) => w.slug === 'hertenbos')!.alt} widths={[480, 800, 1200]} sizes="(max-width: 960px) 92vw, 560px" loading="eager" fetchpriority="high" /></div>
-      <div class="media c2"><Image src={beelden.jungle} alt="" widths={[320, 640]} sizes="(max-width: 960px) 45vw, 270px" loading="eager" /></div>
-      <div class="media c3"><Image src={beelden.safari} alt="" widths={[320, 640]} sizes="(max-width: 960px) 45vw, 270px" loading="eager" /></div>
-    </div>
-  </section>
-
-  <section class="container sectie--krap">
-    <div class="sectie-kop"><h2>Welke stijl past bij jullie kamer?</h2></div>
-    <ul class="stijlen">
-      {stijlen.map((s) => {
-        const w = werelden.find((x) => x.slug === s.wereld)!;
-        return (
-          <li><a href={`/werelden/${w.slug}/`} class="stijl">
-            <div class="media media--zoom"><Image src={beelden[w.beeld]} alt={w.alt} widths={[400, 640]} sizes="(max-width: 760px) 92vw, 240px" loading="lazy" style={`object-position:${w.focus}`} /></div>
-            <span class="label">{w.naam}</span>
-            <h3>{s.titel}</h3>
-            <p class="klein zacht"><b>Mooi voor:</b> {s.voor}</p>
-            <p class="klein">{s.tekst}</p>
-          </a></li>
-        );
-      })}
-    </ul>
-  </section>
-
-  <section class="container sectie--krap">
-    <div class="sectie-kop"><h2>Dierenbehang op maat</h2><a href="/fotobehang-kinderkamer/" class="link-pijl">Alle fotobehang <Icon naam="pijl" /></a></div>
-    <div class="grid raster">{behang.map((p) => <ProductKaart product={p} />)}</div>
-  </section>
-
-  <section class="container sectie--krap">
-    <div class="sectie-kop"><h2>Ook als behangcirkel of poster</h2></div>
-    <div class="grid raster">{extra.map((p) => <ProductKaart product={p} />)}</div>
-  </section>
-
-  <section class="container sectie proza">
-    <h2>Dierenbehang in de babykamer</h2>
-    <p>Dieren zijn vaak het eerste wat een baby herkent op de muur. Kies voor een babykamer een rustige stijl met zachte kleuren, zoals het <a href="/werelden/hertenbos/">Hertenbos</a> in waterverf of de <a href="/werelden/jungle/">Jungle</a> in zandtinten. Voor de babykamer raden we ons naadloze textiel aan: pvc-vrij en gedrukt met geurloze inkt op waterbasis. Lees meer over <a href="/inspiratie/veilig-behang-babykamer/">veilig behang in de babykamer</a>.</p>
-    <h2>Meegroeien met je kind</h2>
-    <p>Een neutraal dierenbehang groeit mee: wat in de babykamer rustig is, blijft ook voor een kind van acht mooi. Wil je later meer avontuur? Combineer dan met een <a href="/behangcirkels/">behangcirkel</a> of <a href="/posters/">poster</a> uit een andere wereld, of zet de naam van je kind in de lucht.</p>
-    <h2>Zoek de dieren, en Penseel</h2>
-    <p>In elke wereld van Wallstories zweeft Bella Ballon ergens in de lucht en verstopt kater Penseel zich. Zo wordt je muur ook een zoekplaatje voor het slapengaan. Benieuwd naar de verhalen achter de werelden? Lees onze <a href="/verhalen/">voorleesverhalen</a>.</p>
-  </section>
-</Basis>
-<style>
-  .held { display: grid; grid-template-columns: 1fr 1.1fr; gap: clamp(24px, 5vw, 64px); align-items: center; padding-top: 12px; }
-  h1 { font-size: clamp(2.3rem, 1.6rem + 2.6vw, 4rem); }
-  .usps { list-style: none; padding: 0; margin: 18px 0 0; display: flex; flex-wrap: wrap; gap: 8px; }
-  .usps li { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 999px; background: var(--papier); border: 1px solid var(--rand); font-weight: 700; font-size: 0.85rem; color: var(--groen); }
-  .usps :global(svg) { width: 16px; height: 16px; color: var(--heuvel); stroke-width: 2.5; }
-  .collage { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: auto auto; gap: 14px; }
-  .c1 { grid-column: 1 / -1; aspect-ratio: 16 / 8; box-shadow: var(--schaduw); }
-  .c2, .c3 { aspect-ratio: 16 / 10; }
-  .stijlen { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, 1fr); gap: 20px; }
-  .stijl { display: grid; gap: 8px; justify-items: start; text-decoration: none; color: inherit; }
-  .stijl .media { aspect-ratio: 3 / 4; width: 100%; }
-  .stijl h3 { margin: 0; font-size: 1.15rem; }
-  .stijl p { margin: 0; }
-  .raster { grid-template-columns: repeat(3, 1fr); row-gap: 40px; }
-  @media (max-width: 1100px) { .stijlen { grid-template-columns: repeat(3, 1fr); } }
-  @media (max-width: 960px) { .held { grid-template-columns: 1fr; } .raster { grid-template-columns: 1fr 1fr; } }
-  @media (max-width: 560px) { .stijlen, .raster { grid-template-columns: 1fr 1fr; } }
-</style>
+<ThemaPagina
+  pad="/dierenbehang/"
+  naam="Dierenbehang"
+  seoTitel="Dierenbehang kinderkamer – hertjes, jungle & safari"
+  beschrijving="Dierenbehang voor de kinderkamer en babykamer: hertjes in waterverf, een jungle in zandtinten, safaridieren in lijntekening, een walvis en een dino. Op maat, pvc-vrij."
+  h1="Dierenbehang voor de kinderkamer"
+  lead="Hertjes in een herfstbos, een giraf tussen de palmbladeren of een walvis die een slaapliedje zingt. Kies de stijl die bij jullie kamer past; wij printen hem op de exacte maat van je muur."
+  collage={['hertenbos', 'jungle', 'safari']}
+  stijlen={[
+    { wereld: 'hertenbos', titel: 'Zachte waterverf', voor: 'Babykamer, rustige slaapkamer', tekst: 'Een herfstbos met hertjes, vos en egel in oker, salie en stoffig blauw. Dromerig en warm.' },
+    { wereld: 'jungle', titel: 'Tonaal in zandtinten', voor: 'Neutrale babykamer, meegroeikamer', tekst: 'Giraf, olifantje en zebra tussen palmbladeren, helemaal in beige en taupe. Tijdloos en rustig.' },
+    { wereld: 'safari', titel: 'Fijne lijntekening', voor: 'Minimalistisch interieur, kleine kamers', tekst: 'Safaridieren in olijfgroen en warm grijs op crème, met veel lucht eromheen. Licht en luchtig.' },
+    { wereld: 'onderwater', titel: 'Zeegroen en verhalend', voor: 'Slaapkamer, kinderen 0–6 jaar', tekst: 'Walvis Walter en duikertje Duikje bij de koraalboog. Rustig blauwgroen met veel te ontdekken.' },
+    { wereld: 'dino', titel: 'Stoer maar vriendelijk', voor: 'Peuters en kleuters', tekst: 'Rex de T-rex met een vlinder op zijn neus in een groen dal. Avontuurlijk, nergens eng.' },
+  ]}
+  proza={[
+    { kop: 'Dierenbehang in de babykamer', html: 'Dieren zijn vaak het eerste wat een baby herkent op de muur. Kies voor een babykamer een rustige stijl met zachte kleuren, zoals het <a href="/werelden/hertenbos/">Hertenbos</a> in waterverf of de <a href="/werelden/jungle/">Jungle</a> in zandtinten. Voor de babykamer raden we ons naadloze textiel aan: pvc-vrij en gedrukt met geurloze inkt op waterbasis. Lees meer over <a href="/inspiratie/veilig-behang-babykamer/">veilig behang in de babykamer</a>.' },
+    { kop: 'Meegroeien met je kind', html: 'Een neutraal dierenbehang groeit mee: wat in de babykamer rustig is, blijft ook voor een kind van acht mooi. Wil je later meer avontuur? Combineer dan met een <a href="/behangcirkels/">behangcirkel</a> of <a href="/posters/">poster</a> uit een andere wereld, of zet de naam van je kind in de lucht. Liever dieren onder water? Bekijk ons <a href="/onderwaterbehang/">onderwaterbehang</a>.' },
+    { kop: 'Zoek de dieren, en Penseel', html: 'In elke wereld van Wallstories zweeft Bella Ballon ergens in de lucht en verstopt kater Penseel zich. Zo wordt je muur ook een zoekplaatje voor het slapengaan. Benieuwd naar de verhalen achter de werelden? Lees onze <a href="/verhalen/">voorleesverhalen</a>.' },
+  ]}
+/>

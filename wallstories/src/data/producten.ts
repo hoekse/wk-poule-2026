@@ -1,4 +1,5 @@
 import { werelden } from './werelden';
+import { aantalWoord } from '@/lib/tekst';
 import { personages } from './personages';
 import { vanafCent } from '@/lib/prijs';
 import type { BeeldSleutel } from '@/lib/beelden';
@@ -21,7 +22,7 @@ export const categorieen: Categorie[] = [
     slug: 'fotobehang-kinderkamer', type: 'fotobehang', naam: 'Fotobehang',
     h1: 'Fotobehang voor de kinderkamer, op maat van jouw muur',
     seoTitel: 'Fotobehang kinderkamer op maat',
-    metaBeschrijving: 'Fotobehang voor de kinderkamer op exacte muurmaat. Negen verhalende werelden, live preview, pvc-vrij vlies of naadloos textiel en levering in 3–5 werkdagen. Vanaf € 44,95 per m².',
+    metaBeschrijving: `Fotobehang voor de kinderkamer op exacte muurmaat. ${aantalWoord(werelden.length, true)} verhalende werelden, live preview, pvc-vrij vlies of naadloos textiel en levering in 3–5 werkdagen. Vanaf € 44,95 per m².`,
     intro: 'Kies een wereld, vul je muurmaat in en zie meteen hoe het verhaal op jouw muur staat. Wij printen elke muur op bestelling, met 5 cm extra rondom.',
     usp: ['Op exacte muurmaat', 'Vlies of naadloos textiel', 'Naam van je kind toevoegen'],
   },
