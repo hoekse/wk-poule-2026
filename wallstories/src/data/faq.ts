@@ -69,7 +69,7 @@ export const faq: FaqItem[] = [
   {
     categorie: 'Aanbrengen',
     vraag: `Kunnen jullie het behang voor mij aanbrengen?`,
-    antwoord: `Ja. Onze partner <a href="https://www.multiwalls.nl" target="_blank" rel="noopener">Multiwalls</a> brengt je fotobehang aan voor € 75 per uur, exclusief reiskosten, in de regio Kampen, Zwolle, Dronten, Lelystad en Hattem (elders op aanvraag). Vink het aan bij het afrekenen of <a href="/contact/?onderwerp=aanbrengen">vraag een offerte aan</a>; je ontvangt altijd eerst een offerte.`,
+    antwoord: `Ja. Onze partner <a href="https://www.multiwalls.nl" target="_blank" rel="noopener">Multiwalls</a> brengt je fotobehang aan voor € 90,75 per uur inclusief btw (€ 75 exclusief btw), exclusief reiskosten, in de regio Kampen, Zwolle, Dronten, Lelystad en Hattem (elders op aanvraag). Vink het aan bij het afrekenen of <a href="/contact/?onderwerp=aanbrengen">vraag een offerte aan</a>; je ontvangt altijd eerst een offerte.`,
   },
   {
     categorie: 'Aanbrengen',

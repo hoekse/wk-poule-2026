@@ -138,7 +138,7 @@ De ondernemer sluit de volgende producten en diensten uit van het herroepingsrec
 
 ## Artikel 16 – Aanbrengservice
 
-1. Op verzoek kan de ondernemer het aanbrengen van fotobehang laten verzorgen door partner Multiwalls ([multiwalls.nl](https://www.multiwalls.nl)), tegen € 75 per uur exclusief reiskosten. Prijs, datum en voorwaarden worden vooraf in een aparte offerte vastgelegd.
+1. Op verzoek kan de ondernemer het aanbrengen van fotobehang laten verzorgen door partner Multiwalls ([multiwalls.nl](https://www.multiwalls.nl)), tegen € 90,75 per uur inclusief btw (€ 75 exclusief btw), exclusief reiskosten. Prijs, datum en voorwaarden worden vooraf in een aparte offerte vastgelegd.
 2. De consument zorgt ervoor dat de muur op de afgesproken datum bereikbaar is en, tenzij in de offerte anders is afgesproken, geschikt is om te behangen.
 3. Het aanbrengen wordt uitgevoerd door Multiwalls als zelfstandige partner. [Nader in te vullen: aanvullende voorwaarden van Multiwalls, zoals annulering en aansprakelijkheid.]
 

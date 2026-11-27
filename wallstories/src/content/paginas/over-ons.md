@@ -18,7 +18,7 @@ Wallstories begon bij een schilder. Iemand die jarenlang muren heeft voorbereid,
 
 [Persoonlijk verhaal van de oprichter: hoe het idee voor Wallstories ontstond, bijvoorbeeld bij een eerste muur voor een eigen kind, een nichtje of een klant, en waarom je de stap hebt gezet.]
 
-Die achtergrond zie je terug in alles wat we doen. We weten hoe een muur zich gedraagt, waarom een naad soms zichtbaar wordt en welke kleuren een kamer rustiger maken. Die kennis delen we graag, op onze pagina over [hoe het werkt](/zo-werkt-het/) en in onze artikelen vol tips van de vakschilder.
+Achter Wallstories staan de vakmensen van [Schildersbedrijf Hoeksema](https://www.schildersbedrijfhoeksema.nl) en [Multiwalls](https://www.multiwalls.nl) uit Kampen: schilders en behangers die dagelijks muren mooier maken. Die achtergrond zie je terug in alles wat we doen. We weten hoe een muur zich gedraagt, waarom een naad soms zichtbaar wordt en welke kleuren een kamer rustiger maken. Die kennis delen we graag, op onze pagina over [hoe het werkt](/zo-werkt-het/) en in onze artikelen vol tips van de vakschilder.
 
 ## Drie personages, zes werelden
 

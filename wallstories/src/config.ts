@@ -29,15 +29,17 @@ export const winkel = {
 } as const;
 
 /**
- * Aanbrengservice via partner Multiwalls.
- * ⚠️ Consumentenprijzen moeten incl. btw getoond worden: bevestig of € 75 incl. of excl. btw is.
+ * Aanbrengservice via partner Multiwalls: € 75 per uur excl. btw.
+ * Consumenten zien de prijs incl. 21% btw (wettelijk verplicht). Geldt het 9%-tarief voor arbeid
+ * in woningen ouder dan 2 jaar? Laat de boekhouder dat bevestigen en pas dan tariefTekst aan.
  */
 export const aanbrengen = {
   actief: true,
   partner: 'Multiwalls',
   partnerUrl: 'https://www.multiwalls.nl',
-  uurtariefCent: 7500,
-  tariefTekst: '€ 75 per uur, exclusief reiskosten',
+  uurtariefExclBtwCent: 7500,
+  tariefTekst: '€ 90,75 per uur incl. btw (€ 75 excl. btw), exclusief reiskosten',
+  tariefZakelijk: '€ 75 per uur excl. btw, exclusief reiskosten',
   regio: 'Kampen, Zwolle, Dronten, Lelystad, Hattem en omgeving; elders in Nederland op aanvraag',
 } as const;
 

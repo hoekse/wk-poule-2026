@@ -23,7 +23,7 @@ const kolommen = [
   ] },
   { titel: 'Klantenservice', links: [
     ['Contact', '/contact/'], ['Veelgestelde vragen', '/veelgestelde-vragen/'], ['Verzenden & retourneren', '/verzenden-en-retourneren/'],
-    ['Behang aanbrengen', '/inspiratie/fotobehang-aanbrengen/'], ['Algemene voorwaarden', '/algemene-voorwaarden/'], ['Privacy', '/privacy/'],
+    ['Behang aanbrengen', '/inspiratie/fotobehang-aanbrengen/'], ['Laten aanbrengen: Multiwalls', 'https://www.multiwalls.nl'], ['Algemene voorwaarden', '/algemene-voorwaarden/'], ['Privacy', '/privacy/'],
   ] },
 ];
 ---
@@ -54,7 +54,7 @@ const kolommen = [
       ))}
     </div>
     <div class="container voet-onder">
-      <p>© {jaar} {merk.naam} <span aria-hidden="true">·</span> KvK {merk.kvk} <span aria-hidden="true">·</span> Prijzen incl. {winkel.btwPercentage}% btw</p>
+      <p>© {jaar} {merk.naam} <span aria-hidden="true">·</span> KvK {merk.kvk} <span aria-hidden="true">·</span> Prijzen incl. {winkel.btwPercentage}% btw<br />Met vakmanschap van <a href="https://www.schildersbedrijfhoeksema.nl" rel="noopener">Schildersbedrijf Hoeksema</a> en <a href="https://www.multiwalls.nl" rel="noopener">Multiwalls</a>, Kampen</p>
       <ul class="betaal" aria-label="Betaalmethoden">
         <li><Icon naam="slot" /> Veilig betalen via Mollie</li>
         <li class="betaal-chip">iDEAL</li><li class="betaal-chip">Creditcard</li><li class="betaal-chip">Apple Pay</li>
@@ -91,6 +91,7 @@ const kolommen = [
   .voet-kolom a:hover { color: var(--groen); text-decoration: underline; }
   .voet-onder { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--rand-sterk); font-size: 0.82rem; color: var(--tekst-zacht); }
   .voet-onder p { margin: 0; }
+  .voet-onder a { color: var(--groen); font-weight: 700; }
   .betaal { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; list-style: none; margin: 0; padding: 0; }
   .betaal li:first-child { display: inline-flex; align-items: center; gap: 6px; margin-right: 4px; }
   .betaal :global(svg) { width: 16px; height: 16px; }

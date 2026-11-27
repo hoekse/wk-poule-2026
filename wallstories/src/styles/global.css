@@ -73,6 +73,7 @@ body {
   overflow-x: clip;
 }
 img, svg, video, picture { display: block; max-width: 100%; }
+[hidden] { display: none !important; }
 img { height: auto; }
 button, input, select, textarea { font: inherit; color: inherit; }
 a { color: inherit; text-decoration-thickness: 1.5px; text-underline-offset: 3px; }
