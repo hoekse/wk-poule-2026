@@ -3,7 +3,7 @@ import { useSessie, useIk } from '../lib/sessie';
 import { telMijnSpullen } from '../lib/api';
 import { useLaden } from '../lib/useLaden';
 import { Avatar, Kop } from '../components/Basis';
-import { IcoonBeheer, IcoonMee, IcoonTas, IcoonTerug, IcoonVerbruik, IcoonVerf } from '../components/Iconen';
+import { IcoonBeheer, IcoonMee, IcoonPalet, IcoonTas, IcoonTerug, IcoonVerbruik, IcoonVerf } from '../components/Iconen';
 
 export function Start() {
   const ik = useIk();
@@ -65,6 +65,10 @@ export function Start() {
           <Link className="bijknop" to="/restverf/voorraad">
             <IcoonVerf />
             Restverf zoeken
+          </Link>
+          <Link className="bijknop" to="/kleurvoorbeeld">
+            <IcoonPalet />
+            Kleurvoorbeeld
           </Link>
           {isBeheerder && (
             <Link className="bijknop" to="/beheer">

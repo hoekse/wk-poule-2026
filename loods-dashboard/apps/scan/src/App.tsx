@@ -10,6 +10,9 @@ import { Restverf } from './pages/Restverf';
 import { RestverfVoorraad } from './pages/RestverfVoorraad';
 import { MijnSpullen } from './pages/MijnSpullen';
 
+// Kleurvoorbeeld pas laden als iemand het opent (zware beeldbewerking, niet nodig om te scannen).
+const Kleurvoorbeeld = lazy(() => import('./pages/Kleurvoorbeeld').then((m) => ({ default: m.Kleurvoorbeeld })));
+
 // Beheerschermen pas laden als de beheerder ze opent (kleinere app voor medewerkers).
 const BeheerMenu = lazy(() => import('./pages/beheer/BeheerMenu').then((m) => ({ default: m.BeheerMenu })));
 const Artikelen = lazy(() => import('./pages/beheer/Artikelen').then((m) => ({ default: m.Artikelen })));
@@ -70,6 +73,7 @@ function MetSessie() {
         <Route path="/restverf" element={<Restverf />} />
         <Route path="/restverf/voorraad" element={<RestverfVoorraad />} />
         <Route path="/mijn-spullen" element={<MijnSpullen />} />
+        <Route path="/kleurvoorbeeld" element={<Kleurvoorbeeld />} />
         {isBeheerder && (
           <>
             <Route path="/beheer" element={<BeheerMenu />} />

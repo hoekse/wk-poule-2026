@@ -4,6 +4,7 @@ Live overzicht van alles in de loods (Industrieweg 3-U, Kampen): steigers, ladde
 
 - **Telefoon (PWA)**: QR- of streepjescode scannen → meenemen, terugbrengen, verbruik of restverf invoeren. Binnen 10 seconden.
 - **Tv in de loods** (fase 2): 3D-model van de loods dat per zone kleurt naar status, met een live lijst *Onderweg*.
+- **Kleurvoorbeeld** (in de telefoon-app): foto van een gevel of ruimte, de app vindt zelf de kleurvlakken, nieuwe kleuren kiezen (RAL of eigen code) en voor/na delen met de klant. Zie [`docs/VOORTGANG.md`](docs/VOORTGANG.md).
 
 De volledige projectbrief staat in [`CLAUDE.md`](CLAUDE.md); de goedgekeurde 3D-indeling in [`loods-3d-preview.html`](loods-3d-preview.html).
 
@@ -22,6 +23,7 @@ Fase 1 (scan-app) is gebouwd en getest. Zie [`docs/VOORTGANG.md`](docs/VOORTGANG
 
 ```
 apps/scan          telefoon-app (Vite + React + TypeScript, PWA, @zxing/browser)
+apps/scan/src/kleur  kleurvoorbeeld: kleurvlakken zoeken, toverstaf, inkleuren, RAL-kleuren
 apps/tv            3D-tv-dashboard (fase 2, nog niet gebouwd)
 packages/shared    types, Supabase-client, huisstijl, loodsmaten
 supabase/          migraties, seed-data, databasetests
