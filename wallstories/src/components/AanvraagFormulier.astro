@@ -33,6 +33,7 @@ const { soort, knop = 'Verstuur', extra = [] } = Astro.props;
     const knop = form.querySelector<HTMLButtonElement>('button[type=submit]')!;
     const onderwerp = new URLSearchParams(location.search).get('onderwerp');
     const bericht = form.querySelector<HTMLTextAreaElement>('textarea');
+    if (onderwerp === 'aanbrengen' && form.dataset.soort === 'contact') form.dataset.soort = 'aanbrengen';
     if (onderwerp === 'aanbrengen' && bericht && !bericht.value) bericht.value = 'Ik wil graag een offerte voor het laten aanbrengen van mijn behang.\n\nMuurmaat: \nPlaats: ';
     form.addEventListener('submit', async (e) => {
       e.preventDefault();

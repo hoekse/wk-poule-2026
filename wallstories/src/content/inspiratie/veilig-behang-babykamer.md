@@ -28,27 +28,27 @@ Naast het materiaal zijn er nog een paar vragen die je aan elk behang kunt stell
 | Waar let je op? | Waarom je ernaar vraagt | Ons fotobehang |
 |---|---|---|
 | Materiaal | Zit er een vinyllaag op? | pvc-vrij vliesbehang |
-| Papier | Waar komt de grondstof vandaan? | papier uit verantwoord beheerde bossen (FSC) |
-| Inkt | Waarmee is het ontwerp gedrukt? | watergedragen latexinkt |
-| Geur | Ruikt het behang na het uitpakken? | geurarm |
-| Vocht | Laat het behang vocht door? | ademend |
+| Herkomst | Waar komt de grondstof vandaan? | vlies mat: FSC-gecertificeerd |
+| Inkt | Waarmee is het ontwerp gedrukt? | textiel: inkt op waterbasis; vlies: UV-inkt |
+| Geur | Ruikt het behang na het uitpakken? | textiel: geurloos; vlies: kan de eerste dagen licht ruiken |
+| Brand | Is het materiaal brandvertragend? | ja |
 | Verwijderen | Krijg je het later makkelijk van de muur? | droog afneembaar |
 
 ### De inkt
 
-Een ontwerp kan met verschillende soorten inkt gedrukt zijn. Wij drukken met watergedragen latexinkt. Vraag bij ander behang gerust na welke inkt er is gebruikt.
+Een ontwerp kan met verschillende soorten inkt gedrukt zijn. Ons naadloze textielbehang wordt gedrukt met inkt op waterbasis, die geurloos is. Vlies mat wordt gedrukt met UV-inkt: die is krasvast en kleurecht. Vraag bij ander behang gerust na welke inkt er is gebruikt.
 
 ### De geur
 
-Nieuwe spullen ruiken vaak nog even nieuw. Dat geldt voor behang, maar ook voor verf, lijm, een nieuw matras of een kast van spaanplaat. Ons behang is geurarm. Kijk bij het inrichten naar het geheel: de geur in een kamer komt zelden van één ding.
+Nieuwe spullen ruiken vaak nog even nieuw. Dat geldt voor behang, maar ook voor verf, lijm, een nieuw matras of een kast van spaanplaat. Ons naadloze textiel is geurloos. Vlies mat kan de eerste dagen licht naar de UV-inkt ruiken; dat trekt vanzelf weg. Kies voor de babykamer daarom bij voorkeur textiel, of breng vlies een paar weken van tevoren aan en lucht de kamer goed. Kijk bij het inrichten naar het geheel: de geur in een kamer komt zelden van één ding.
 
-### Ademend behang
+### Brandvertragend
 
-Ademend behang laat waterdamp door. Zo kan vocht uit de muur verdampen en blijft het niet achter het behang hangen. Dat is fijn voor de muur en voor het behang zelf.
+Alle materialen die we gebruiken zijn brandvertragend. Dat is geen reden om minder op te letten met lampjes en stekkers, maar wel een geruststelling voor een kamer waar je kind slaapt.
 
 ### Later weer verwijderen
 
-Een babykamer verandert sneller dan je denkt. Ons vliesbehang is droog afneembaar: je trekt de banen in principe in hun geheel van de muur, zonder week te maken of te stomen. Dat scheelt werk, rommel en stof als de kamer later een nieuw verhaal krijgt.
+Een babykamer verandert sneller dan je denkt. Ons behang is droog afneembaar: je trekt de banen in principe in hun geheel van de muur, zonder week te maken of te stomen. Dat scheelt werk, rommel en stof als de kamer later een nieuw verhaal krijgt.
 
 ## Vergeet de lijm en de verf niet
 
@@ -97,7 +97,7 @@ Begin bij voorkeur een aantal weken voor de uitgerekende datum. Dan heeft het be
 
 ### Is jullie fotobehang pvc-vrij?
 
-Ja. Ons fotobehang is pvc-vrij vliesbehang van papier uit verantwoord beheerde bossen (FSC). Het is gedrukt met watergedragen latexinkt, geurarm en ademend.
+Ja. Zowel vlies mat (200 g/m², FSC-gecertificeerd) als naadloos textiel is pvc-vrij en brandvertragend. Het textiel wordt gedrukt met geurloze inkt op waterbasis.
 
 ### Kan ik het materiaal eerst voelen?
 

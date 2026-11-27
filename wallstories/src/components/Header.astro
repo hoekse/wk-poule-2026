@@ -17,7 +17,7 @@ const producten = [
 const menu = [
   { naam: 'Werelden', url: '/werelden/' },
   { naam: 'Personages', url: '/personages/' },
-  { naam: 'Gepersonaliseerd', url: '/gepersonaliseerd/' },
+  { naam: 'Verhalen', url: '/verhalen/' },
   { naam: 'Op maat', url: '/op-maat/' },
   { naam: 'Zakelijk', url: '/zakelijk/' },
   { naam: 'Inspiratie', url: '/inspiratie/' },
@@ -90,7 +90,7 @@ const actief = (url: string) => pad.startsWith(url);
     <p class="mega-titel">Shop</p>
     <ul class="mm-lijst">{producten.map((p) => <li><a href={p.url}>{p.naam}<Icon naam="rechts" /></a></li>)}</ul>
     <p class="mega-titel">Ontdek</p>
-    <ul class="mm-lijst">{menu.filter((m) => m.url !== '/gepersonaliseerd/').map((m) => <li><a href={m.url}>{m.naam}<Icon naam="rechts" /></a></li>)}</ul>
+    <ul class="mm-lijst">{menu.map((m) => <li><a href={m.url}>{m.naam}<Icon naam="rechts" /></a></li>)}</ul>
     <p class="mega-titel">Werelden</p>
     <ul class="mm-werelden">
       {werelden.map((w) => (

@@ -6,7 +6,7 @@ import AanvraagFormulier from '@/components/AanvraagFormulier.astro';
 import Icon from '@/components/Icon.astro';
 import { beelden } from '@/lib/beelden';
 import { kruimelpad } from '@/lib/schema';
-import { winkel } from '@/config';
+import { aanbrengen } from '@/config';
 const kruimels = [{ naam: 'Home', url: '/' }, { naam: 'Zakelijk', url: '/zakelijk/' }];
 const sectoren = [
   { titel: 'Kinderopvang & bso', tekst: 'Groepsruimtes en slaapkamers met een rustig, herkenbaar verhaal.' },
@@ -25,7 +25,7 @@ const sectoren = [
       <ul class="checklist">
         <li><Icon naam="vink-rond" /> Ontwerp afgestemd op jullie ruimte en huisstijl</li>
         <li><Icon naam="vink-rond" /> PVC-vrij vliesbehang, geschikt voor intensief gebruik</li>
-        {winkel.aanbrengservice && <li><Icon naam="vink-rond" /> Aanbrengen door een vakschilder (op aanvraag)</li>}
+        {aanbrengen.actief && <li><Icon naam="vink-rond" /> Professioneel aanbrengen door onze partner {aanbrengen.partner}</li>}
         <li><Icon naam="vink-rond" /> Factuur op naam van de organisatie</li>
       </ul>
     </div>

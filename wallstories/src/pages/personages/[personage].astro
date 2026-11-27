@@ -9,11 +9,14 @@ import { personages, type Personage } from '@/data/personages';
 import { producten } from '@/data/producten';
 import { wereldBySlug } from '@/data/werelden';
 import { beelden } from '@/lib/beelden';
+import { alleVerhalen } from '@/lib/verhalen';
 import { kruimelpad } from '@/lib/schema';
 export function getStaticPaths() { return personages.map((personage) => ({ params: { personage: personage.slug }, props: { personage } })); }
 const { personage: p } = Astro.props as { personage: Personage };
 const wereld = p.wereld ? wereldBySlug(p.wereld) : undefined;
 const items = producten.filter((x) => x.personage === p.slug || (p.wereld && x.wereld === p.wereld && x.type !== 'muursticker')).slice(0, 4);
+const verhalen = (await alleVerhalen()).filter((v) => v.data.personages.includes(p.naam));
+const sheet = beelden[`sheet-${p.slug}` as keyof typeof beelden];
 const kruimels = [{ naam: 'Home', url: '/' }, { naam: 'Personages', url: '/personages/' }, { naam: p.naam, url: `/personages/${p.slug}/` }];
 const anderen = personages.filter((x) => x.slug !== p.slug);
 ---
@@ -24,11 +27,33 @@ const anderen = personages.filter((x) => x.slug !== p.slug);
     <div>
       <span class="eyebrow">{p.rol}</span>
       <h1>{p.naam}</h1>
-      <p class="lead">{p.kort}</p>
+      <p class="uitspraak">“{p.uitspraak}”</p>
       {p.verhaal.map((a) => <p>{a}</p>)}
+      <dl class="feiten">{p.feiten.map(([k, v]) => <div><dt>{k}</dt><dd>{v}</dd></div>)}</dl>
       {wereld && <a href={`/werelden/${wereld.slug}/`} class="knop">Ontdek de wereld {wereld.naam} <Icon naam="pijl" class="pijl" /></a>}
     </div>
   </section>
+
+  {sheet && (
+    <section class="container sectie--krap">
+      <div class="sectie-kop"><div><span class="eyebrow">Van alle kanten</span><h2>Zo ziet {p.naam} eruit</h2></div></div>
+      <div class="sheet-blok">
+        <div class="media sheet"><Image src={sheet} alt={`Character sheet van ${p.naam}: vooraanzicht, driekwart, zijaanzicht en achteraanzicht`} widths={[480, 800, 1200, 1600]} sizes="(max-width: 960px) 92vw, 620px" loading="lazy" /></div>
+        <div class="sheet-tekst">
+          <p>Van voren, van opzij en van achteren: zo ziet {p.naam} er in elke wereld uit. Onze illustratoren tekenen altijd vanuit deze vaste ontwerpen, zodat je kind {p.naam} overal herkent – op het behang, op een poster en als muursticker.</p>
+          <p class="zacht klein">Zoek je {p.naam} terug op jullie muur? In elke wereld zit ook kater Penseel ergens verstopt.</p>
+        </div>
+      </div>
+    </section>
+  )}
+
+  {verhalen.length > 0 && (
+    <section class="container sectie--krap">
+      <div class="sectie-kop"><h2>Voorleesverhalen met {p.naam}</h2><a href="/verhalen/" class="link-pijl">Alle verhalen <Icon naam="pijl" /></a></div>
+      <ul class="verhalen">{verhalen.map((v) => <li><a href={`/verhalen/${v.data.wereld}/`} class="kaart verhaal"><b>{v.data.titel}</b><span class="zacht klein">{v.data.leestijd} min · {v.data.leeftijd}</span><span class="link-pijl">Lees voor <Icon naam="pijl" /></span></a></li>)}</ul>
+    </section>
+  )}
+
   <section class="container sectie--krap">
     <div class="sectie-kop"><h2>{p.naam} in de kinderkamer</h2></div>
     <div class="grid items">{items.map((x) => <ProductKaart product={x} />)}</div>
@@ -43,7 +68,19 @@ const anderen = personages.filter((x) => x.slug !== p.slug);
   .held-beeld { background: var(--kaart); border-radius: var(--r-xl); display: grid; place-items: end center; padding: 40px 24px 0; min-height: 460px; overflow: hidden; }
   .held-beeld img { max-height: 520px; width: auto; filter: drop-shadow(0 16px 20px rgb(24 64 58 / 0.2)); }
   h1 { font-size: clamp(2.6rem, 1.8rem + 3vw, 4.6rem); margin-bottom: 0.1em; }
+  .uitspraak { font-family: var(--font-kop); font-size: 1.35rem; color: var(--groen); line-height: 1.3; }
+  .feiten { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 20px 0 24px; }
+  .feiten div { background: var(--papier); border: 1px solid var(--rand); border-radius: 14px; padding: 10px 14px; }
+  .feiten dt { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--koraal-tekst); }
+  .feiten dd { margin: 2px 0 0; font-weight: 600; color: var(--groen); font-size: 0.92rem; }
+  .sheet-blok { display: grid; grid-template-columns: minmax(0, 620px) 1fr; gap: clamp(24px, 4vw, 56px); align-items: center; }
+  .sheet { aspect-ratio: auto; background: #fbf9f5; box-shadow: var(--schaduw-s); }
+  .sheet-tekst p:first-child { font-size: 1.1rem; }
+  @media (max-width: 860px) { .sheet-blok { grid-template-columns: 1fr; } }
+  .verhalen { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .verhaal { display: grid; gap: 4px; padding: 20px; text-decoration: none; color: inherit; height: 100%; }
+  .verhaal b { font-family: var(--font-kop); color: var(--groen); font-size: 1.15rem; }
   .items { grid-template-columns: repeat(4, 1fr); }
   .anderen { grid-template-columns: 1fr 1fr; }
-  @media (max-width: 960px) { .held { grid-template-columns: 1fr; } .items { grid-template-columns: 1fr 1fr; } .anderen { grid-template-columns: 1fr; } }
+  @media (max-width: 960px) { .held { grid-template-columns: 1fr; } .items { grid-template-columns: 1fr 1fr; } .anderen { grid-template-columns: 1fr; } .verhalen { grid-template-columns: 1fr; } }
 </style>

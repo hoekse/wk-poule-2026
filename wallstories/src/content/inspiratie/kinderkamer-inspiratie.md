@@ -28,9 +28,9 @@ Bekijk eerst alle [werelden voor de kinderkamer](/werelden/) en kies er één di
 
 Eén muur met [fotobehang op maat voor de kinderkamer](/fotobehang-kinderkamer/) is genoeg. Kies de muur achter het bed of de muur die je ziet als je binnenkomt. De andere muren houd je rustig, zodat het verhaal ruimte krijgt.
 
-### 3. Een gouden museumzaal achter de commode
+### 3. Een gouden atelier achter de commode
 
-In de wereld Rembrandt Museum schildert Rembrandt 2.0 zijn verhalen in een warme, gouden zaal. Dat past bij houten meubels en zachte, warme tinten. Zet een lage commode of boekenkast voor de muur, alsof je kind zelf door het museum loopt.
+In de wereld Rembrandts Atelier schildert Rembrandt 2.0 zijn verhalen tussen warme, gouden lijsten. Dat past bij houten meubels en zachte, warme tinten. Zet een lage commode of boekenkast voor de muur, alsof je kind zelf door het atelier loopt.
 
 ### 4. Onderwater voor een kalme babykamer
 
@@ -82,7 +82,7 @@ Het ontwerp op de muur bepaalt het kleurenpalet van de rest van de kamer. Pak é
 
 | Wereld | Sfeer | Kleuren voor de andere muren |
 |---|---|---|
-| Rembrandt Museum | warm en klassiek | gebroken wit, oker, warm beige |
+| Rembrandts Atelier | warm en klassiek | gebroken wit, oker, warm beige |
 | Onderwater | kalm en zacht | lichtblauw, zand, crème |
 | Ruimte | avontuurlijk en diep | diepblauw, zacht grijs, warm geel als accent |
 | Dino | speels en natuurlijk | saliegroen, zand, terracotta |

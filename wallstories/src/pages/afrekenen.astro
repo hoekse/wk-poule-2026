@@ -1,7 +1,7 @@
 ---
 import Basis from '@/layouts/Basis.astro';
 import Icon from '@/components/Icon.astro';
-import Logo from '@/components/Logo.astro';
+import { aanbrengen } from '@/config';
 ---
 <Basis titel="Afrekenen" beschrijving="Rond je bestelling bij Wallstories Kids veilig af met iDEAL." noindex>
   <section class="container sectie--krap">
@@ -31,6 +31,11 @@ import Logo from '@/components/Logo.astro';
           <p class="hint" data-adres-hint>Vul je postcode en huisnummer in, dan vullen we straat en plaats automatisch aan.</p>
           <div class="veld"><label for="opmerking">Opmerking <span class="hint">(optioneel)</span></label><textarea class="invoer" id="opmerking" name="opmerking" rows="3" placeholder="Bijv. een cadeauboodschap of bezorginstructie"></textarea></div>
         </fieldset>
+        {aanbrengen.actief && (
+          <fieldset class="aanbreng-optie" data-aanbreng-optie hidden>
+            <label class="vink"><input type="checkbox" name="aanbrengen" /> <span><b>Laat mijn fotobehang aanbrengen</b> door onze partner {aanbrengen.partner} ({aanbrengen.tariefTekst.toLowerCase()}). Je ontvangt eerst een offerte; nu betaal je alleen het behang.</span></label>
+          </fieldset>
+        )}
         <fieldset class="akkoord">
           <label class="vink"><input type="checkbox" name="voorwaarden" required /> <span>Ik ga akkoord met de <a href="/algemene-voorwaarden/" target="_blank">algemene voorwaarden</a> en het <a href="/privacy/" target="_blank">privacybeleid</a>.</span></label>
           <label class="vink" data-maatwerk-akkoord hidden><input type="checkbox" name="maatwerk" /> <span>Ik begrijp dat <b>maatwerk en gepersonaliseerde producten</b> speciaal voor mij worden gemaakt en daarom <b>niet onder het herroepingsrecht</b> vallen (art. 6:230p BW).</span></label>
@@ -59,6 +64,7 @@ import Logo from '@/components/Logo.astro';
   const regels = document.querySelector<HTMLElement>('[data-kassa-regels]')!;
   const totalen = document.querySelector<HTMLElement>('[data-kassa-totalen]')!;
   const maatwerk = form.querySelector<HTMLElement>('[data-maatwerk-akkoord]')!;
+  const aanbreng = form.querySelector<HTMLElement>('[data-aanbreng-optie]');
   const fout = form.querySelector<HTMLElement>('[data-fout]')!;
   const knop = form.querySelector<HTMLButtonElement>('[data-betaal]')!;
   const knopTekst = form.querySelector<HTMLElement>('[data-betaal-tekst]')!;
@@ -69,6 +75,7 @@ import Logo from '@/components/Logo.astro';
     const heeftMaatwerk = items.some((i) => prijsVoor(i.config).maatwerk);
     maatwerk.hidden = !heeftMaatwerk;
     maatwerk.querySelector('input')!.required = heeftMaatwerk;
+    if (aanbreng) aanbreng.hidden = !items.some((i) => i.config.type === 'fotobehang');
     const t = winkelwagen.totalen();
     knop.disabled = t.aantal === 0;
     knopTekst.textContent = t.aantal ? `Bestellen en betalen · ${euro(t.totaal)}` : 'Je winkelwagen is leeg';
@@ -109,7 +116,7 @@ import Logo from '@/components/Logo.astro';
         body: JSON.stringify({
           klant: { email: f.email, voornaam: f.voornaam, achternaam: f.achternaam, telefoon: f.telefoon, postcode: f.postcode, huisnummer: f.huisnummer, toevoeging: f.toevoeging, straat: f.straat, plaats: f.plaats, opmerking: f.opmerking },
           regels: winkelwagen.items().map((i) => ({ key: i.key, config: i.config, aantal: i.aantal })),
-          akkoordVoorwaarden: !!f.voorwaarden, akkoordMaatwerk: !!f.maatwerk,
+          akkoordVoorwaarden: !!f.voorwaarden, akkoordMaatwerk: !!f.maatwerk, aanbrengen: !!f.aanbrengen,
         }),
       });
       const j = await res.json().catch(() => ({}));
@@ -134,6 +141,8 @@ import Logo from '@/components/Logo.astro';
   .vink input { width: 20px; height: 20px; margin-top: 2px; flex: none; accent-color: var(--groen); }
   .vink a { color: var(--groen); font-weight: 700; }
   .akkoord { padding: 18px; border-radius: var(--r); background: var(--zand-100); }
+  .aanbreng-optie { padding: 16px 18px; border-radius: var(--r); border: 1.5px dashed var(--rand-sterk); }
+  .aanbreng-optie[hidden] { display: none; }
   .centreer { text-align: center; margin: 0; }
   .overzicht { padding: 28px; position: sticky; top: calc(var(--header-h) + 20px); display: grid; gap: 12px; }
   .h-klein { font-size: 1.4rem; margin: 0; }

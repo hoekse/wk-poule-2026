@@ -43,6 +43,7 @@ const ld = [kruimelpad(Astro.site, kruimels), { '@type': 'CollectionPage', name:
     <div class="proza">
       <h2>Het verhaal: {w.verhaal}</h2>
       {w.alineas.map((a) => <p>{a}</p>)}
+      <p><a href={`/verhalen/${w.slug}/`}>Lees het voorleesverhaal van deze wereld</a>: ongeveer vier minuten, voor kinderen van 3 tot 7 jaar.</p>
       <p>Zoek je inspiratie? Lees onze <a href="/inspiratie/kinderkamer-inspiratie/">ideeën voor de kinderkamer</a> of ontdek <a href="/inspiratie/hoeveel-behang-nodig/">hoeveel behang je nodig hebt</a>.</p>
     </div>
     {personage && (

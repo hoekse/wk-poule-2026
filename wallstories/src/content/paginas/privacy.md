@@ -61,7 +61,7 @@ Mollie is voor een deel van de verwerking zelf verantwoordelijk, bijvoorbeeld vo
 Naast onze verwerkers delen we gegevens alleen als dat nodig is:
 
 - **PostNL** ontvangt je naam, adres en e-mailadres om je pakket te bezorgen en je een track & trace-code te sturen. PostNL is zelf verantwoordelijk voor die verwerking.
-- **Een vakschilder** ontvangt je naam, adres en telefoonnummer als je de aanbrengservice aanvraagt.
+- **Multiwalls** (onze aanbrengpartner) ontvangt je naam, adres, telefoonnummer en muurmaat als je de aanbrengservice aanvraagt.
 - **Overheidsinstanties**, zoals de Belastingdienst, als we daartoe wettelijk verplicht zijn.
 
 ## Gegevens buiten de Europese Unie

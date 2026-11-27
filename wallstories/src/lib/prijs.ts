@@ -8,15 +8,16 @@ import { winkel } from '@/config';
 
 export const tarieven = {
   fotobehang: {
+    // Afgestemd op drukpartner Probo: ProVlies mat (banen) en WalltexPro (naadloos textiel, max. 290 cm hoog)
     materialen: {
-      'vlies-mat': { naam: 'Premium vlies – mat', m2Cent: 4495 },
-      'vlies-structuur': { naam: 'Premium vlies – linnenstructuur', m2Cent: 5295 },
+      'vlies-mat': { naam: 'Vlies mat', sub: 'in banen van 53 cm', m2Cent: 4495, baanCm: 53, maxHoogteCm: 400 },
+      'textiel-naadloos': { naam: 'Textiel naadloos', sub: 'in één stuk, geurloos', m2Cent: 5995, baanCm: 0, maxHoogteCm: 290 },
     },
     minM2: 3,
     naamCent: 1495,
     grenzen: { minCm: 50, maxBreedteCm: 1000, maxHoogteCm: 400 },
     overmaatCm: 5,
-    baanbreedteCm: 50,
+    baanbreedteCm: 53,
   },
   behangcirkel: { maten: { '70': 4995, '100': 6995, '125': 8995 } },
   poster: { maten: { '30x40': 1995, '50x70': 2995, '70x100': 4495 }, naamCent: 995 },
@@ -63,8 +64,9 @@ export function m2(breedteCm: number, hoogteCm: number): number {
   return Math.max(tarieven.fotobehang.minM2, Math.ceil(ruw * 10 - 1e-9) / 10);
 }
 
-export function aantalBanen(breedteCm: number) {
-  return Math.ceil((breedteCm + 2 * tarieven.fotobehang.overmaatCm) / tarieven.fotobehang.baanbreedteCm);
+export function aantalBanen(breedteCm: number, materiaal: MateriaalKey = 'vlies-mat') {
+  const baan = tarieven.fotobehang.materialen[materiaal].baanCm;
+  return baan ? Math.ceil((breedteCm + 2 * tarieven.fotobehang.overmaatCm) / baan) : 1;
 }
 
 const isInt = (v: unknown, min: number, max: number) => Number.isInteger(v) && (v as number) >= min && (v as number) <= max;
@@ -78,6 +80,7 @@ export function prijsVoor(c: Config): { cent: number; regels: string[]; maatwerk
       if (!isInt(c.hoogte, t.grenzen.minCm, t.grenzen.maxHoogteCm)) throw new PrijsFout(`Hoogte moet tussen ${t.grenzen.minCm} en ${t.grenzen.maxHoogteCm} cm liggen.`);
       const mat = t.materialen[c.materiaal];
       if (!mat) throw new PrijsFout('Onbekend materiaal.');
+      if (c.hoogte > mat.maxHoogteCm) throw new PrijsFout(`${mat.naam} kan tot ${mat.maxHoogteCm} cm hoog. Kies vlies mat voor hogere muren.`);
       const naam = schoneNaam(c.naam);
       const opp = m2(c.breedte, c.hoogte);
       const uitsnede = typeof c.uitsnede === 'number' ? Math.min(100, Math.max(0, Math.round(c.uitsnede))) : 50;
@@ -85,7 +88,7 @@ export function prijsVoor(c: Config): { cent: number; regels: string[]; maatwerk
       return {
         cent, maatwerk: true,
         config: { type: 'fotobehang', breedte: c.breedte, hoogte: c.hoogte, materiaal: c.materiaal, naam, uitsnede },
-        regels: [`${c.breedte} × ${c.hoogte} cm (${opp.toLocaleString('nl-NL', { minimumFractionDigits: 1 })} m²)`, mat.naam, ...(naam ? [`Met naam: ${naam}`] : [])],
+        regels: [`${c.breedte} × ${c.hoogte} cm (${opp.toLocaleString('nl-NL', { minimumFractionDigits: 1 })} m²)`, `${mat.naam}, ${mat.sub}`, ...(naam ? [`Met naam: ${naam}`] : [])],
       };
     }
     case 'behangcirkel': {
@@ -114,7 +117,7 @@ export function prijsVoor(c: Config): { cent: number; regels: string[]; maatwerk
       return { cent: tarieven.naamsticker.prijsCent, maatwerk: true, config: { type: 'naamsticker', naam, kleur: c.kleur }, regels: [`Naam: ${naam}`, `Kleur: ${c.kleur.replace('-', ' ')}`] };
     }
     case 'proefstaal':
-      return { cent: tarieven.proefstaal.prijsCent, maatwerk: false, config: { type: 'proefstaal' }, regels: ['A4-proefstaal, premium vlies'] };
+      return { cent: tarieven.proefstaal.prijsCent, maatwerk: false, config: { type: 'proefstaal' }, regels: ['A4-proefstaal van deze wereld op vlies mat'] };
     default:
       throw new PrijsFout('Onbekend producttype.');
   }

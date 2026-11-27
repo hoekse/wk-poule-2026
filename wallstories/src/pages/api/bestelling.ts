@@ -6,7 +6,7 @@ import type { APIRoute } from 'astro';
 import { z } from 'astro/zod';
 import { productByKey, type ProductType } from '@/data/producten';
 import { prijsVoor, verzendkosten, PrijsFout, type Config } from '@/lib/prijs';
-import { db, mollie, json, siteUrl, geconfigureerd, bestelnummer } from '@/lib/server';
+import { db, mollie, json, siteUrl, webhookUrl, geconfigureerd, bestelnummer } from '@/lib/server';
 import { merk } from '@/config';
 
 export const prerender = false;
@@ -27,6 +27,7 @@ const Schema = z.object({
   regels: z.array(z.object({ key: z.string().max(80), config: z.any(), aantal: z.number().int().min(1).max(20) })).min(1).max(30),
   akkoordVoorwaarden: z.literal(true),
   akkoordMaatwerk: z.boolean().optional(),
+  aanbrengen: z.boolean().optional(),
 });
 
 export const POST: APIRoute = async ({ request }) => {
@@ -74,6 +75,7 @@ export const POST: APIRoute = async ({ request }) => {
         email: k.email.toLowerCase(), klant: { ...k, postcode: k.postcode.replace(/\s/g, '').toUpperCase() },
         regels, subtotaal_cent: subtotaal, verzendkosten_cent: verzend, totaal_cent: totaal,
         akkoord_voorwaarden: true, akkoord_maatwerk: !!body.akkoordMaatwerk, bevat_maatwerk: heeftMaatwerk,
+        aanbrengen: !!body.aanbrengen && regels.some((r) => r.config.type === 'fotobehang'),
       }),
     });
 
@@ -86,7 +88,7 @@ export const POST: APIRoute = async ({ request }) => {
         amount: { currency: 'EUR', value: (totaal / 100).toFixed(2) },
         description: `${merk.naam} ${nr}`,
         redirectUrl: `${site}/bedankt/?nr=${nr}&t=${token}`,
-        ...(lokaal ? {} : { webhookUrl: `${site}/api/mollie-webhook/` }),
+        ...(lokaal ? {} : { webhookUrl: webhookUrl() }),
         locale: 'nl_NL',
         metadata: { bestelnummer: nr },
         billingEmail: k.email,

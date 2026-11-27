@@ -1,0 +1,91 @@
+---
+import { Image } from 'astro:assets';
+import { render, type CollectionEntry } from 'astro:content';
+import Basis from '@/layouts/Basis.astro';
+import Kruimelpad from '@/components/Kruimelpad.astro';
+import ProductKaart from '@/components/ProductKaart.astro';
+import Palet from '@/components/Palet.astro';
+import Icon from '@/components/Icon.astro';
+import { alleVerhalen } from '@/lib/verhalen';
+import { wereldBySlug } from '@/data/werelden';
+import { productenInWereld } from '@/data/producten';
+import { beelden } from '@/lib/beelden';
+import { merk } from '@/config';
+import { kruimelpad, absoluut } from '@/lib/schema';
+export async function getStaticPaths() {
+  const lijst = await alleVerhalen();
+  return lijst.map((verhaal, i) => ({ params: { wereld: verhaal.data.wereld }, props: { verhaal, vorige: lijst[i - 1], volgende: lijst[i + 1] } }));
+}
+const { verhaal, vorige, volgende } = Astro.props as { verhaal: CollectionEntry<'verhalen'>; vorige?: CollectionEntry<'verhalen'>; volgende?: CollectionEntry<'verhalen'> };
+const { Content } = await render(verhaal);
+const d = verhaal.data;
+const w = wereldBySlug(d.wereld)!;
+const url = `/verhalen/${d.wereld}/`;
+const kruimels = [{ naam: 'Home', url: '/' }, { naam: 'Verhalen', url: '/verhalen/' }, { naam: d.titel, url }];
+const producten = productenInWereld(d.wereld).slice(0, 3);
+const ld = [kruimelpad(Astro.site, kruimels), {
+  '@type': 'ShortStory', name: d.titel, description: d.beschrijving, inLanguage: 'nl-NL', url: absoluut(Astro.site, url),
+  author: { '@type': 'Organization', name: merk.naam }, publisher: { '@id': absoluut(Astro.site, '/#organisatie') },
+  audience: { '@type': 'PeopleAudience', suggestedMinAge: 3, suggestedMaxAge: 7 }, timeRequired: `PT${d.leestijd}M`,
+  isPartOf: { '@type': 'CreativeWorkSeries', name: 'Het zevende raam' }, position: d.volgorde, character: d.personages.map((n) => ({ '@type': 'Person', name: n })),
+}];
+---
+<Basis titel={`${d.titel} – voorleesverhaal`} beschrijving={d.beschrijving} ogBeeld={beelden[w.beeld]} ogAlt={w.alt} type="article" jsonLd={ld}>
+  <Kruimelpad items={kruimels} />
+  <article>
+    <header class="container held">
+      <div class="media beeld"><Image src={beelden[w.beeld]} alt={w.alt} widths={[640, 1000, 1400, 2000]} sizes="(max-width: 1100px) 92vw, 1040px" loading="eager" fetchpriority="high" /></div>
+      <div class="kop">
+        <span class="eyebrow">Het zevende raam · deel {d.volgorde} van 6 · {w.naam}</span>
+        <h1>{d.titel}</h1>
+        <p class="meta">{d.leestijd} minuten voorlezen · {d.leeftijd} · met {d.personages.join(', ').replace(/, ([^,]*)$/, ' en $1')}</p>
+      </div>
+    </header>
+    <div class="container verhaal-grid">
+      <div class="voorlees"><Content /></div>
+      <aside class="zij">
+        <div class="kaart zij-kaart">
+          <p class="zij-titel">Het palet van Rembrandt</p>
+          <Palet tot={d.volgorde} />
+          <p class="klein zacht">Gevonden in dit verhaal: <b>{d.paletkleur}</b> ({d.volgorde} van 6).</p>
+        </div>
+        <div class="kaart zij-kaart">
+          <p class="zij-titel">Zeg het samen</p>
+          <p class="refrein">{d.herhaalzin}</p>
+          <p class="klein zacht">Laat je kind dit zinnetje meezeggen elke keer dat het terugkomt.</p>
+        </div>
+      </aside>
+    </div>
+  </article>
+  <nav class="container blader" aria-label="Andere verhalen">
+    {vorige ? <a href={`/verhalen/${vorige.data.wereld}/`} class="knop knop--rand"><Icon naam="pijl-links" /> {vorige.data.titel}</a> : <span />}
+    {volgende ? <a href={`/verhalen/${volgende.data.wereld}/`} class="knop">Volgend verhaal: {volgende.data.titel} <Icon naam="pijl" class="pijl" /></a> : <a href="/op-maat/" class="knop">Schilder je zevende raam <Icon naam="pijl" class="pijl" /></a>}
+  </nav>
+  <section class="container sectie--krap">
+    <div class="sectie-kop"><h2>Dit verhaal op jullie muur</h2><a href={`/werelden/${w.slug}/`} class="link-pijl">Alles uit {w.naam} <Icon naam="pijl" /></a></div>
+    <div class="grid producten">{producten.map((p) => <ProductKaart product={p} />)}</div>
+  </section>
+</Basis>
+<style>
+  .held { max-width: calc(1040px + 2 * var(--gutter)); }
+  .beeld { aspect-ratio: 16 / 7; box-shadow: var(--schaduw); }
+  .kop { padding-top: 28px; }
+  .kop h1 { font-size: clamp(2.2rem, 1.5rem + 2.8vw, 4rem); margin: 6px 0 8px; }
+  .meta { color: var(--tekst-zacht); font-weight: 600; }
+  .verhaal-grid { display: grid; grid-template-columns: 1fr 260px; gap: 56px; padding-top: 28px; max-width: calc(1040px + 2 * var(--gutter)); }
+  .voorlees { font-size: clamp(1.1rem, 1rem + 0.35vw, 1.28rem); line-height: 1.8; max-width: 36rem; color: #2c3a36; }
+  .voorlees :global(p) { margin: 0 0 1.05em; }
+  .voorlees :global(p:first-child::first-letter) { font-family: var(--font-kop); font-weight: 800; float: left; font-size: 3.6em; line-height: 0.85; padding: 6px 10px 0 0; color: var(--groen); }
+  .voorlees :global(em) { color: var(--groen); font-weight: 700; font-style: italic; }
+  .voorlees :global(hr) { border: 0; height: 1px; background: var(--rand); margin: 2em 0 1.2em; }
+  .voorlees :global(hr + p) { font-size: 0.92rem; background: var(--zon-100); border-radius: var(--r); padding: 14px 18px; }
+  .zij { display: grid; gap: 16px; align-content: start; position: sticky; top: calc(var(--header-h) + 20px); }
+  .zij-kaart { padding: 20px; }
+  .zij-titel { font-family: var(--font-kop); font-weight: 700; color: var(--groen); margin: 0 0 8px; }
+  .refrein { font-family: var(--font-kop); font-size: 1.15rem; color: var(--groen); line-height: 1.3; margin: 0 0 8px; }
+  .blader { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding-top: 32px; max-width: calc(1040px + 2 * var(--gutter)); }
+  .blader .knop { white-space: normal; text-align: left; min-height: 50px; padding-block: 10px; }
+  .producten { grid-template-columns: repeat(3, 1fr); }
+  @media (max-width: 900px) { .verhaal-grid { grid-template-columns: 1fr; gap: 28px; } .zij { position: static; grid-template-columns: 1fr 1fr; } .producten { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 560px) { .zij { grid-template-columns: 1fr; } .producten { grid-template-columns: 1fr; } .beeld { aspect-ratio: 16 / 10; } }
+</style>

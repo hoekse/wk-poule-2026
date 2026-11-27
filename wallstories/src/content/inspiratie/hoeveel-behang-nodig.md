@@ -46,14 +46,14 @@ Die overmaat is gratis. Je vult in de configurator de netto maat van je muur in;
 
 De oppervlakte reken je uit met breedte × hoogte, in meters. Een muur van 300 cm breed en 260 cm hoog is 3,00 × 2,60 = 7,80 m². Met vlies mat à €44,95 per m² kom je dan uit op €350,61.
 
-| Muur (b × h) | Oppervlakte | Vlies mat (€44,95/m²) | Vlies structuur (€52,95/m²) |
+| Muur (b × h) | Oppervlakte | Vlies mat (€44,95/m²) | Textiel naadloos (€59,95/m²) |
 |---|---|---|---|
-| 150 × 240 cm | 3,60 m² | €161,82 | €190,62 |
-| 250 × 240 cm | 6,00 m² | €269,70 | €317,70 |
-| 300 × 260 cm | 7,80 m² | €350,61 | €413,01 |
-| 400 × 270 cm | 10,80 m² | €485,46 | €571,86 |
+| 150 × 240 cm | 3,60 m² | €161,82 | €215,82 |
+| 250 × 240 cm | 6,00 m² | €269,70 | €359,70 |
+| 300 × 260 cm | 7,80 m² | €350,61 | €467,61 |
+| 400 × 270 cm | 10,80 m² | €485,46 | €647,46 |
 
-De bedragen zijn indicatief en inclusief btw. Wil je de naam van je kind in het ontwerp, dan komt daar €14,95 bij. De configurator rekent je exacte prijs direct uit. Omdat een bestelling fotobehang altijd boven de €50 uitkomt, verzenden we die gratis.
+De bedragen zijn indicatief en inclusief btw. Naadloos textiel kan tot 290 cm hoog; voor hogere muren kies je vlies mat. Wil je de naam van je kind in het ontwerp, dan komt daar €14,95 bij. De configurator rekent je exacte prijs direct uit. Omdat een bestelling fotobehang altijd boven de €50 uitkomt, verzenden we die gratis.
 
 Voor fotobehang op maat geldt een minimum van 3 m². Gaat het om een kleiner vlak, zoals een nis of een smal stuk muur naast de kast? Dan is een [behangcirkel](/behangcirkels/) vaak de mooiere keuze.
 

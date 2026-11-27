@@ -25,19 +25,30 @@ export const winkel = {
   verzendkostenCent: 495,
   gratisVerzendingVanafCent: 5000,
   landen: ['NL'] as const,
-  levertijd: { maatwerk: '5–7 werkdagen', standaard: '2–4 werkdagen' },
-  /** Optionele dienst: aanbrengen door een vakschilder. Zet op false als je dit (nog) niet aanbiedt. */
-  aanbrengservice: true,
+  levertijd: { maatwerk: '3–5 werkdagen', standaard: '2–4 werkdagen' },
 } as const;
 
 /**
- * Productspecificaties zoals ze op de site staan.
- * ⚠️ Laten bevestigen door de drukpartner vóór livegang (misleidende claims = ACM-risico).
+ * Aanbrengservice via partner Multiwalls.
+ * ⚠️ Consumentenprijzen moeten incl. btw getoond worden: bevestig of € 75 incl. of excl. btw is.
+ */
+export const aanbrengen = {
+  actief: true,
+  partner: 'Multiwalls',
+  partnerUrl: 'https://www.multiwalls.nl',
+  uurtariefCent: 7500,
+  tariefTekst: '€ 75 per uur, exclusief reiskosten',
+  regio: 'Kampen, Zwolle, Dronten, Lelystad, Hattem en omgeving; elders in Nederland op aanvraag',
+} as const;
+
+/**
+ * Productspecificaties zoals ze op de site staan – afgestemd op de materialen van drukpartner Probo
+ * (ProVlies mat, WalltexPro, Gekkotex, FSC-posterpapier). Bij een ander materiaal: hier aanpassen.
  */
 export const specs = [
-  'PVC-vrij vliesbehang',
-  'Papier uit verantwoord beheerde bossen (FSC)',
-  'Watergedragen latexinkt, geurarm',
+  'Pvc-vrij en brandvertragend',
+  'Vlies mat: 200 g/m², FSC-gecertificeerd, genummerde banen die naad-op-naad aansluiten',
+  'Textiel naadloos: in één stuk tot 290 cm hoog, geurloze inkt op waterbasis',
   'Plak-de-muur-methode: lijm op de muur, niet op het behang',
-  'Droog afneembaar bij verwijderen',
+  'Later droog in zijn geheel van de muur te halen',
 ] as const;

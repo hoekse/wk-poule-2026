@@ -47,7 +47,7 @@ export const faq: FaqItem[] = [
   {
     categorie: 'Maatwerk & opmeten',
     vraag: `Wat kost fotobehang op maat en is er een minimale afmeting?`,
-    antwoord: `Fotobehang op maat kost €44,95 per m² in vlies mat en €52,95 per m² in vlies structuur met linnen-look. Je bestelt vanaf 3 m². Voor een kleiner vlak is een <a href="/behangcirkels/">behangcirkel</a> vaak een mooie keuze.`,
+    antwoord: `Fotobehang op maat kost €44,95 per m² in vlies mat en €59,95 per m² in naadloos textiel. Je bestelt vanaf 3 m². Voor een kleiner vlak is een <a href="/behangcirkels/">behangcirkel</a> vaak een mooie keuze.`,
   },
   {
     categorie: 'Maatwerk & opmeten',
@@ -69,7 +69,7 @@ export const faq: FaqItem[] = [
   {
     categorie: 'Aanbrengen',
     vraag: `Kunnen jullie het behang voor mij aanbrengen?`,
-    antwoord: `Op aanvraag brengt een vakschilder je fotobehang voor je aan. <a href="/contact/">Neem contact met ons op</a> voor de mogelijkheden en een prijs voor jouw situatie.`,
+    antwoord: `Ja. Onze partner <a href="https://www.multiwalls.nl" target="_blank" rel="noopener">Multiwalls</a> brengt je fotobehang aan voor € 75 per uur, exclusief reiskosten, in de regio Kampen, Zwolle, Dronten, Lelystad en Hattem (elders op aanvraag). Vink het aan bij het afrekenen of <a href="/contact/?onderwerp=aanbrengen">vraag een offerte aan</a>; je ontvangt altijd eerst een offerte.`,
   },
   {
     categorie: 'Aanbrengen',
@@ -81,17 +81,17 @@ export const faq: FaqItem[] = [
   {
     categorie: 'Materiaal & veiligheid',
     vraag: `Van welk materiaal is jullie fotobehang gemaakt?`,
-    antwoord: `Ons fotobehang is pvc-vrij vliesbehang van papier uit verantwoord beheerde bossen (FSC). Het is gedrukt met watergedragen latexinkt, geurarm en ademend.`,
+    antwoord: `Je kiest uit twee pvc-vrije, brandvertragende materialen. Vlies mat is 200 g/m², FSC-gecertificeerd en wordt geleverd in genummerde banen van 53 cm. Naadloos textiel is polyester textiel in één stuk tot 290 cm hoog, gedrukt met geurloze inkt op waterbasis.`,
   },
   {
     categorie: 'Materiaal & veiligheid',
     vraag: `Is jullie behang geschikt voor de babykamer?`,
-    antwoord: `Veel ouders kiezen ons behang voor de babykamer, omdat het pvc-vrij en geurarm is. Behang wel op tijd, een aantal weken voor de uitgerekende datum, en lucht de kamer goed na het drogen. Meer tips lees je in ons artikel over <a href="/inspiratie/veilig-behang-babykamer/">behang in de babykamer</a>.`,
+    antwoord: `Ja. Voor de babykamer raden we naadloos textiel aan: pvc-vrij en gedrukt met geurloze inkt op waterbasis. Vlies mat wordt met UV-inkt gedrukt; die kan de eerste dagen licht ruiken, wat vanzelf wegtrekt. Behang wel op tijd, een aantal weken voor de uitgerekende datum, en lucht de kamer goed na het drogen. Meer tips lees je in ons artikel over <a href="/inspiratie/veilig-behang-babykamer/">behang in de babykamer</a>.`,
   },
   {
     categorie: 'Materiaal & veiligheid',
-    vraag: `Wat is het verschil tussen vlies mat en vlies structuur?`,
-    antwoord: `Vlies mat heeft een glad, mat oppervlak en kost €44,95 per m². Vlies structuur heeft een linnen-look en kost €52,95 per m². Twijfel je, bestel dan van allebei een proefstaal.`,
+    vraag: `Wat is het verschil tussen vlies mat en naadloos textiel?`,
+    antwoord: `Vlies mat (€44,95 per m²) komt in banen van 53 cm die je naad-op-naad plakt, en kan tot 4 meter hoog. Naadloos textiel (€59,95 per m²) is één doorlopend stuk zonder naden tot 290 cm hoog, met een zachte textielstructuur en geurloze inkt. Twijfel je, bestel dan eerst een proefstaal.`,
   },
   {
     categorie: 'Materiaal & veiligheid',

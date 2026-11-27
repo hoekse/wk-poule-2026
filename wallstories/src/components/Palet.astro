@@ -1,0 +1,21 @@
+---
+/** Het palet van Rembrandt 2.0: per verhaal komt er een kleur bij (rode draad "Het zevende raam"). */
+import { paletKleuren } from '@/lib/verhalen';
+interface Props { tot?: number; groot?: boolean; }
+const { tot = 6, groot = false } = Astro.props;
+const kleuren = Object.entries(paletKleuren);
+---
+<div class:list={['palet', { groot }]} role="img" aria-label={`Het palet van Rembrandt 2.0: ${tot} van de 6 kleuren gevonden`}>
+  <svg viewBox="0 0 220 160" aria-hidden="true">
+    <path d="M110 8C52 8 8 42 8 82c0 30 24 52 52 48 18-2 20-18 34-18 11 0 15 9 15 19 0 16 13 27 34 23 46-9 69-40 69-78C212 42 168 8 110 8z" fill="#E9D6B8" stroke="#18403A" stroke-width="4" />
+    <circle cx="62" cy="96" r="13" fill="#F7F4EF" stroke="#18403A" stroke-width="4" />
+    {kleuren.map(([naam, hex], i) => {
+      const pos = [[52, 52], [88, 36], [128, 34], [164, 46], [184, 76], [160, 104]][i];
+      return <circle cx={pos[0]} cy={pos[1]} r="14" fill={i < tot ? hex : 'none'} stroke={i < tot ? 'none' : '#B9A98C'} stroke-width="2.5" stroke-dasharray={i < tot ? undefined : '4 4'}><title>{naam}</title></circle>;
+    })}
+  </svg>
+</div>
+<style>
+  .palet svg { width: 132px; height: auto; display: block; }
+  .palet.groot svg { width: 200px; }
+</style>

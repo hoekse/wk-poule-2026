@@ -46,7 +46,7 @@ function initFormulier(form: HTMLFormElement) {
       if (cfg.type === 'fotobehang' && detailEl) {
         const opp = m2(cfg.breedte, cfg.hoogte);
         const echt = (cfg.breedte * cfg.hoogte) / 10000;
-        detailEl.innerHTML = `${fmtM2(opp)} m² × ${euro(tarieven.fotobehang.materialen[cfg.materiaal].m2Cent)}${cfg.naam ? ` + naam ${euro(tarieven.fotobehang.naamCent)}` : ''} · ${aantalBanen(cfg.breedte)} banen van 50 cm${echt < tarieven.fotobehang.minM2 ? ' · minimaal 3 m²' : ''}`;
+        detailEl.innerHTML = `${fmtM2(opp)} m² × ${euro(tarieven.fotobehang.materialen[cfg.materiaal].m2Cent)}${cfg.naam ? ` + naam ${euro(tarieven.fotobehang.naamCent)}` : ''} · ${cfg.materiaal === 'textiel-naadloos' ? 'naadloos in één stuk' : `${aantalBanen(cfg.breedte, cfg.materiaal)} banen van 53 cm`}${echt < tarieven.fotobehang.minM2 ? ' · minimaal 3 m²' : ''}`;
       }
     } catch (e) {
       if (foutEl) foutEl.textContent = e instanceof PrijsFout ? e.message : 'Controleer je invoer.';
@@ -92,8 +92,9 @@ function tekenPreview(el: HTMLElement, cfg: Config, schuif: HTMLElement | null) 
     const breder = ratio > beeldRatio; // muur breder dan beeld → verticaal schuiven
     const pos = cfg.uitsnede ?? 50;
     wand.style.backgroundPosition = breder ? `50% ${pos}%` : `${pos}% 50%`;
-    const baan = (tarieven.fotobehang.baanbreedteCm / cfg.breedte) * 100;
-    wand.style.setProperty('--baan', `${baan}%`);
+    const baanCm = tarieven.fotobehang.materialen[cfg.materiaal].baanCm;
+    wand.classList.toggle('naadloos', !baanCm);
+    if (baanCm) wand.style.setProperty('--baan', `${(baanCm / cfg.breedte) * 100}%`);
     const naam = el.querySelector<HTMLElement>('[data-naam-preview]');
     if (naam) { naam.textContent = cfg.naam ?? ''; naam.hidden = !cfg.naam; naam.style.fontSize = `${Math.max(18, Math.min(h * 0.16, b * 0.09))}px`; }
     el.querySelector('[data-maat-b]')!.textContent = `${cfg.breedte} cm`;

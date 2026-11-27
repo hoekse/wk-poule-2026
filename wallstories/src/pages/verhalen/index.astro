@@ -1,0 +1,68 @@
+---
+import { Image } from 'astro:assets';
+import Basis from '@/layouts/Basis.astro';
+import Kruimelpad from '@/components/Kruimelpad.astro';
+import Palet from '@/components/Palet.astro';
+import Icon from '@/components/Icon.astro';
+import { alleVerhalen, paletKleuren } from '@/lib/verhalen';
+import { wereldBySlug } from '@/data/werelden';
+import { beelden } from '@/lib/beelden';
+import { kruimelpad, absoluut } from '@/lib/schema';
+const verhalen = await alleVerhalen();
+const kruimels = [{ naam: 'Home', url: '/' }, { naam: 'Verhalen', url: '/verhalen/' }];
+const ld = [kruimelpad(Astro.site, kruimels), { '@type': 'CollectionPage', name: 'Voorleesverhalen van Wallstories Kids', url: absoluut(Astro.site, '/verhalen/'),
+  mainEntity: { '@type': 'ItemList', itemListElement: verhalen.map((v, i) => ({ '@type': 'ListItem', position: i + 1, url: absoluut(Astro.site, `/verhalen/${v.data.wereld}/`), name: v.data.titel })) } }];
+---
+<Basis titel="Voorleesverhalen voor het slapengaan" beschrijving="Zes gratis voorleesverhalen voor kinderen van 3 tot 7 jaar, met Rembrandt 2.0, Bella Ballon en Kees Komeet. Eén verhaal per wereld, elk in vier minuten voorgelezen." jsonLd={ld} ogBeeld={beelden['hero-schilder']}>
+  <Kruimelpad items={kruimels} />
+  <header class="container kop">
+    <div>
+      <span class="eyebrow">Verhalen voor het slapengaan</span>
+      <h1>Het zevende raam</h1>
+      <p class="lead">In zijn atelier heeft Rembrandt 2.0 zes werelden geschilderd. Eén raam is nog leeg: hoe vaak hij ook schildert, de verf blijft er niet op zitten. Bella Ballon en Kees Komeet zoeken in elke wereld een kleur voor zijn palet, tot ze het geheim van het zevende raam ontdekken.</p>
+      <p class="zacht">Zes voorleesverhalen van ongeveer vier minuten, voor kinderen van 3 tot 7 jaar. Lees ze op volgorde, of kies de wereld die op jullie muur staat.</p>
+    </div>
+    <Palet groot />
+  </header>
+  <section class="container sectie--krap">
+    <ol class="lijst">
+      {verhalen.map((v) => {
+        const w = wereldBySlug(v.data.wereld)!;
+        return (
+          <li><a href={`/verhalen/${v.data.wereld}/`} class="verhaal">
+            <div class="media media--zoom"><Image src={beelden[w.beeld]} alt={w.alt} widths={[400, 640, 900]} sizes="(max-width: 760px) 92vw, 380px" loading="lazy" style={`object-position:${w.focus}`} /></div>
+            <div class="info">
+              <span class="nr" style={`--k:${paletKleuren[v.data.paletkleur]}`}>{v.data.volgorde}</span>
+              <div>
+                <h2>{v.data.titel}</h2>
+                <p class="zacht klein">{w.naam} · {v.data.leestijd} minuten · {v.data.leeftijd}</p>
+                <p class="refrein">{v.data.herhaalzin}</p>
+              </div>
+            </div>
+          </a></li>
+        );
+      })}
+    </ol>
+    <aside class="kaart zevende">
+      <h2 class="h-klein">En het zevende raam?</h2>
+      <p>Dat kan alleen geschilderd worden door het kind dat ervoor slaapt. Wil je jullie eigen wereld op de muur? <a href="/op-maat/">Ontwerp je zevende raam op maat</a>.</p>
+    </aside>
+  </section>
+</Basis>
+<style>
+  .kop { display: grid; grid-template-columns: 1fr auto; gap: 40px; align-items: center; }
+  h1 { font-size: clamp(2.4rem, 1.6rem + 3vw, 4.2rem); }
+  .lijst { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px 28px; }
+  .verhaal { display: grid; gap: 14px; text-decoration: none; color: inherit; }
+  .verhaal .media { aspect-ratio: 16 / 10; }
+  .info { display: grid; grid-template-columns: 40px 1fr; gap: 12px; align-items: start; }
+  .nr { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: var(--k); color: #fff; font-family: var(--font-kop); font-weight: 800; box-shadow: 0 0 0 4px rgb(255 255 255 / 0.8), 0 0 0 5px var(--rand); }
+  .verhaal h2 { font-size: 1.3rem; margin: 2px 0 2px; }
+  .verhaal p { margin: 0; }
+  .refrein { margin-top: 6px !important; font-style: italic; color: var(--groen); font-weight: 600; font-size: 0.92rem; }
+  .zevende { margin-top: 48px; padding: 28px; max-width: 640px; }
+  .zevende a { color: var(--groen); font-weight: 700; }
+  .h-klein { font-size: 1.35rem; }
+  @media (max-width: 960px) { .lijst { grid-template-columns: 1fr 1fr; } .kop { grid-template-columns: 1fr; } }
+  @media (max-width: 560px) { .lijst { grid-template-columns: 1fr; } }
+</style>

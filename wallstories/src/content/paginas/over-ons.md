@@ -28,17 +28,17 @@ In onze werelden kom je steeds dezelfde vrienden tegen.
 - **Bella Ballon**, de ontdekker. Met haar vliegeniersmuts en haar gestreepte luchtballon vliegt ze naar plekken die niemand anders ziet.
 - **Kees Komeet**, de avonturier. Een astronautje dat door de ruimte schiet en altijd als eerste op ontdekkingstocht gaat.
 
-Samen reizen ze door zes werelden: van een gouden museumzaal tot de diepe oceaan, van een sterrenhemel vol raketten tot een jungle met een vrolijke T-rex, een drukke bouwplaats en een pastelkleurig sprookjeskasteel. Omdat de personages terugkomen op fotobehang, behangcirkels, posters en muurstickers, bouw je een kamer op waarin alles bij elkaar hoort. Maak kennis met [onze personages](/personages/) of ontdek [alle werelden](/werelden/).
+Samen reizen ze door zes werelden: van een gouden schildersatelier tot de diepe oceaan, van een sterrenhemel vol raketten tot een jungle met een vrolijke T-rex, een drukke bouwplaats en een pastelkleurig sprookjeskasteel. Omdat de personages terugkomen op fotobehang, behangcirkels, posters en muurstickers, bouw je een kamer op waarin alles bij elkaar hoort. Maak kennis met [onze personages](/personages/) of ontdek [alle werelden](/werelden/).
 
 ## Kwaliteit en zorg
 
-Een kinderkamer verdient materialen waar je bewust voor kiest. Ons fotobehang is pvc-vrij vliesbehang, gemaakt van papier uit verantwoord beheerde bossen (FSC) en gedrukt met watergedragen latexinkt. Het is geurarm en ademend. Je brengt het aan met de plak-de-muur-methode, en het is droog afneembaar als de kamer later een nieuw verhaal krijgt.
+Een kinderkamer verdient materialen waar je bewust voor kiest. Je kiest uit pvc-vrij vlies (FSC-gecertificeerd) of naadloos textiel dat geurloos wordt gedrukt met inkt op waterbasis. Alle materialen zijn brandvertragend. Je brengt het aan met de plak-de-muur-methode, en het is droog afneembaar als de kamer later een nieuw verhaal krijgt.
 
 [Ruimte voor de oprichter: wat kwaliteit voor jou betekent, bijvoorbeeld hoe je ontwerpen en drukproeven beoordeelt of waarom je voor deze materialen hebt gekozen.]
 
 ## Op maat, tot op de centimeter
 
-Geen muur is hetzelfde. Daarom maken we fotobehang op de exacte maat van jouw muur. In de live preview zie je direct hoe jouw wereld eruitziet, en je kunt de naam van je kind toevoegen. We leveren met 5 cm overmaat rondom, zodat je het behang netjes kunt afwerken. Liever niet zelf behangen? Op aanvraag brengt een vakschilder het voor je aan. Lees meer over [fotobehang op maat](/op-maat/).
+Geen muur is hetzelfde. Daarom maken we fotobehang op de exacte maat van jouw muur. In de live preview zie je direct hoe jouw wereld eruitziet, en je kunt de naam van je kind toevoegen. We leveren met 5 cm overmaat rondom, zodat je het behang netjes kunt afwerken. Liever niet zelf behangen? Dan brengt een behanger van onze partner Multiwalls het voor je aan. Lees meer over [fotobehang op maat](/op-maat/).
 
 ## Vragen of ideeën?
 

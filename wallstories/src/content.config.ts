@@ -4,7 +4,7 @@ import { glob } from 'astro/loaders';
 /** Beeldsleutels die artikelen mogen gebruiken (zie src/lib/beelden.ts). */
 export const beeldSleutels = [
   'hero-schilder', 'babykamer-walvis',
-  'rembrandt-museum', 'onderwater', 'ruimte', 'dino', 'bouwplaats', 'sprookjes',
+  'rembrandts-atelier', 'onderwater', 'ruimte', 'dino', 'bouwplaats', 'sprookjes',
 ] as const;
 
 const inspiratie = defineCollection({
@@ -35,4 +35,19 @@ const paginas = defineCollection({
   }),
 });
 
-export const collections = { inspiratie, paginas };
+const verhalen = defineCollection({
+  loader: glob({ pattern: '**/*.md', base: './src/content/verhalen' }),
+  schema: z.object({
+    titel: z.string().max(70),
+    wereld: z.enum(['rembrandts-atelier', 'onderwater', 'ruimte', 'dino', 'bouwplaats', 'sprookjes']),
+    volgorde: z.number().int(),
+    beschrijving: z.string().min(110).max(160),
+    personages: z.array(z.string()),
+    herhaalzin: z.string(),
+    paletkleur: z.string(),
+    leeftijd: z.string(),
+    leestijd: z.number().int(),
+  }),
+});
+
+export const collections = { inspiratie, paginas, verhalen };

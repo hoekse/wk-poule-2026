@@ -12,7 +12,7 @@ import { wereldBySlug } from '@/data/werelden';
 import { personageBySlug } from '@/data/personages';
 import { tarieven, euro, maatLabels, vanafCent, NAAM_MAX } from '@/lib/prijs';
 import { kruimelpad, verzendDetails, retourBeleid, absoluut } from '@/lib/schema';
-import { specs, winkel, merk } from '@/config';
+import { specs, winkel, merk, aanbrengen } from '@/config';
 
 interface Props { product: Product; }
 const { product: p } = Astro.props;
@@ -85,7 +85,7 @@ const kleuren = { 'diep-groen': '#18403A', koraal: '#F08A76', 'zon-geel': '#F0B4
             </div>
             <span class="maat maat-h" data-maat-h>260 cm</span>
           </div>
-          <p class="preview-hint"><Icon naam="info" /> Stippellijnen tonen de naden van de banen (50 cm). Wij printen 5 cm extra rondom.</p>
+          <p class="preview-hint"><Icon naam="info" /> Stippellijnen tonen de naden van de banen (53 cm); naadloos textiel heeft geen naden. Wij printen 5 cm extra rondom.</p>
         </div>
       ) : (
         <div data-preview class="pv-statisch">
@@ -128,7 +128,7 @@ const kleuren = { 'diep-groen': '#18403A', koraal: '#F08A76', 'zon-geel': '#F0B4
               <legend>2. Materiaal</legend>
               <div class="chips">
                 {Object.entries(tarieven.fotobehang.materialen).map(([k, m], i) => (
-                  <label class="chip"><input type="radio" name="materiaal" value={k} checked={i === 0} /><span><b>{m.naam.replace('Premium vlies – ', 'Vlies ')}</b><small>{euro(m.m2Cent)} per m²</small></span></label>
+                  <label class="chip"><input type="radio" name="materiaal" value={k} checked={i === 0} /><span><b>{m.naam}</b><small>{euro(m.m2Cent)} per m² · {m.sub}</small></span></label>
                 ))}
               </div>
             </fieldset>
@@ -190,6 +190,7 @@ const kleuren = { 'diep-groen': '#18403A', koraal: '#F08A76', 'zon-geel': '#F0B4
           ? <li><Icon naam="liniaal" /> <span><b>Maatwerk</b> · speciaal voor jou geprint, daarom geen herroepingsrecht. <a href="/verzenden-en-retourneren/">Meer info</a></span></li>
           : <li><Icon naam="schild" /> <span><b>14 dagen bedenktijd</b> · <a href="/verzenden-en-retourneren/">retourneren</a></span></li>}
         <li><Icon naam="slot" /> <span><b>Veilig betalen</b> met iDEAL via Mollie</span></li>
+        {p.type === 'fotobehang' && aanbrengen.actief && <li><Icon naam="kwast" /> <span><b>Laten aanbrengen?</b> Door onze partner {aanbrengen.partner}, {aanbrengen.tariefTekst.toLowerCase()}. Aan te vinken bij het afrekenen.</span></li>}
       </ul>
 
       {p.type === 'fotobehang' && (
@@ -231,25 +232,27 @@ const kleuren = { 'diep-groen': '#18403A', koraal: '#F08A76', 'zon-geel': '#F0B4
       <h2 class="h-klein">Specificaties</h2>
       <dl class="specs">
         {p.type === 'fotobehang' && (<>
-          <div><dt>Materiaal</dt><dd>PVC-vrij vliesbehang, mat of linnenstructuur</dd></div>
+          <div><dt>Vlies mat</dt><dd>Pvc-vrij vlies, 200 g/m², FSC-gecertificeerd. Genummerde banen van 53 cm die naad-op-naad aansluiten</dd></div>
+          <div><dt>Textiel naadloos</dt><dd>Pvc-vrij polyester textiel, in één stuk tot 290 cm hoog, gedrukt met geurloze inkt op waterbasis</dd></div>
           <div><dt>Maat</dt><dd>Op maat tot {tarieven.fotobehang.grenzen.maxBreedteCm} × {tarieven.fotobehang.grenzen.maxHoogteCm} cm, + 5 cm overmaat rondom</dd></div>
-          <div><dt>Banen</dt><dd>50 cm breed, genummerd</dd></div>
+          <div><dt>Veiligheid</dt><dd>Brandvertragend materiaal</dd></div>
           <div><dt>Aanbrengen</dt><dd>Lijm op de muur (vliesbehanglijm)</dd></div>
           <div><dt>Minimum</dt><dd>{tarieven.fotobehang.minM2} m² per bestelling</dd></div>
         </>)}
         {p.type === 'behangcirkel' && (<>
-          <div><dt>Materiaal</dt><dd>Zelfklevend textiel, herpositioneerbaar</dd></div>
-          <div><dt>Maten</dt><dd>Ø 70, 100 of 125 cm</dd></div>
-          <div><dt>Ondergrond</dt><dd>Gladde, geverfde muur</dd></div>
+          <div><dt>Materiaal</dt><dd>Zelfklevend textiel, pvc-vrij, verwijderbaar en herpositioneerbaar</dd></div>
+          <div><dt>Inkt</dt><dd>Geurloze inkt op waterbasis</dd></div>
+          <div><dt>Maten</dt><dd>Ø 70, 100 of 125 cm, rond gesneden</dd></div>
+          <div><dt>Ondergrond</dt><dd>Gladde muur, verf minstens 2 weken droog, geen siliconenhoudende verf</dd></div>
         </>)}
         {p.type === 'poster' && (<>
-          <div><dt>Papier</dt><dd>Mat museumkwaliteit papier, 200 g/m²</dd></div>
+          <div><dt>Papier</dt><dd>Zijdemat FSC-posterpapier, 250 g/m²</dd></div>
           <div><dt>Formaten</dt><dd>30 × 40, 50 × 70 of 70 × 100 cm</dd></div>
           <div><dt>Lijst</dt><dd>Niet inbegrepen; past in standaardlijsten</dd></div>
         </>)}
         {(p.type === 'muursticker' || p.type === 'naamsticker') && (<>
-          <div><dt>Materiaal</dt><dd>Matte, verwijderbare muursticker</dd></div>
-          <div><dt>Ondergrond</dt><dd>Gladde, geverfde muur (min. 3 weken droog)</dd></div>
+          <div><dt>Materiaal</dt><dd>Zelfklevend textiel, pvc-vrij, op contour gesneden, verwijderbaar</dd></div>
+          <div><dt>Ondergrond</dt><dd>Gladde muur, verf minstens 2 weken droog, geen siliconenhoudende verf</dd></div>
         </>)}
         <div><dt>Levertijd</dt><dd>{levertijd}</dd></div>
       </dl>
@@ -274,6 +277,7 @@ const kleuren = { 'diep-groen': '#18403A', koraal: '#F08A76', 'zon-geel': '#F0B4
   .wand-kader { position: relative; display: grid; justify-items: center; padding: 26px 30px 0 0; }
   .wand { position: relative; background-size: cover; background-repeat: no-repeat; border-radius: 4px; transition: width 0.25s var(--ease), height 0.25s var(--ease), background-position 0.1s linear;
     box-shadow: 0 0 0 1px rgb(24 64 58 / 0.12), 0 24px 48px -24px rgb(24 64 58 / 0.55); max-width: 100%; }
+  .wand:global(.naadloos)::after { display: none; }
   .wand::after { content: ''; position: absolute; inset: 0; pointer-events: none; border-radius: inherit;
     background-image: repeating-linear-gradient(to right, transparent 0 calc(var(--baan, 16.66%) - 1px), rgb(255 255 255 / 0.85) calc(var(--baan, 16.66%) - 1px) var(--baan, 16.66%));
     -webkit-mask: repeating-linear-gradient(to bottom, #000 0 6px, transparent 6px 11px); mask: repeating-linear-gradient(to bottom, #000 0 6px, transparent 6px 11px); opacity: 0.75; }

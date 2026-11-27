@@ -2,7 +2,16 @@
 import { merk } from '@/config';
 
 export const env = (k: string): string | undefined => (typeof process !== 'undefined' ? process.env[k] : undefined) ?? (import.meta.env as Record<string, string | undefined>)[k];
-export const siteUrl = () => (env('SITE_URL') ?? 'http://localhost:4321').replace(/\/$/, '');
+/** Productie: SITE_URL. Testversies (Vercel preview): hun eigen vaste branch-URL, zodat betalen daar terugkomt. */
+export const siteUrl = () => {
+  if (env('VERCEL_ENV') === 'preview' && env('VERCEL_BRANCH_URL')) return `https://${env('VERCEL_BRANCH_URL')}`;
+  return (env('SITE_URL') ?? 'http://localhost:4321').replace(/\/$/, '');
+};
+/** Mollie moet de webhook kunnen bereiken, ook als de testversie achter Vercel-beveiliging staat. */
+export const webhookUrl = () => {
+  const bypass = env('VERCEL_AUTOMATION_BYPASS_SECRET');
+  return `${siteUrl()}/api/mollie-webhook/${bypass && env('VERCEL_ENV') === 'preview' ? `?x-vercel-protection-bypass=${encodeURIComponent(bypass)}` : ''}`;
+};
 export const geconfigureerd = () => !!(env('MOLLIE_API_KEY') && env('SUPABASE_URL') && env('SUPABASE_SERVICE_ROLE_KEY'));
 
 export const json = (data: unknown, status = 200) =>

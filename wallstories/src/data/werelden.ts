@@ -20,23 +20,23 @@ export type Wereld = {
 
 export const werelden: Wereld[] = [
   {
-    slug: 'rembrandt-museum',
-    naam: 'Rembrandt Museum',
+    slug: 'rembrandts-atelier',
+    naam: 'Rembrandts Atelier',
     verhaal: 'De magische kwast van Rembrandt',
     personage: 'rembrandt-2-0',
-    beeld: 'rembrandt-museum',
+    beeld: 'rembrandts-atelier',
     focus: '47% 50%',
     kleur: '#C8963E',
-    seoTitel: 'Kunst in de kinderkamer: Rembrandt Museum behang',
-    metaBeschrijving: 'Breng kunst naar de kinderkamer: fotobehang, posters en behangcirkels uit het Rembrandt Museum van Wallstories Kids. Op maat gemaakt, PVC-vrij.',
-    h1: 'Kunst in de kinderkamer: het Rembrandt Museum',
-    intro: 'In een zaal vol gouden lijsten werkt Rembrandt 2.0 aan zijn mooiste schilderij. Wie goed kijkt, ziet de molens draaien en de portretten knipogen.',
+    seoTitel: 'Kunst in de kinderkamer: Rembrandts Atelier',
+    metaBeschrijving: 'Breng kunst naar de kinderkamer: fotobehang, posters en behangcirkels uit Rembrandts Atelier van Wallstories Kids. Op maat gemaakt, pvc-vrij.',
+    h1: 'Kunst in de kinderkamer: Rembrandts Atelier',
+    intro: 'In zijn atelier vol gouden lijsten werkt Rembrandt 2.0 aan zijn mooiste schilderij. Wie goed kijkt, ziet de molens draaien en de portretten knipogen.',
     alineas: [
       'Kinderen die opgroeien tussen kunst, leren vanzelf kijken. In deze wereld nodigt Rembrandt 2.0 – onze meesterverteller – je kind uit in zijn atelier vol warme tinten, molens en stillevens.',
       'De wereld past prachtig bij hout, linnen en okerkleuren en groeit makkelijk mee van babykamer tot tienerkamer.',
     ],
-    zoekwoorden: ['kunst kinderkamer', 'museum behang', 'oude meesters kinderkamer'],
-    alt: 'Illustratie van een vriendelijke oude schilder met baret en palet in een gouden museumzaal vol schilderijen',
+    zoekwoorden: ['kunst kinderkamer', 'schilderij behang kinderkamer', 'oude meesters kinderkamer'],
+    alt: 'Illustratie van een vriendelijke oude schilder met baret en palet in zijn atelier vol ingelijste schilderijen',
   },
   {
     slug: 'onderwater',

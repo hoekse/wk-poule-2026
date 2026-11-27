@@ -5,6 +5,7 @@ import Basis from '@/layouts/Basis.astro';
 import Icon from '@/components/Icon.astro';
 import Illustratie from '@/components/Illustratie.astro';
 import Spot from '@/components/Spot.astro';
+import Palet from '@/components/Palet.astro';
 import WereldTegel from '@/components/WereldTegel.astro';
 import PersonageKaart from '@/components/PersonageKaart.astro';
 import Stappen from '@/components/Stappen.astro';
@@ -14,7 +15,7 @@ import { personages } from '@/data/personages';
 import { productByKey } from '@/data/producten';
 import { faq } from '@/data/faq';
 import { beelden } from '@/lib/beelden';
-import { specs, winkel } from '@/config';
+import { specs, winkel, aanbrengen } from '@/config';
 import { euro } from '@/lib/prijs';
 
 const usps = [
@@ -104,6 +105,19 @@ const vragen = faq.slice(0, 5);
     </div>
   </section>
 
+  <!-- ============ VERHALEN ============ -->
+  <section class="container" aria-labelledby="verhalen-titel">
+    <a href="/verhalen/" class="verhalenband">
+      <Palet />
+      <div>
+        <span class="eyebrow">Voorleesverhalen</span>
+        <h2 id="verhalen-titel">Elke wereld heeft een verhaal voor het slapengaan</h2>
+        <p class="zacht">Zes gratis voorleesverhalen van vier minuten. Bella Ballon en Kees Komeet zoeken in elke wereld een kleur voor het palet van Rembrandt 2.0, tot ze het geheim van het zevende raam ontdekken.</p>
+      </div>
+      <span class="knop">Lees voor <Icon naam="pijl" class="pijl" /></span>
+    </a>
+  </section>
+
   <!-- ============ ZO WERKT HET ============ -->
   <section class="sectie sectie--krap" aria-labelledby="werkt-titel">
     <div class="container">
@@ -172,11 +186,12 @@ const vragen = faq.slice(0, 5);
         <ul class="checklist">{specs.map((s) => <li><Icon naam="vink-rond" /> {s}</li>)}</ul>
         <p class="klein zacht" style="margin-top:1rem">Twijfel je over kleur of structuur? <a href="/fotobehang-kinderkamer/#proefstaal">Bestel eerst een proefstaal</a> voor {euro(395)}.</p>
       </div>
-      {winkel.aanbrengservice && (
+      {aanbrengen.actief && (
         <aside class="kaart aanbreng">
           <Illustratie naam="schilder" class="aanbreng-ill" />
           <h3>Liever laten aanbrengen?</h3>
-          <p>Wallstories is ontstaan uit het schildersvak. Wil je het behang niet zelf plakken? Dan brengt een vakschilder het voor je aan – strak, naadloos en zonder gedoe.</p>
+          <p>Wil je het behang niet zelf plakken? Samen met onze partner <a href={aanbrengen.partnerUrl} rel="noopener" target="_blank">{aanbrengen.partner}</a> brengt een ervaren behanger het voor je aan: strak, naadloos en zonder gedoe.</p>
+          <p class="tarief"><b>{aanbrengen.tariefTekst}.</b> Je ontvangt vooraf een offerte.<br /><span class="klein">Werkgebied: {aanbrengen.regio}.</span></p>
           <a href="/contact/?onderwerp=aanbrengen" class="knop knop--rand">Vraag een offerte aan <Icon naam="pijl" class="pijl" /></a>
         </aside>
       )}
@@ -308,6 +323,13 @@ const vragen = faq.slice(0, 5);
   .personages { grid-template-columns: repeat(3, 1fr); }
   @media (max-width: 1023px) { .personages { grid-template-columns: 1fr; max-width: 560px; } }
 
+  /* ---------- Verhalenband ---------- */
+  .verhalenband { display: grid; grid-template-columns: auto 1fr auto; gap: clamp(20px, 3vw, 40px); align-items: center; padding: clamp(20px, 3vw, 32px) clamp(20px, 3vw, 40px); border-radius: var(--r-xl); background: var(--lichtblauw-100); text-decoration: none; color: inherit; transition: transform 0.3s var(--ease); }
+  .verhalenband:hover { transform: translateY(-3px); }
+  .verhalenband h2 { font-size: clamp(1.4rem, 1.1rem + 1vw, 1.9rem); margin-bottom: 0.3em; }
+  .verhalenband p { margin: 0; max-width: 60ch; }
+  @media (max-width: 860px) { .verhalenband { grid-template-columns: 1fr; justify-items: start; } }
+
   /* ---------- Zo werkt het ---------- */
   .werkt { display: grid; grid-template-columns: 1.35fr 1fr; gap: clamp(24px, 4vw, 56px); align-items: center; background: var(--zand-100); border-radius: var(--r-xl); padding: clamp(24px, 4vw, 48px); }
   .werkt h2 { margin-bottom: 28px; }
@@ -345,6 +367,8 @@ const vragen = faq.slice(0, 5);
   .aanbreng { padding: clamp(24px, 3vw, 40px); text-align: left; }
   .aanbreng :global(.aanbreng-ill) { width: 80px; height: 80px; margin-bottom: 8px; }
   .aanbreng p { color: var(--tekst-zacht); }
+  .aanbreng a:not(.knop) { color: var(--groen); font-weight: 700; }
+  .aanbreng .tarief { color: var(--groen); background: var(--zon-100); border-radius: 12px; padding: 10px 14px; font-size: 0.92rem; }
   @media (max-width: 960px) { .kwaliteit { grid-template-columns: 1fr; } }
 
   /* ---------- Artikelen ---------- */

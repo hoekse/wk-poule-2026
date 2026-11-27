@@ -2,7 +2,7 @@
 import type { APIRoute } from 'astro';
 import { db, mollie, mail, esc, siteUrl } from '@/lib/server';
 import { euro } from '@/lib/prijs';
-import { merk, winkel } from '@/config';
+import { merk, winkel, aanbrengen } from '@/config';
 
 export const prerender = false;
 
@@ -37,6 +37,7 @@ async function bevestiging(b: any) {
     <table style="width:100%;border-collapse:collapse;border-top:1px solid #e6ded1;border-bottom:1px solid #e6ded1">${regels}</table>
     <p style="text-align:right">Verzending: ${b.verzendkosten_cent ? euro(b.verzendkosten_cent) : 'gratis'}<br><b style="color:#18403A;font-size:18px">Totaal: ${euro(b.totaal_cent)}</b></p>
     <p><b>Bezorgadres</b><br>${esc(k.voornaam)} ${esc(k.achternaam)}<br>${esc(k.straat)} ${esc(k.huisnummer)}${esc(k.toevoeging)}<br>${esc(k.postcode)} ${esc(k.plaats)}</p>
+    ${b.aanbrengen ? `<p><b>Laten aanbrengen:</b> je hebt gekozen voor aanbrengen door ${aanbrengen.partner} (${aanbrengen.tariefTekst.toLowerCase()}). We nemen binnen twee werkdagen contact met je op voor een offerte en een datum.</p>` : ''}
     <p>Verwachte levertijd: ${b.bevat_maatwerk ? winkel.levertijd.maatwerk : winkel.levertijd.standaard}. Je ontvangt een track & trace zodra je pakket onderweg is.</p>
     <p>Tips voor het aanbrengen vind je op <a href="${siteUrl()}/inspiratie/fotobehang-aanbrengen/" style="color:#18403A">onze site</a>.</p>
     <p>Liefs,<br>${merk.naam}</p></div>`;

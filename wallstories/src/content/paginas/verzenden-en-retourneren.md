@@ -21,7 +21,7 @@ De verzendkosten zie je altijd in je winkelwagen, voordat je betaalt.
 
 | Product | Levertijd |
 |---|---|
-| Fotobehang op maat | 5–7 werkdagen |
+| Fotobehang op maat | 3–5 werkdagen (bij een naam: na akkoord op je digitale proef) |
 | Behangcirkels, posters, muurstickers, naamstickers en proefstalen | 2–4 werkdagen |
 
 Fotobehang op maat drukken we speciaal voor jou, op de exacte maat van je muur. Daarom duurt het iets langer. Bestel je fotobehang samen met andere producten, dan geldt de levertijd van het fotobehang voor je hele bestelling.

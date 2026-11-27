@@ -20,7 +20,7 @@ In deze voorwaarden wordt verstaan onder:
 6. **Maatwerk:** producten die volgens specificaties van de consument worden vervaardigd, zoals fotobehang op de door de consument opgegeven muurmaat.
 7. **Gepersonaliseerd product:** een product dat op verzoek van de consument wordt voorzien van een naam, tekst of andere persoonlijke keuze, en daardoor duidelijk voor een specifieke persoon bestemd is.
 8. **Standaardproduct:** een product dat geen maatwerk of gepersonaliseerd product is, zoals posters zonder naam, behangcirkels, muurstickersets en proefstalen.
-9. **Aanbrengservice:** het op verzoek van de consument aanbrengen van fotobehang door een vakschilder.
+9. **Aanbrengservice:** het op verzoek van de consument aanbrengen van fotobehang door onze partner Multiwalls.
 10. **Dag:** kalenderdag.
 11. **Duurzame gegevensdrager:** elk hulpmiddel, waaronder e-mail, dat de consument of de ondernemer in staat stelt om informatie die aan hem persoonlijk is gericht op te slaan op een manier die toekomstige raadpleging en ongewijzigde reproductie mogelijk maakt.
 
@@ -138,9 +138,9 @@ De ondernemer sluit de volgende producten en diensten uit van het herroepingsrec
 
 ## Artikel 16 – Aanbrengservice
 
-1. Op verzoek kan de ondernemer het aanbrengen van fotobehang door een vakschilder verzorgen. Prijs, datum en voorwaarden worden vooraf in een aparte offerte vastgelegd.
+1. Op verzoek kan de ondernemer het aanbrengen van fotobehang laten verzorgen door partner Multiwalls ([multiwalls.nl](https://www.multiwalls.nl)), tegen € 75 per uur exclusief reiskosten. Prijs, datum en voorwaarden worden vooraf in een aparte offerte vastgelegd.
 2. De consument zorgt ervoor dat de muur op de afgesproken datum bereikbaar is en, tenzij in de offerte anders is afgesproken, geschikt is om te behangen.
-3. [Nader in te vullen: of de aanbrengservice door de ondernemer zelf of door een zelfstandige vakschilder wordt uitgevoerd, en welke aanvullende voorwaarden daarvoor gelden.]
+3. Het aanbrengen wordt uitgevoerd door Multiwalls als zelfstandige partner. [Nader in te vullen: aanvullende voorwaarden van Multiwalls, zoals annulering en aansprakelijkheid.]
 
 ## Artikel 17 – Intellectueel eigendom
 

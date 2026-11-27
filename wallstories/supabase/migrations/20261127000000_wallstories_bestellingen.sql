@@ -17,6 +17,8 @@ create table if not exists public.bestellingen (
   akkoord_voorwaarden boolean not null default false,
   akkoord_maatwerk   boolean not null default false,
   mollie_id          text unique,
+  aanbrengen         boolean not null default false,  -- klant wil laten aanbrengen (Multiwalls, offerte volgt)
+  probo_order_id     text,                            -- ordernummer bij drukpartner Probo
   track_trace        text,
   notities           text,
   betaald_op         timestamptz,
